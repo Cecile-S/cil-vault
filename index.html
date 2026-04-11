@@ -18,10 +18,13 @@
         .page { display: none; }
         .page.active { display: block; }
         nav a.active { color: #1e40af; background-color: #eff6ff; }
+        @media print {
+            header, nav, .no-print { display: none !important; }
+            .page { display: block !important; page-break-after: always; }
+        }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen pb-16">
-    <!-- Header -->
     <header class="bg-cil-blue text-white px-4 py-3 sticky top-0 z-50">
         <div class="max-w-lg mx-auto flex items-center justify-between">
             <h1 class="text-lg font-semibold">🏠 CIL Vault</h1>
@@ -49,21 +52,25 @@
             </div>
 
             <div class="grid grid-cols-3 gap-3 mb-6">
-                <a onclick="showPage('equipment')" class="bg-white rounded-xl shadow p-4 text-center cursor-pointer">
+                <a onclick="showPage('equipment')" class="bg-white rounded-xl shadow p-4 text-center cursor-pointer hover:shadow-md transition">
                     <p id="eq-count" class="text-2xl font-bold">0</p>
                     <p class="text-xs text-slate-500">Équipements</p>
                 </a>
-                <a onclick="showPage('documents')" class="bg-white rounded-xl shadow p-4 text-center cursor-pointer">
+                <a onclick="showPage('documents')" class="bg-white rounded-xl shadow p-4 text-center cursor-pointer hover:shadow-md transition">
                     <p id="doc-count" class="text-2xl font-bold">0</p>
                     <p class="text-xs text-slate-500">Documents</p>
                 </a>
-                <a onclick="showPage('alerts')" class="bg-white rounded-xl shadow p-4 text-center cursor-pointer">
+                <a onclick="showPage('alerts')" class="bg-white rounded-xl shadow p-4 text-center cursor-pointer hover:shadow-md transition">
                     <p id="alert-count" class="text-2xl font-bold">0</p>
                     <p class="text-xs text-slate-500">Alertes</p>
                 </a>
             </div>
 
-            <p class="text-center text-sm text-slate-400 mt-8">
+            <button onclick="exportCIL()" class="w-full bg-cil-blue text-white py-3 rounded-xl font-medium mb-4">
+                📄 Exporter le CIL
+            </button>
+
+            <p class="text-center text-sm text-slate-400 mt-4">
                 CIL Vault - Carnet d'Information Logement<br>
                 Obligatoire en France depuis 2023
             </p>
@@ -85,6 +92,7 @@
                 </select>
                 <input id="eq-name" type="text" placeholder="Nom / Modèle" class="w-full p-2 border rounded mb-2">
                 <input id="eq-date" type="date" class="w-full p-2 border rounded mb-2">
+                <input id="eq-notes" type="text" placeholder="Notes (optionnel)" class="w-full p-2 border rounded mb-2">
                 <button onclick="saveEquipment()" class="w-full bg-cil-blue text-white p-2 rounded">Enregistrer</button>
             </div>
 
@@ -104,9 +112,14 @@
                     <option value="invoice">🧾 Facture</option>
                     <option value="contract">📄 Contrat</option>
                     <option value="warranty">🛡️ Garantie</option>
+                    <option value="maintenance">🔧 Entretien</option>
                 </select>
                 <input id="doc-name" type="text" placeholder="Nom du document" class="w-full p-2 border rounded mb-2">
                 <input id="doc-date" type="date" class="w-full p-2 border rounded mb-2">
+                <textarea id="doc-content" placeholder="Contenu (pour classification IA)" class="w-full p-2 border rounded mb-2 h-20"></textarea>
+                <button onclick="classifyDocument()" class="w-full bg-slate-100 text-slate-700 p-2 rounded mb-2 text-sm">
+                    🤖 Classifier avec l'IA
+                </button>
                 <button onclick="saveDocument()" class="w-full bg-cil-blue text-white p-2 rounded">Enregistrer</button>
             </div>
 
@@ -123,12 +136,29 @@
                     <li>• Chaudière : entretien annuel</li>
                     <li>• VMC : contrôle tous les 3 ans</li>
                     <li>• PAC : entretien annuel</li>
+                    <li>• Chauffe-eau : contrôle tous les 2 ans</li>
                 </ul>
             </div>
         </div>
+
+        <!-- Settings -->
+        <div id="page-settings" class="page">
+            <h2 class="text-xl font-bold mb-4">Paramètres</h2>
+            
+            <div class="bg-white rounded-xl shadow p-4 mb-4">
+                <label class="block text-sm font-medium mb-2">Adresse du logement</label>
+                <input id="address" type="text" class="w-full p-2 border rounded" placeholder="Ex: 12 rue de Paris, 75001">
+            </div>
+            
+            <div class="bg-white rounded-xl shadow p-4 mb-4">
+                <label class="block text-sm font-medium mb-2">Surface (m²)</label>
+                <input id="surface" type="number" class="w-full p-2 border rounded" placeholder="Ex: 75">
+            </div>
+            
+            <button onclick="saveSettings()" class="w-full bg-cil-blue text-white p-3 rounded-xl">Enregistrer</button>
+        </div>
     </main>
 
-    <!-- Nav -->
     <nav class="fixed bottom-0 left-0 right-0 bg-white border-t">
         <div class="max-w-lg mx-auto flex justify-around py-2">
             <a onclick="showPage('home')" data-page="home" class="flex flex-col items-center p-2 active">
@@ -147,6 +177,10 @@
                 <span>🔔</span>
                 <span class="text-xs">Alertes</span>
             </a>
+            <a onclick="showPage('settings')" data-page="settings" class="flex flex-col items-center p-2">
+                <span>⚙️</span>
+                <span class="text-xs">Paramètres</span>
+            </a>
         </div>
     </nav>
 
@@ -154,11 +188,12 @@
         const API = 'http://84.247.161.15:8001';
         let equipment = JSON.parse(localStorage.getItem('cil-eq') || '[]');
         let documents = JSON.parse(localStorage.getItem('cil-docs') || '[]');
+        let settings = JSON.parse(localStorage.getItem('cil-settings') || '{}');
 
-        // Init
         document.addEventListener('DOMContentLoaded', () => {
             render();
             checkAPI();
+            loadSettings();
         });
 
         function showPage(page) {
@@ -174,22 +209,58 @@
 
         function checkAPI() {
             fetch(API + '/')
-                .then(r => r.ok ? 'En ligne' : 'Erreur')
+                .then(r => r.ok ? 'En ligne ✓' : 'Erreur')
                 .then(s => document.getElementById('api-status').textContent = s)
                 .catch(() => document.getElementById('api-status').textContent = 'Hors ligne');
+        }
+
+        function loadSettings() {
+            if (settings.address) document.getElementById('address').value = settings.address;
+            if (settings.surface) document.getElementById('surface').value = settings.surface;
+        }
+
+        function saveSettings() {
+            settings.address = document.getElementById('address').value;
+            settings.surface = document.getElementById('surface').value;
+            localStorage.setItem('cil-settings', JSON.stringify(settings));
+            alert('Paramètres enregistrés');
         }
 
         function saveEquipment() {
             const type = document.getElementById('eq-type').value;
             const name = document.getElementById('eq-name').value;
             const date = document.getElementById('eq-date').value;
+            const notes = document.getElementById('eq-notes').value;
             if (!name) return alert('Entrez un nom');
             
             const icons = { boiler: '🔥', vmc: '💨', heatpump: '🌡️', waterheater: '🚿' };
-            equipment.push({ id: Date.now(), type, name, date, icon: icons[type] });
+            equipment.push({ id: Date.now(), type, name, date, notes, icon: icons[type] });
             localStorage.setItem('cil-eq', JSON.stringify(equipment));
             render();
             toggleForm('eq-form');
+            document.getElementById('eq-name').value = '';
+            document.getElementById('eq-notes').value = '';
+        }
+
+        async function classifyDocument() {
+            const content = document.getElementById('doc-content').value;
+            if (!content) return alert('Entrez du contenu');
+            
+            try {
+                const r = await fetch(API + '/ai/classify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content })
+                });
+                const data = await r.json();
+                const typeMap = { 'notice': 'invoice', 'contract': 'contract', 'dpe': 'dpe', 'warranty': 'warranty', 'maintenance': 'maintenance' };
+                if (typeMap[data.type]) {
+                    document.getElementById('doc-type').value = typeMap[data.type];
+                    alert('Classifié: ' + typeMap[data.type] + ' (' + Math.round(data.confidence * 100) + '%)');
+                }
+            } catch (e) {
+                alert('Erreur classification');
+            }
         }
 
         function saveDocument() {
@@ -198,58 +269,65 @@
             const date = document.getElementById('doc-date').value;
             if (!name) return alert('Entrez un nom');
             
-            const icons = { dpe: '📊', invoice: '🧾', contract: '📄', warranty: '🛡️' };
-            documents.push({ id: Date.now(), type, name, date, icon: icons[type] });
+            const icons = { dpe: '📊', invoice: '🧾', contract: '📄', warranty: '🛡️', maintenance: '🔧' };
+            documents.push({ id: Date.now(), type, name, date, icon: icons[type] || '📎' });
             localStorage.setItem('cil-docs', JSON.stringify(documents));
             render();
             toggleForm('doc-form');
+            document.getElementById('doc-name').value = '';
+            document.getElementById('doc-content').value = '';
         }
 
         function render() {
-            // Counts
             document.getElementById('eq-count').textContent = equipment.length;
             document.getElementById('doc-count').textContent = documents.length;
             document.getElementById('alert-count').textContent = getAlerts().length;
 
-            // Equipment list
             const eqList = document.getElementById('eq-list');
             eqList.innerHTML = equipment.length === 0 
                 ? '<p class="text-center text-slate-400 py-8">Aucun équipement</p>'
                 : equipment.map(e => `
-                    <div class="bg-white rounded-xl shadow p-4 flex justify-between items-center">
-                        <div>
-                            <span class="text-2xl mr-2">${e.icon}</span>
-                            <span class="font-medium">${e.name}</span>
-                            ${e.date ? '<span class="text-sm text-slate-500 ml-2">→ ' + new Date(e.date).toLocaleDateString('fr-FR') + '</span>' : ''}
+                    <div class="bg-white rounded-xl shadow p-4">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-2xl">${e.icon}</span>
+                                    <span class="font-medium">${e.name}</span>
+                                </div>
+                                ${e.date ? '<p class="text-sm text-slate-500 mt-1">📅 ' + new Date(e.date).toLocaleDateString('fr-FR') + '</p>' : ''}
+                                ${e.notes ? '<p class="text-sm text-slate-400 mt-1">' + e.notes + '</p>' : ''}
+                            </div>
+                            <button onclick="deleteItem('equipment', ${e.id})" class="text-red-400 hover:text-red-600 text-sm">✕</button>
                         </div>
-                        <button onclick="deleteItem('equipment', ${e.id})" class="text-red-400 hover:text-red-600">✕</button>
                     </div>
                 `).join('');
 
-            // Documents list
             const docList = document.getElementById('doc-list');
             docList.innerHTML = documents.length === 0
                 ? '<p class="text-center text-slate-400 py-8">Aucun document</p>'
                 : documents.map(d => `
-                    <div class="bg-white rounded-xl shadow p-4 flex justify-between items-center">
-                        <div>
-                            <span class="text-2xl mr-2">${d.icon}</span>
-                            <span class="font-medium">${d.name}</span>
-                            ${d.date ? '<span class="text-sm text-slate-500 ml-2">• ' + new Date(d.date).toLocaleDateString('fr-FR') + '</span>' : ''}
+                    <div class="bg-white rounded-xl shadow p-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-2xl">${d.icon}</span>
+                                    <span class="font-medium">${d.name}</span>
+                                </div>
+                                ${d.date ? '<p class="text-sm text-slate-500">• ' + new Date(d.date).toLocaleDateString('fr-FR') + '</p>' : ''}
+                            </div>
+                            <button onclick="deleteItem('documents', ${d.id})" class="text-red-400 hover:text-red-600">✕</button>
                         </div>
-                        <button onclick="deleteItem('documents', ${d.id})" class="text-red-400 hover:text-red-600">✕</button>
                     </div>
                 `).join('');
 
-            // Alerts
             const alerts = getAlerts();
             const alertsList = document.getElementById('alerts-list');
             alertsList.innerHTML = alerts.length === 0
                 ? '<p class="text-center text-slate-400 py-8">Aucune alerte</p>'
                 : alerts.map(a => `
-                    <div class="bg-orange-50 border border-orange-200 rounded-xl p-4">
-                        <p class="font-semibold text-orange-800">${a.title}</p>
-                        <p class="text-sm text-orange-600">${a.message}</p>
+                    <div class="${a.urgent ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200'} border rounded-xl p-4">
+                        <p class="font-semibold ${a.urgent ? 'text-red-800' : 'text-orange-800'}">${a.icon} ${a.title}</p>
+                        <p class="text-sm ${a.urgent ? 'text-red-600' : 'text-orange-600'}">${a.message}</p>
                     </div>
                 `).join('');
         }
@@ -263,8 +341,10 @@
                     const days = Math.ceil((next - today) / (1000 * 60 * 60 * 24));
                     if (days <= 30) {
                         alerts.push({
-                            title: `Entretien ${e.name} ${days < 0 ? 'en retard' : 'à planifier'}`,
-                            message: days < 0 ? 'Dépassé de ' + Math.abs(days) + ' jours' : 'Dans ' + days + ' jours'
+                            icon: days < 0 ? '🔴' : '⚠️',
+                            title: `Entretien ${e.name}`,
+                            message: days < 0 ? 'En retard de ' + Math.abs(days) + ' jours' : 'Dans ' + days + ' jours',
+                            urgent: days < 0
                         });
                     }
                 }
@@ -281,6 +361,60 @@
                 localStorage.setItem('cil-docs', JSON.stringify(documents));
             }
             render();
+        }
+
+        function exportCIL() {
+            const lines = [];
+            lines.push('═══════════════════════════════════════════════════');
+            lines.push('       CARNET D\'INFORMATION LOGEMENT (CIL)');
+            lines.push('═══════════════════════════════════════════════════');
+            lines.push('');
+            lines.push('LOGEMENT');
+            lines.push('Adresse: ' + (settings.address || 'Non renseignée'));
+            lines.push('Surface: ' + (settings.surface || 'Non renseignée') + ' m²');
+            lines.push('Date d\'export: ' + new Date().toLocaleDateString('fr-FR'));
+            lines.push('');
+            lines.push('───────────────────────────────────────────────────');
+            lines.push('ÉQUIPEMENTS');
+            lines.push('───────────────────────────────────────────────────');
+            if (equipment.length === 0) {
+                lines.push('Aucun équipement enregistré');
+            } else {
+                equipment.forEach(e => {
+                    lines.push(e.icon + ' ' + e.name);
+                    lines.push('   Entretien: ' + (e.date ? new Date(e.date).toLocaleDateString('fr-FR') : 'Non planifié'));
+                    if (e.notes) lines.push('   Notes: ' + e.notes);
+                    lines.push('');
+                });
+            }
+            lines.push('───────────────────────────────────────────────────');
+            lines.push('DOCUMENTS');
+            lines.push('───────────────────────────────────────────────────');
+            if (documents.length === 0) {
+                lines.push('Aucun document enregistré');
+            } else {
+                documents.forEach(d => {
+                    lines.push(d.icon + ' ' + d.name + ' (' + d.type + ')');
+                    if (d.date) lines.push('   Date: ' + new Date(d.date).toLocaleDateString('fr-FR'));
+                    lines.push('');
+                });
+            }
+            lines.push('───────────────────────────────────────────────────');
+            lines.push('');
+            lines.push('Ce document constitue le carnet d\'information du logement');
+            lines.push('prévu par l\'article L. 731-1 du code de la construction.');
+            lines.push('');
+            lines.push('Généré par CIL Vault - cecilesow.fr/cil');
+            lines.push('═══════════════════════════════════════════════════');
+            
+            const text = lines.join('\n');
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'carnet-information-logement-' + new Date().toISOString().split('T')[0] + '.txt';
+            a.click();
+            URL.revokeObjectURL(url);
         }
     </script>
 </body>
