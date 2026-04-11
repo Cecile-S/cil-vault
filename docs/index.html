@@ -193,10 +193,11 @@
 <div id="modal-property" class="modal">
     <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
         <div class="p-4 border-b flex justify-between items-center">
-            <h3 class="font-bold text-lg">Ajouter un bien</h3>
+            <h3 class="font-bold text-lg" id="modal-property-title">Ajouter un bien</h3>
             <button onclick="closeModal('modal-property')" class="text-slate-400">✕</button>
         </div>
         <div class="p-4">
+            <input type="hidden" id="prop-edit-id">
             <label class="block text-sm font-medium mb-1">Adresse *</label>
             <input type="text" id="prop-address" class="w-full p-2 border rounded-lg mb-2" placeholder="10 rue de la Paix, Paris">
             <label class="block text-sm font-medium mb-1">Type</label>
@@ -220,7 +221,7 @@
                 <option value="locataire">Locataire</option>
                 <option value="mandataire">Mandataire</option>
             </select>
-            <button onclick="saveProperty()" class="w-full bg-cil-blue text-white py-3 rounded-lg">Créer</button>
+            <button onclick="saveProperty()" class="w-full bg-cil-blue text-white py-3 rounded-lg">Enregistrer</button>
         </div>
     </div>
 </div>
@@ -229,10 +230,11 @@
 <div id="modal-equipment" class="modal">
     <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div class="p-4 border-b flex justify-between items-center">
-            <h3 class="font-bold text-lg">Ajouter un équipement</h3>
+            <h3 class="font-bold text-lg" id="modal-eq-title">Ajouter un équipement</h3>
             <button onclick="closeModal('modal-equipment')" class="text-slate-400">✕</button>
         </div>
         <div class="p-4">
+            <input type="hidden" id="eq-edit-id">
             <label class="block text-sm font-medium mb-1">Type *</label>
             <select id="eq-type" class="w-full p-2 border rounded-lg mb-2" onchange="document.getElementById('eq-type-custom').classList.toggle('hidden',this.value!=='personnalise')">
                 <optgroup label="Chauffage">
@@ -326,15 +328,45 @@ function closeModal(id){document.getElementById(id).classList.remove('active')}
 
 // Properties
 function saveProperty(){
+    const editId=document.getElementById('prop-edit-id').value;
     const addr=document.getElementById('prop-address').value.trim();
     if(!addr){alert('Adresse requise');return}
-    const p={id:Date.now().toString(),address:addr,type:document.getElementById('prop-type').value,surface:document.getElementById('prop-surface').value||null,rooms:document.getElementById('prop-rooms').value||null,role:document.getElementById('prop-role').value,createdAt:new Date().toISOString()};
-    state.properties.push(p);
-    state.equipment[p.id]=[];
-    state.documents[p.id]=[];
-    state.currentPropertyId=p.id;
-    saveState();updateUI();closeModal('modal-property');showPage('home');
+    
+    if(editId){
+        // Mode édition
+        const prop=state.properties.find(p=>p.id===editId);
+        if(prop&&prop.role==='proprietaire'){
+            prop.address=addr;
+            prop.type=document.getElementById('prop-type').value;
+            prop.surface=document.getElementById('prop-surface').value||null;
+            prop.rooms=document.getElementById('prop-rooms').value||null;
+            prop.role=document.getElementById('prop-role').value;
+            prop.updatedAt=new Date().toISOString();
+        }
+    }else{
+        // Mode création
+        const p={id:Date.now().toString(),address:addr,type:document.getElementById('prop-type').value,surface:document.getElementById('prop-surface').value||null,rooms:document.getElementById('prop-rooms').value||null,role:document.getElementById('prop-role').value,createdAt:new Date().toISOString()};
+        state.properties.push(p);
+        state.equipment[p.id]=[];
+        state.documents[p.id]=[];
+        state.currentPropertyId=p.id;
+    }
+    saveState();updateUI();closeModal('modal-property');
+    document.getElementById('prop-edit-id').value='';
     document.getElementById('prop-address').value='';
+}
+function editProperty(id){
+    const prop=state.properties.find(p=>p.id===id);
+    if(!prop)return;
+    if(prop.role!=='proprietaire'){alert('Seul le propriétaire peut modifier ce bien');return}
+    document.getElementById('prop-edit-id').value=id;
+    document.getElementById('prop-address').value=prop.address;
+    document.getElementById('prop-type').value=prop.type;
+    document.getElementById('prop-surface').value=prop.surface||'';
+    document.getElementById('prop-rooms').value=prop.rooms||'';
+    document.getElementById('prop-role').value=prop.role;
+    document.getElementById('modal-property-title').textContent='Modifier le bien';
+    openModal('modal-property');
 }
 function selectProperty(id){state.currentPropertyId=id;saveState();updateUI();showPage('home')}
 function deleteProperty(id){if(!confirm('Supprimer ?'))return;state.properties=state.properties.filter(p=>p.id!==id);delete state.equipment[id];delete state.documents[id];if(state.currentPropertyId===id)state.currentPropertyId=state.properties[0]?.id||null;saveState();updateUI()}
@@ -342,14 +374,44 @@ function deleteProperty(id){if(!confirm('Supprimer ?'))return;state.properties=s
 // Equipment
 function saveEquipment(){
     if(!state.currentPropertyId){alert('Sélectionnez un bien');return}
+    const editId=document.getElementById('eq-edit-id').value;
     const name=document.getElementById('eq-name').value.trim();
     if(!name){alert('Nom requis');return}
     const type=document.getElementById('eq-type').value;
     const purchaseDate=document.getElementById('eq-purchase-date').value;
     const warranty=parseInt(document.getElementById('eq-warranty').value)||0;
-    const e={id:Date.now().toString(),type:type==='personnalise'?document.getElementById('eq-type-custom').value:type,name:name,brand:document.getElementById('eq-brand').value,model:document.getElementById('eq-model').value,purchaseDate:purchaseDate,warrantyMonths:warranty,warrantyEnd:warranty&&purchaseDate?new Date(new Date(purchaseDate).setMonth(new Date(purchaseDate).getMonth()+warranty)).toISOString().split('T')[0]:null,responsable:document.getElementById('eq-responsable').value,nextMaintenance:document.getElementById('eq-next-maint').value,periodMonths:EQ_PERIODS[type]||12,notes:document.getElementById('eq-notes').value,icon:EQ_ICONS[type]||'⚙️',createdAt:new Date().toISOString()};
-    state.equipment[state.currentPropertyId].push(e);saveState();updateUI();closeModal('modal-equipment');
+    
+    const e={name:name,type:type==='personnalise'?document.getElementById('eq-type-custom').value:type,brand:document.getElementById('eq-brand').value,model:document.getElementById('eq-model').value,purchaseDate:purchaseDate,warrantyMonths:warranty,warrantyEnd:warranty&&purchaseDate?new Date(new Date(purchaseDate).setMonth(new Date(purchaseDate).getMonth()+warranty)).toISOString().split('T')[0]:null,responsable:document.getElementById('eq-responsable').value,nextMaintenance:document.getElementById('eq-next-maint').value,periodMonths:EQ_PERIODS[type]||12,notes:document.getElementById('eq-notes').value,icon:EQ_ICONS[type]||'⚙️',updatedAt:new Date().toISOString()};
+    
+    if(editId){
+        const eq=state.equipment[state.currentPropertyId].find(x=>x.id===editId);
+        if(eq){Object.assign(eq,e);eq.id=editId}
+    }else{
+        e.id=Date.now().toString();
+        e.createdAt=new Date().toISOString();
+        state.equipment[state.currentPropertyId].push(e);
+    }
+    saveState();updateUI();closeModal('modal-equipment');
+    document.getElementById('eq-edit-id').value='';
     document.getElementById('eq-name').value='';
+}
+function editEquipment(id){
+    const eq=(state.equipment[state.currentPropertyId]||[]).find(e=>e.id===id);
+    if(!eq)return;
+    document.getElementById('eq-edit-id').value=id;
+    document.getElementById('eq-type').value=eq.type;
+    document.getElementById('eq-type-custom').value=eq.type;
+    document.getElementById('eq-type-custom').classList.toggle('hidden',!['personnalise','autre'].includes(eq.type));
+    document.getElementById('eq-name').value=eq.name;
+    document.getElementById('eq-brand').value=eq.brand||'';
+    document.getElementById('eq-model').value=eq.model||'';
+    document.getElementById('eq-purchase-date').value=eq.purchaseDate||'';
+    document.getElementById('eq-warranty').value=eq.warrantyMonths||0;
+    document.getElementById('eq-responsable').value=eq.responsable||'proprietaire';
+    document.getElementById('eq-next-maint').value=eq.nextMaintenance||'';
+    document.getElementById('eq-notes').value=eq.notes||'';
+    document.getElementById('modal-eq-title').textContent='Modifier l\'équipement';
+    openModal('modal-equipment');
 }
 function deleteEquipment(id){if(!confirm('Supprimer ?'))return;state.equipment[state.currentPropertyId]=state.equipment[state.currentPropertyId].filter(e=>e.id!==id);saveState();updateUI()}
 function filterEquipment(f){currentFilter=f;document.querySelectorAll('[data-efilter]').forEach(b=>{b.className=b.getAttribute('data-efilter')===f?'px-3 py-1 rounded-full bg-cil-blue text-white text-sm':'px-3 py-1 rounded-full bg-slate-200 text-slate-700 text-sm'});updateEquipmentPage()}
@@ -367,9 +429,9 @@ function filterDocuments(f){currentFilter=f;document.querySelectorAll('[data-dfi
 
 // UI Updates
 function updateUI(){updatePropertiesPage();updateHomePage();updateEquipmentPage();updateDocumentsPage();updateAlertsPage()}
-function updatePropertiesPage(){const list=document.getElementById('properties-list');const noProp=document.getElementById('no-property');if(state.properties.length===0){list.innerHTML='';noProp.classList.remove('hidden');return}noProp.classList.add('hidden');list.innerHTML=state.properties.map(p=>`<div class="bg-white rounded-xl shadow p-4 ${state.currentPropertyId===p.id?'ring-2 ring-cil-blue':''}"><div class="flex justify-between items-start"><div><h3 class="font-semibold">${p.type}</h3><p class="text-sm text-slate-500">${p.address}</p>${p.surface?`<p class="text-xs text-slate-400">${p.surface} m²</p>`:''}<span class="inline-block mt-1 px-2 py-0.5 rounded text-xs ${p.role==='proprietaire'?'bg-blue-100 text-blue-800':'bg-green-100 text-green-800'}">${p.role}</span></div><div class="flex gap-2">${state.currentPropertyId!==p.id?`<button onclick="selectProperty('${p.id}')" class="text-cil-blue text-sm">Sélectionner</button>`:'<span class="text-green-600 text-sm">✓</span>'}<button onclick="deleteProperty('${p.id}')" class="text-red-400">✕</button></div></div></div>`).join('')}
+function updatePropertiesPage(){const list=document.getElementById('properties-list');const noProp=document.getElementById('no-property');if(state.properties.length===0){list.innerHTML='';noProp.classList.remove('hidden');return}noProp.classList.add('hidden');list.innerHTML=state.properties.map(p=>`<div class="bg-white rounded-xl shadow p-4 ${state.currentPropertyId===p.id?'ring-2 ring-cil-blue':''}"><div class="flex justify-between items-start"><div><h3 class="font-semibold">${p.type}</h3><p class="text-sm text-slate-500">${p.address}</p>${p.surface?`<p class="text-xs text-slate-400">${p.surface} m²</p>`:''}<span class="inline-block mt-1 px-2 py-0.5 rounded text-xs ${p.role==='proprietaire'?'bg-blue-100 text-blue-800':'bg-green-100 text-green-800'}">${p.role}</span></div><div class="flex gap-2 items-center">${state.currentPropertyId!==p.id?`<button onclick="selectProperty('${p.id}')" class="text-cil-blue text-sm">Sélectionner</button>`:'<span class="text-green-600 text-sm">✓</span>'}${p.role==='proprietaire'?`<button onclick="editProperty('${p.id}')" class="text-amber-500 text-sm">✎</button>`:''}<button onclick="deleteProperty('${p.id}')" class="text-red-400">✕</button></div></div></div>`).join('')}
 function updateHomePage(){const noProp=document.getElementById('home-no-property');const content=document.getElementById('home-content');const currProp=document.getElementById('current-property');if(!state.currentPropertyId){noProp.classList.remove('hidden');content.classList.add('hidden');currProp.textContent='Sélectionner';return}noProp.classList.add('hidden');content.classList.remove('hidden');const p=state.properties.find(x=>x.id===state.currentPropertyId);if(p){document.getElementById('property-title').textContent=p.type;document.getElementById('property-address-display').textContent=p.address;currProp.textContent=p.address.split(',')[0]}const eqCount=(state.equipment[state.currentPropertyId]||[]).length;const docCount=(state.documents[state.currentPropertyId]||[]).length;const alertCount=generateAlerts().length;document.getElementById('eq-count-home').textContent=eqCount;document.getElementById('doc-count-home').textContent=docCount;document.getElementById('alert-count-home').textContent=alertCount;document.getElementById('eq-stat').textContent=eqCount;document.getElementById('doc-stat').textContent=docCount;if(alertCount>0){document.getElementById('alert-badge').textContent=alertCount;document.getElementById('alert-badge').classList.remove('hidden')}else{document.getElementById('alert-badge').classList.add('hidden')}}
-function updateEquipmentPage(){const list=document.getElementById('equipment-list');const noEq=document.getElementById('no-equipment');let eq=state.equipment[state.currentPropertyId]||[];if(currentFilter!=='all')eq=eq.filter(e=>e.responsable===currentFilter);if(eq.length===0){list.innerHTML='';noEq.classList.remove('hidden');return}noEq.classList.add('hidden');list.innerHTML=eq.map(e=>{const warrantyStatus=e.warrantyEnd?daysUntil(e.warrantyEnd):null;const maintStatus=e.nextMaintenance?daysUntil(e.nextMaintenance):null;return`<div class="bg-white rounded-xl shadow p-4 ${maintStatus!==null&&maintStatus<0?'card-urgent':maintStatus!==null&&maintStatus<30?'card-warning':''}"><div class="flex justify-between items-start"><div><div class="flex items-center gap-2"><span class="text-2xl">${e.icon}</span><div><h3 class="font-semibold">${e.name}</h3>${e.brand||e.model?`<p class="text-sm text-slate-500">${e.brand||''} ${e.model||''}</p>`:''}</div></div>${e.purchaseDate?`<p class="text-xs text-slate-400 mt-1">Acheté: ${new Date(e.purchaseDate).toLocaleDateString('fr-FR')}</p>`:''}${e.warrantyEnd?`<p class="text-xs ${warrantyStatus<0?'text-red-600':warrantyStatus<30?'text-amber-600':'text-slate-400'}">Garantie: ${new Date(e.warrantyEnd).toLocaleDateString('fr-FR')} ${warrantyStatus<0?'(Expirée)':warrantyStatus<30?'(Expire bientôt)':''}</p>`:''}${e.nextMaintenance?`<p class="text-xs ${maintStatus<0?'text-red-600':maintStatus<30?'text-amber-600':'text-slate-400'} mt-1">Entretien: ${new Date(e.nextMaintenance).toLocaleDateString('fr-FR')} ${maintStatus<0?'(En retard)':maintStatus<30?'(À venir)':''}</p>`:''}<span class="inline-block mt-1 px-2 py-0.5 rounded text-xs ${e.responsable==='proprietaire'?'bg-blue-100 text-blue-800':'bg-green-100 text-green-800'}">${e.responsable}</span></div><button onclick="deleteEquipment('${e.id}')" class="text-red-400">✕</button></div></div>`}).join('')}
+function updateEquipmentPage(){const list=document.getElementById('equipment-list');const noEq=document.getElementById('no-equipment');let eq=state.equipment[state.currentPropertyId]||[];if(currentFilter!=='all')eq=eq.filter(e=>e.responsable===currentFilter);if(eq.length===0){list.innerHTML='';noEq.classList.remove('hidden');return}noEq.classList.add('hidden');list.innerHTML=eq.map(e=>{const warrantyStatus=e.warrantyEnd?daysUntil(e.warrantyEnd):null;const maintStatus=e.nextMaintenance?daysUntil(e.nextMaintenance):null;return`<div class="bg-white rounded-xl shadow p-4 ${maintStatus!==null&&maintStatus<0?'card-urgent':maintStatus!==null&&maintStatus<30?'card-warning':''}"><div class="flex justify-between items-start"><div><div class="flex items-center gap-2"><span class="text-2xl">${e.icon}</span><div><h3 class="font-semibold">${e.name}</h3>${e.brand||e.model?`<p class="text-sm text-slate-500">${e.brand||''} ${e.model||''}</p>`:''}</div></div>${e.purchaseDate?`<p class="text-xs text-slate-400 mt-1">Acheté: ${new Date(e.purchaseDate).toLocaleDateString('fr-FR')}</p>`:''}${e.warrantyEnd?`<p class="text-xs ${warrantyStatus<0?'text-red-600':warrantyStatus<30?'text-amber-600':'text-slate-400'}">Garantie: ${new Date(e.warrantyEnd).toLocaleDateString('fr-FR')} ${warrantyStatus<0?'(Expirée)':warrantyStatus<30?'(Expire bientôt)':''}</p>`:''}${e.nextMaintenance?`<p class="text-xs ${maintStatus<0?'text-red-600':maintStatus<30?'text-amber-600':'text-slate-400'} mt-1">Entretien: ${new Date(e.nextMaintenance).toLocaleDateString('fr-FR')} ${maintStatus<0?'(En retard)':maintStatus<30?'(À ven</p>`:''}<span class="inline-block mt-1 px-2 py-0.5 rounded text-xs ${e.responsable==='proprietaire'?'bg-blue-100 text-blue-800':'bg-green-100 text-green-800'}">${e.responsable}</span></div><div class="flex gap-2"><button onclick="editEquipment('${e.id}')" class="text-amber-500">✎</button><button onclick="deleteEquipment('${e.id}')" class="text-red-400">✕</button></div></div></div>`}).join('')}
 function updateDocumentsPage(){const list=document.getElementById('documents-list');const noDoc=document.getElementById('no-document');let docs=state.documents[state.currentPropertyId]||[];if(currentFilter!=='all')docs=docs.filter(d=>d.type===currentFilter);if(docs.length===0){list.innerHTML='';noDoc.classList.remove('hidden');return}noDoc.classList.add('hidden');list.innerHTML=docs.map(d=>`<div class="bg-white rounded-xl shadow p-4"><div class="flex justify-between items-start"><div class="flex-1"><div class="flex items-center gap-2"><span class="text-2xl">${DOC_ICONS[d.type]||'📎'}</span><div><h3 class="font-semibold">${d.type==='diagnostic'?(d.diagType||'DPE').toUpperCase():d.type}</h3><p class="text-sm text-slate-500">${d.filename}</p></div></div>${d.date?`<p class="text-xs text-slate-400 mt-1">📅 ${new Date(d.date).toLocaleDateString('fr-FR')}</p>`:''}${d.amount?`<p class="text-xs text-slate-400">💰 ${d.amount} €</p>`:''}</div><div class="flex gap-2"><button onclick="downloadDocument('${d.id}')" class="bg-cil-blue text-white px-3 py-1 rounded text-sm">⬇</button><button onclick="deleteDocument('${d.id}')" class="text-red-400">✕</button></div></div></div>`).join('')}
 function generateAlerts(){const alerts=[];const today=new Date();const propId=state.currentPropertyId;const roleFilter=document.getElementById('alert-role-filter')?document.getElementById('alert-role-filter').value:'all';const eq=state.equipment[propId]||[];const docs=state.documents[propId]||[];eq.forEach(e=>{if(e.nextMaintenance){const days=daysUntil(e.nextMaintenance);if(days<=30&&(roleFilter==='all'||roleFilter===e.responsable))alerts.push({id:'eq-'+e.id,title:`${e.icon} ${e.name}`,message:days<0?`En retard de ${Math.abs(days)} jours`:`Dans ${days} jours`,urgent:days<0,responsable:e.responsable})}if(e.warrantyEnd){const days=daysUntil(e.warrantyEnd);if(days<=30&&(roleFilter==='all'||roleFilter===e.responsable))alerts.push({id:'warranty-'+e.id,title:`Garantie: ${e.name}`,message:days<0?`Expirée`:`Expire dans ${days} jours`,urgent:days<0,responsable:'proprietaire'})}});docs.filter(d=>d.type==='diagnostic').forEach(d=>{const years=DIAG_VALIDITY[d.diagType]||10;if(d.date){const date=new Date(d.date);const expiry=new Date(date.setFullYear(date.getFullYear()+years));const days=daysUntil(expiry.toISOString().split('T')[0]);if(days<=90&&(roleFilter==='all'||roleFilter==='proprietaire'))alerts.push({id:'diag-'+d.id,title:`📋 ${(d.diagType||'DPE').toUpperCase()}`,message:days<0?`Expiré depuis ${Math.abs(days)} jours`:`Expire dans ${days} jours`,urgent:days<0,responsable:'proprietaire'})}});return alerts.sort((a,b)=>b.urgent-a.urgent)}
 function updateAlertsPage(){const list=document.getElementById('alerts-list');const noAlert=document.getElementById('no-alert');const alerts=generateAlerts();if(alerts.length===0){list.innerHTML='';noAlert.classList.remove('hidden');return}noAlert.classList.add('hidden');list.innerHTML=alerts.map(a=>`<div class="bg-white rounded-xl shadow p-4 ${a.urgent?'card-urgent':a.warning?'card-warning':''}"><div class="flex justify-between items-center"><div><h3 class="font-semibold ${a.urgent?'text-red-600':''}">${a.title}</h3><p class="text-sm ${a.urgent?'text-red-500':'text-slate-500'}">${a.message}</p><span class="inline-block mt-1 px-2 py-0.5 rounded text-xs ${a.responsable==='proprietaire'?'bg-blue-100 text-blue-800':'bg-green-100 text-green-800'}">${a.responsable}</span></div></div></div>`).join('')}
