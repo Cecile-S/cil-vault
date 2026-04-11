@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1e40af">
+    <meta name="description" content="CIL Vault - Carnet d'Information Logement obligatoire France 2023">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>CIL Vault - Carnet d'Information Logement</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { 'cil-blue': '#1e40af' } } }
+        }
+    </script>
+    <style>
+        .page { display: none; }
+        .page.active { display: block; }
+        nav a.active { color: #1e40af; background-color: #eff6ff; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen pb-16">
+    <!-- Header -->
+    <header class="bg-cil-blue text-white px-4 py-3 sticky top-0 z-50">
+        <div class="max-w-lg mx-auto flex items-center justify-between">
+            <h1 class="text-lg font-semibold">🏠 CIL Vault</h1>
+            <span class="text-sm opacity-80">Paris</span>
+        </div>
+    </header>
+
+    <main class="px-4 py-6 max-w-lg mx-auto">
+        <!-- Home -->
+        <div id="page-home" class="page active">
+            <h2 class="text-2xl font-bold mb-2">Mon Carnet Logement</h2>
+            <p class="text-slate-500 mb-6">Centralisez vos documents et suivez vos équipements</p>
+
+            <div class="bg-white rounded-xl shadow p-4 mb-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="text-sm text-slate-500">Score énergétique</p>
+                        <p id="score" class="text-3xl font-bold text-slate-400">-</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-slate-500">API</p>
+                        <p id="api-status" class="text-sm text-slate-400">Vérification...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 mb-6">
+                <a onclick="showPage('equipment')" class="bg-white rounded-xl shadow p-4 text-center cursor-pointer">
+                    <p id="eq-count" class="text-2xl font-bold">0</p>
+                    <p class="text-xs text-slate-500">Équipements</p>
+                </a>
+                <a onclick="showPage('documents')" class="bg-white rounded-xl shadow p-4 text-center cursor-pointer">
+                    <p id="doc-count" class="text-2xl font-bold">0</p>
+                    <p class="text-xs text-slate-500">Documents</p>
+                </a>
+                <a onclick="showPage('alerts')" class="bg-white rounded-xl shadow p-4 text-center cursor-pointer">
+                    <p id="alert-count" class="text-2xl font-bold">0</p>
+                    <p class="text-xs text-slate-500">Alertes</p>
+                </a>
+            </div>
+
+            <p class="text-center text-sm text-slate-400 mt-8">
+                CIL Vault - Carnet d'Information Logement<br>
+                Obligatoire en France depuis 2023
+            </p>
+        </div>
+
+        <!-- Equipment -->
+        <div id="page-equipment" class="page">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Équipements</h2>
+                <button onclick="toggleForm('eq-form')" class="bg-cil-blue text-white px-4 py-2 rounded-lg">+ Ajouter</button>
+            </div>
+
+            <div id="eq-form" class="hidden bg-white rounded-xl shadow p-4 mb-4">
+                <select id="eq-type" class="w-full p-2 border rounded mb-2">
+                    <option value="boiler">🔥 Chaudière</option>
+                    <option value="vmc">💨 VMC</option>
+                    <option value="heatpump">🌡️ PAC</option>
+                    <option value="waterheater">🚿 Chauffe-eau</option>
+                </select>
+                <input id="eq-name" type="text" placeholder="Nom / Modèle" class="w-full p-2 border rounded mb-2">
+                <input id="eq-date" type="date" class="w-full p-2 border rounded mb-2">
+                <button onclick="saveEquipment()" class="w-full bg-cil-blue text-white p-2 rounded">Enregistrer</button>
+            </div>
+
+            <div id="eq-list" class="space-y-2"></div>
+        </div>
+
+        <!-- Documents -->
+        <div id="page-documents" class="page">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Documents</h2>
+                <button onclick="toggleForm('doc-form')" class="bg-cil-blue text-white px-4 py-2 rounded-lg">+ Ajouter</button>
+            </div>
+
+            <div id="doc-form" class="hidden bg-white rounded-xl shadow p-4 mb-4">
+                <select id="doc-type" class="w-full p-2 border rounded mb-2">
+                    <option value="dpe">📊 DPE</option>
+                    <option value="invoice">🧾 Facture</option>
+                    <option value="contract">📄 Contrat</option>
+                    <option value="warranty">🛡️ Garantie</option>
+                </select>
+                <input id="doc-name" type="text" placeholder="Nom du document" class="w-full p-2 border rounded mb-2">
+                <input id="doc-date" type="date" class="w-full p-2 border rounded mb-2">
+                <button onclick="saveDocument()" class="w-full bg-cil-blue text-white p-2 rounded">Enregistrer</button>
+            </div>
+
+            <div id="doc-list" class="space-y-2"></div>
+        </div>
+
+        <!-- Alerts -->
+        <div id="page-alerts" class="page">
+            <h2 class="text-xl font-bold mb-4">Alertes</h2>
+            <div id="alerts-list" class="space-y-2"></div>
+            <div class="bg-blue-50 rounded-xl p-4 mt-4">
+                <h3 class="font-semibold text-blue-900 mb-2">📅 Rappels automatiques</h3>
+                <ul class="text-sm text-blue-800">
+                    <li>• Chaudière : entretien annuel</li>
+                    <li>• VMC : contrôle tous les 3 ans</li>
+                    <li>• PAC : entretien annuel</li>
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <!-- Nav -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t">
+        <div class="max-w-lg mx-auto flex justify-around py-2">
+            <a onclick="showPage('home')" data-page="home" class="flex flex-col items-center p-2 active">
+                <span>🏠</span>
+                <span class="text-xs">Accueil</span>
+            </a>
+            <a onclick="showPage('equipment')" data-page="equipment" class="flex flex-col items-center p-2">
+                <span>🔧</span>
+                <span class="text-xs">Équipements</span>
+            </a>
+            <a onclick="showPage('documents')" data-page="documents" class="flex flex-col items-center p-2">
+                <span>📄</span>
+                <span class="text-xs">Documents</span>
+            </a>
+            <a onclick="showPage('alerts')" data-page="alerts" class="flex flex-col items-center p-2">
+                <span>🔔</span>
+                <span class="text-xs">Alertes</span>
+            </a>
+        </div>
+    </nav>
+
+    <script>
+        const API = 'http://84.247.161.15:8001';
+        let equipment = JSON.parse(localStorage.getItem('cil-eq') || '[]');
+        let documents = JSON.parse(localStorage.getItem('cil-docs') || '[]');
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            render();
+            checkAPI();
+        });
+
+        function showPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + page).classList.add('active');
+            document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+            document.querySelector('nav a[data-page="' + page + '"]').classList.add('active');
+        }
+
+        function toggleForm(id) {
+            document.getElementById(id).classList.toggle('hidden');
+        }
+
+        function checkAPI() {
+            fetch(API + '/')
+                .then(r => r.ok ? 'En ligne' : 'Erreur')
+                .then(s => document.getElementById('api-status').textContent = s)
+                .catch(() => document.getElementById('api-status').textContent = 'Hors ligne');
+        }
+
+        function saveEquipment() {
+            const type = document.getElementById('eq-type').value;
+            const name = document.getElementById('eq-name').value;
+            const date = document.getElementById('eq-date').value;
+            if (!name) return alert('Entrez un nom');
+            
+            const icons = { boiler: '🔥', vmc: '💨', heatpump: '🌡️', waterheater: '🚿' };
+            equipment.push({ id: Date.now(), type, name, date, icon: icons[type] });
+            localStorage.setItem('cil-eq', JSON.stringify(equipment));
+            render();
+            toggleForm('eq-form');
+        }
+
+        function saveDocument() {
+            const type = document.getElementById('doc-type').value;
+            const name = document.getElementById('doc-name').value;
+            const date = document.getElementById('doc-date').value;
+            if (!name) return alert('Entrez un nom');
+            
+            const icons = { dpe: '📊', invoice: '🧾', contract: '📄', warranty: '🛡️' };
+            documents.push({ id: Date.now(), type, name, date, icon: icons[type] });
+            localStorage.setItem('cil-docs', JSON.stringify(documents));
+            render();
+            toggleForm('doc-form');
+        }
+
+        function render() {
+            // Counts
+            document.getElementById('eq-count').textContent = equipment.length;
+            document.getElementById('doc-count').textContent = documents.length;
+            document.getElementById('alert-count').textContent = getAlerts().length;
+
+            // Equipment list
+            const eqList = document.getElementById('eq-list');
+            eqList.innerHTML = equipment.length === 0 
+                ? '<p class="text-center text-slate-400 py-8">Aucun équipement</p>'
+                : equipment.map(e => `
+                    <div class="bg-white rounded-xl shadow p-4 flex justify-between items-center">
+                        <div>
+                            <span class="text-2xl mr-2">${e.icon}</span>
+                            <span class="font-medium">${e.name}</span>
+                            ${e.date ? '<span class="text-sm text-slate-500 ml-2">→ ' + new Date(e.date).toLocaleDateString('fr-FR') + '</span>' : ''}
+                        </div>
+                        <button onclick="deleteItem('equipment', ${e.id})" class="text-red-400 hover:text-red-600">✕</button>
+                    </div>
+                `).join('');
+
+            // Documents list
+            const docList = document.getElementById('doc-list');
+            docList.innerHTML = documents.length === 0
+                ? '<p class="text-center text-slate-400 py-8">Aucun document</p>'
+                : documents.map(d => `
+                    <div class="bg-white rounded-xl shadow p-4 flex justify-between items-center">
+                        <div>
+                            <span class="text-2xl mr-2">${d.icon}</span>
+                            <span class="font-medium">${d.name}</span>
+                            ${d.date ? '<span class="text-sm text-slate-500 ml-2">• ' + new Date(d.date).toLocaleDateString('fr-FR') + '</span>' : ''}
+                        </div>
+                        <button onclick="deleteItem('documents', ${d.id})" class="text-red-400 hover:text-red-600">✕</button>
+                    </div>
+                `).join('');
+
+            // Alerts
+            const alerts = getAlerts();
+            const alertsList = document.getElementById('alerts-list');
+            alertsList.innerHTML = alerts.length === 0
+                ? '<p class="text-center text-slate-400 py-8">Aucune alerte</p>'
+                : alerts.map(a => `
+                    <div class="bg-orange-50 border border-orange-200 rounded-xl p-4">
+                        <p class="font-semibold text-orange-800">${a.title}</p>
+                        <p class="text-sm text-orange-600">${a.message}</p>
+                    </div>
+                `).join('');
+        }
+
+        function getAlerts() {
+            const alerts = [];
+            const today = new Date();
+            equipment.forEach(e => {
+                if (e.date) {
+                    const next = new Date(e.date);
+                    const days = Math.ceil((next - today) / (1000 * 60 * 60 * 24));
+                    if (days <= 30) {
+                        alerts.push({
+                            title: `Entretien ${e.name} ${days < 0 ? 'en retard' : 'à planifier'}`,
+                            message: days < 0 ? 'Dépassé de ' + Math.abs(days) + ' jours' : 'Dans ' + days + ' jours'
+                        });
+                    }
+                }
+            });
+            return alerts;
+        }
+
+        function deleteItem(type, id) {
+            if (type === 'equipment') {
+                equipment = equipment.filter(e => e.id !== id);
+                localStorage.setItem('cil-eq', JSON.stringify(equipment));
+            } else {
+                documents = documents.filter(d => d.id !== id);
+                localStorage.setItem('cil-docs', JSON.stringify(documents));
+            }
+            render();
+        }
+    </script>
+</body>
+</html>
