@@ -9,413 +9,211 @@
     <title>CIL Vault - Carnet d'Information Logement</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: { extend: { colors: { 'cil-blue': '#1e40af' } } }
-        }
-    </script>
-    <style>
-        .page { display: none; }
-        .page.active { display: block; }
-        nav a.active { color: #1e40af; background-color: #eff6ff; }
-        @media print {
-            header, nav, .no-print { display: none !important; }
-            .page { display: block !important; page-break-after: always; }
-        }
-    </style>
+    <script>tailwind.config={theme:{extend:{colors:{'cil-blue':'#1e40af'}}}}</script>
+    <style>.page{display:none}.page.active{display:block}nav a.active{color:#1e40af;background-color:#eff6ff}</style>
 </head>
 <body class="bg-slate-50 min-h-screen pb-16">
-    <header class="bg-cil-blue text-white px-4 py-3 sticky top-0 z-50">
-        <div class="max-w-lg mx-auto flex items-center justify-between">
-            <h1 class="text-lg font-semibold">🏠 CIL Vault</h1>
-            <span class="text-sm opacity-80">Paris</span>
-        </div>
-    </header>
+<header class="bg-cil-blue text-white px-4 py-3 sticky top-0 z-50">
+    <div class="max-w-lg mx-auto flex items-center justify-between">
+        <h1 class="text-lg font-semibold cursor-pointer" onclick="showPage('home')">🏠 CILIA</h1>
+        <div id="current-property" class="text-sm opacity-80 cursor-pointer" onclick="showPage('properties')">Sélectionner un bien</div>
+    </div>
+</header>
+<main class="px-4 py-6 max-w-lg mx-auto">
 
-    <main class="px-4 py-6 max-w-lg mx-auto">
-        <!-- Home -->
-        <div id="page-home" class="page active">
-            <h2 class="text-2xl font-bold mb-2">Mon Carnet Logement</h2>
-            <p class="text-slate-500 mb-6">Centralisez vos documents et suivez vos équipements</p>
+<!-- Properties Page -->
+<div id="page-properties" class="page">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">Mes Biens</h2>
+        <button onclick="toggleForm('property-form')" class="bg-cil-blue text-white px-4 py-2 rounded-lg">+ Ajouter</button>
+    </div>
+    <div id="property-form" class="hidden bg-white rounded-xl shadow p-4 mb-4">
+        <input id="prop-address" type="text" placeholder="Adresse *" class="w-full p-2 border rounded mb-2">
+        <input id="prop-type" type="text" placeholder="Type (appartement, maison...)" class="w-full p-2 border rounded mb-2">
+        <input id="prop-surface" type="number" placeholder="Surface m²" class="w-full p-2 border rounded mb-2">
+        <select id="prop-role" class="w-full p-2 border rounded mb-2">
+            <option value="proprietaire">Propriétaire</option>
+            <option value="locataire">Locataire</option>
+            <option value="mandataire">Mandataire</option>
+        </select>
+        <button onclick="saveProperty()" class="w-full bg-cil-blue text-white p-2 rounded">Créer</button>
+    </div>
+    <div id="properties-list" class="space-y-2"></div>
+    <p id="no-property" class="text-center text-slate-400 py-8">Créez un bien pour commencer</p>
+</div>
 
-            <div class="bg-white rounded-xl shadow p-4 mb-4">
-                <div class="flex justify-between items-center">
-                    <div>
-                        <p class="text-sm text-slate-500">Score énergétique</p>
-                        <p id="score" class="text-3xl font-bold text-slate-400">-</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-sm text-slate-500">API</p>
-                        <p id="api-status" class="text-sm text-slate-400">Vérification...</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-3 gap-3 mb-6">
-                <a onclick="showPage('equipment')" class="bg-white rounded-xl shadow p-4 text-center cursor-pointer hover:shadow-md transition">
-                    <p id="eq-count" class="text-2xl font-bold">0</p>
-                    <p class="text-xs text-slate-500">Équipements</p>
-                </a>
-                <a onclick="showPage('documents')" class="bg-white rounded-xl shadow p-4 text-center cursor-pointer hover:shadow-md transition">
-                    <p id="doc-count" class="text-2xl font-bold">0</p>
-                    <p class="text-xs text-slate-500">Documents</p>
-                </a>
-                <a onclick="showPage('alerts')" class="bg-white rounded-xl shadow p-4 text-center cursor-pointer hover:shadow-md transition">
-                    <p id="alert-count" class="text-2xl font-bold">0</p>
-                    <p class="text-xs text-slate-500">Alertes</p>
-                </a>
-            </div>
-
-            <button onclick="exportCIL()" class="w-full bg-cil-blue text-white py-3 rounded-xl font-medium mb-4">
-                📄 Exporter le CIL
-            </button>
-
-            <p class="text-center text-sm text-slate-400 mt-4">
-                CIL Vault - Carnet d'Information Logement<br>
-                Obligatoire en France depuis 2023
-            </p>
-        </div>
-
-        <!-- Equipment -->
-        <div id="page-equipment" class="page">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold">Équipements</h2>
-                <button onclick="toggleForm('eq-form')" class="bg-cil-blue text-white px-4 py-2 rounded-lg">+ Ajouter</button>
-            </div>
-
-            <div id="eq-form" class="hidden bg-white rounded-xl shadow p-4 mb-4">
-                <select id="eq-type" class="w-full p-2 border rounded mb-2">
-                    <option value="boiler">🔥 Chaudière</option>
-                    <option value="vmc">💨 VMC</option>
-                    <option value="heatpump">🌡️ PAC</option>
-                    <option value="waterheater">🚿 Chauffe-eau</option>
-                </select>
-                <input id="eq-name" type="text" placeholder="Nom / Modèle" class="w-full p-2 border rounded mb-2">
-                <input id="eq-date" type="date" class="w-full p-2 border rounded mb-2">
-                <input id="eq-notes" type="text" placeholder="Notes (optionnel)" class="w-full p-2 border rounded mb-2">
-                <button onclick="saveEquipment()" class="w-full bg-cil-blue text-white p-2 rounded">Enregistrer</button>
-            </div>
-
-            <div id="eq-list" class="space-y-2"></div>
-        </div>
-
-        <!-- Documents -->
-        <div id="page-documents" class="page">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold">Documents</h2>
-                <button onclick="toggleForm('doc-form')" class="bg-cil-blue text-white px-4 py-2 rounded-lg">+ Ajouter</button>
-            </div>
-
-            <div id="doc-form" class="hidden bg-white rounded-xl shadow p-4 mb-4">
-                <select id="doc-type" class="w-full p-2 border rounded mb-2">
-                    <option value="dpe">📊 DPE</option>
-                    <option value="invoice">🧾 Facture</option>
-                    <option value="contract">📄 Contrat</option>
-                    <option value="warranty">🛡️ Garantie</option>
-                    <option value="maintenance">🔧 Entretien</option>
-                </select>
-                <input id="doc-name" type="text" placeholder="Nom du document" class="w-full p-2 border rounded mb-2">
-                <input id="doc-date" type="date" class="w-full p-2 border rounded mb-2">
-                <textarea id="doc-content" placeholder="Contenu (pour classification IA)" class="w-full p-2 border rounded mb-2 h-20"></textarea>
-                <button onclick="classifyDocument()" class="w-full bg-slate-100 text-slate-700 p-2 rounded mb-2 text-sm">
-                    🤖 Classifier avec l'IA
-                </button>
-                <button onclick="saveDocument()" class="w-full bg-cil-blue text-white p-2 rounded">Enregistrer</button>
-            </div>
-
-            <div id="doc-list" class="space-y-2"></div>
-        </div>
-
-        <!-- Alerts -->
-        <div id="page-alerts" class="page">
-            <h2 class="text-xl font-bold mb-4">Alertes</h2>
-            <div id="alerts-list" class="space-y-2"></div>
-            <div class="bg-blue-50 rounded-xl p-4 mt-4">
-                <h3 class="font-semibold text-blue-900 mb-2">📅 Rappels automatiques</h3>
-                <ul class="text-sm text-blue-800">
-                    <li>• Chaudière : entretien annuel</li>
-                    <li>• VMC : contrôle tous les 3 ans</li>
-                    <li>• PAC : entretien annuel</li>
-                    <li>• Chauffe-eau : contrôle tous les 2 ans</li>
-                </ul>
-            </div>
-        </div>
-
-        <!-- Settings -->
-        <div id="page-settings" class="page">
-            <h2 class="text-xl font-bold mb-4">Paramètres</h2>
-            
-            <div class="bg-white rounded-xl shadow p-4 mb-4">
-                <label class="block text-sm font-medium mb-2">Adresse du logement</label>
-                <input id="address" type="text" class="w-full p-2 border rounded" placeholder="Ex: 12 rue de Paris, 75001">
-            </div>
-            
-            <div class="bg-white rounded-xl shadow p-4 mb-4">
-                <label class="block text-sm font-medium mb-2">Surface (m²)</label>
-                <input id="surface" type="number" class="w-full p-2 border rounded" placeholder="Ex: 75">
-            </div>
-            
-            <button onclick="saveSettings()" class="w-full bg-cil-blue text-white p-3 rounded-xl">Enregistrer</button>
-        </div>
-    </main>
-
-    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t">
-        <div class="max-w-lg mx-auto flex justify-around py-2">
-            <a onclick="showPage('home')" data-page="home" class="flex flex-col items-center p-2 active">
-                <span>🏠</span>
-                <span class="text-xs">Accueil</span>
+<!-- Home Page -->
+<div id="page-home" class="page active">
+    <div id="home-no-property" class="text-center py-12">
+        <p class="text-slate-500 mb-4">🏠 Sélectionnez un bien</p>
+        <button onclick="showPage('properties')" class="bg-cil-blue text-white px-6 py-3 rounded-xl">Gérer mes biens</button>
+    </div>
+    <div id="home-content" class="hidden">
+        <h2 class="text-2xl font-bold mb-2" id="property-title">Mon Carnet</h2>
+        <p class="text-slate-500 mb-4" id="property-address-display"></p>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            <a onclick="showPage('equipment')" class="bg-white rounded-xl shadow p-4 text-center cursor-pointer hover:shadow-md">
+                <p id="eq-count" class="text-2xl font-bold">0</p>
+                <p class="text-xs text-slate-500">Équipements</p>
             </a>
-            <a onclick="showPage('equipment')" data-page="equipment" class="flex flex-col items-center p-2">
-                <span>🔧</span>
-                <span class="text-xs">Équipements</span>
-            </a>
-            <a onclick="showPage('documents')" data-page="documents" class="flex flex-col items-center p-2">
-                <span>📄</span>
-                <span class="text-xs">Documents</span>
-            </a>
-            <a onclick="showPage('alerts')" data-page="alerts" class="flex flex-col items-center p-2">
-                <span>🔔</span>
-                <span class="text-xs">Alertes</span>
-            </a>
-            <a onclick="showPage('settings')" data-page="settings" class="flex flex-col items-center p-2">
-                <span>⚙️</span>
-                <span class="text-xs">Paramètres</span>
+            <a onclick="showPage('documents')" class="bg-white rounded-xl shadow p-4 text-center cursor-pointer hover:shadow-md">
+                <p id="doc-count" class="text-2xl font-bold">0</p>
+                <p class="text-xs text-slate-500">Documents</p>
             </a>
         </div>
-    </nav>
+        <button onclick="showPage('upload')" class="w-full bg-cil-blue text-white py-3 rounded-xl font-medium mb-3">📤 Ajouter un document</button>
+        <button onclick="exportCIL()" class="w-full bg-white text-cil-blue border-2 border-cil-blue py-3 rounded-xl">📄 Exporter CIL</button>
+    </div>
+</div>
 
-    <script>
-        const API = 'http://84.247.161.15:8001';
-        let equipment = JSON.parse(localStorage.getItem('cil-eq') || '[]');
-        let documents = JSON.parse(localStorage.getItem('cil-docs') || '[]');
-        let settings = JSON.parse(localStorage.getItem('cil-settings') || '{}');
+<!-- Upload Page -->
+<div id="page-upload" class="page">
+    <div class="flex items-center mb-4">
+        <button onclick="showPage('home')" class="text-slate-500 mr-3">←</button>
+        <h2 class="text-xl font-bold">Ajouter document</h2>
+    </div>
+    <div id="drop-zone" class="border-2 border-dashed border-cil-blue rounded-xl p-8 text-center mb-4 cursor-pointer hover:bg-blue-50">
+        <input type="file" id="file-input" class="hidden" accept=".pdf,.jpg,.png" multiple>
+        <p class="text-4xl mb-2">📤</p>
+        <p class="text-slate-600">Glissez vos documents</p>
+        <p class="text-xs text-slate-400 mt-2">PDF, JPG, PNG</p>
+    </div>
+    <div id="upload-progress" class="hidden bg-white rounded-xl shadow p-4">
+        <p id="upload-filename" class="font-medium"></p>
+        <div class="w-full bg-slate-200 rounded-full h-2 mt-2"><div id="upload-bar" class="bg-cil-blue h-2 rounded-full" style="width:0%"></div></div>
+    </div>
+    <div id="ai-result" class="hidden bg-white rounded-xl shadow p-4 mt-4">
+        <h3 class="font-semibold mb-2">🤖 Analyse IA</h3>
+        <div id="ai-content"></div>
+    </div>
+    <div id="doc-form" class="hidden bg-white rounded-xl shadow p-4 mt-4">
+        <label class="block text-sm font-medium mb-1">Type</label>
+        <select id="doc-type" class="w-full p-2 border rounded mb-2" onchange="document.getElementById('diag-subtype').classList.toggle('hidden',this.value!=='diagnostic')">
+            <option value="diagnostic">📋 Diagnostic</option>
+            <option value="facture">🧾 Facture</option>
+            <option value="notice">📖 Notice</option>
+            <option value="attestation">✅ Attestation</option>
+            <option value="autre">📎 Autre</option>
+        </select>
+        <div id="diag-subtype" class="hidden mb-2">
+            <select id="diag-type" class="w-full p-2 border rounded">
+                <option value="dpe">DPE</option>
+                <option value="electricite">Électricité</option>
+                <option value="gaz">Gaz</option>
+                <option value="plomb">Plomb</option>
+                <option value="amiante">Amiante</option>
+            </select>
+        </div>
+        <label class="block text-sm font-medium mb-1">Date</label>
+        <input id="doc-date" type="date" class="w-full p-2 border rounded mb-2">
+        <button onclick="confirmDocument()" class="w-full bg-cil-blue text-white p-2 rounded">Enregistrer</button>
+    </div>
+</div>
 
-        document.addEventListener('DOMContentLoaded', () => {
-            render();
-            checkAPI();
-            loadSettings();
-        });
+<!-- Equipment Page -->
+<div id="page-equipment" class="page">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">Équipements</h2>
+        <button onclick="toggleForm('eq-form')" class="bg-cil-blue text-white px-4 py-2 rounded-lg">+ Ajouter</button>
+    </div>
+    <div id="eq-form" class="hidden bg-white rounded-xl shadow p-4 mb-4">
+        <select id="eq-type" class="w-full p-2 border rounded mb-2" onchange="document.getElementById('eq-type-custom').classList.toggle('hidden',this.value!=='personnalise')">
+            <optgroup label="Chauffage">
+                <option value="chaudiere">🔥 Chaudière</option>
+                <option value="pac">🌡️ PAC</option>
+            </optgroup>
+            <optgroup label="Eau/Ventilation">
+                <option value="chauffe-eau">🚿 Chauffe-eau</option>
+                <option value="vmc">💨 VMC</option>
+            </optgroup>
+            <option value="personnalise">⚙️ Autre</option>
+        </select>
+        <input id="eq-type-custom" type="text" placeholder="Type personnalisé" class="w-full p-2 border rounded mb-2 hidden">
+        <input id="eq-name" type="text" placeholder="Nom *" class="w-full p-2 border rounded mb-2">
+        <select id="eq-responsable" class="w-full p-2 border rounded mb-2">
+            <option value="proprietaire">Propriétaire</option>
+            <option value="locataire">Locataire</option>
+        </select>
+        <input id="eq-date" type="date" class="w-full p-2 border rounded mb-2">
+        <button onclick="saveEquipment()" class="w-full bg-cil-blue text-white p-2 rounded">Enregistrer</button>
+    </div>
+    <div id="eq-list" class="space-y-2"></div>
+    <p id="no-equipment" class="text-center text-slate-400 py-8 hidden">Aucun équipement</p>
+</div>
 
-        function showPage(page) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById('page-' + page).classList.add('active');
-            document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
-            document.querySelector('nav a[data-page="' + page + '"]').classList.add('active');
-        }
+<!-- Documents Page -->
+<div id="page-documents" class="page">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">Documents</h2>
+        <button onclick="showPage('upload')" class="bg-cil-blue text-white px-4 py-2 rounded-lg">+ Ajouter</button>
+    </div>
+    <div id="doc-list" class="space-y-2"></div>
+    <p id="no-document" class="text-center text-slate-400 py-8 hidden">Aucun document</p>
+</div>
 
-        function toggleForm(id) {
-            document.getElementById(id).classList.toggle('hidden');
-        }
+<!-- Alerts Page -->
+<div id="page-alerts" class="page">
+    <h2 class="text-xl font-bold mb-4">Alertes</h2>
+    <div id="alerts-list" class="space-y-2"></div>
+    <p id="no-alert" class="text-center text-slate-400 py-8 hidden">Aucune alerte</p>
+    <div class="bg-blue-50 rounded-xl p-4 mt-4">
+        <h3 class="font-semibold text-blue-900 mb-2">📅 Rappels</h3>
+        <ul class="text-sm text-blue-800">
+            <li>• Chaudière : annuel</li>
+            <li>• VMC : 3 ans</li>
+            <li>• DPE : 10 ans</li>
+        </ul>
+    </div>
+</div>
 
-        function checkAPI() {
-            fetch(API + '/')
-                .then(r => r.ok ? 'En ligne ✓' : 'Erreur')
-                .then(s => document.getElementById('api-status').textContent = s)
-                .catch(() => document.getElementById('api-status').textContent = 'Hors ligne');
-        }
+</main>
 
-        function loadSettings() {
-            if (settings.address) document.getElementById('address').value = settings.address;
-            if (settings.surface) document.getElementById('surface').value = settings.surface;
-        }
+<nav class="fixed bottom-0 left-0 right-0 bg-white border-t">
+    <div class="max-w-lg mx-auto flex justify-around py-2">
+        <a onclick="showPage('home')" data-page="home" class="flex flex-col items-center p-2 active"><span>🏠</span><span class="text-xs">Accueil</span></a>
+        <a onclick="showPage('equipment')" data-page="equipment" class="flex flex-col items-center p-2"><span>🔧</span><span class="text-xs">Équipements</span></a>
+        <a onclick="showPage('documents')" data-page="documents" class="flex flex-col items-center p-2"><span>📄</span><span class="text-xs">Documents</span></a>
+        <a onclick="showPage('alerts')" data-page="alerts" class="flex flex-col items-center p-2"><span>🔔</span><span class="text-xs">Alertes</span></a>
+        <a onclick="showPage('properties')" data-page="properties" class="flex flex-col items-center p-2"><span>🏢</span><span class="text-xs">Biens</span></a>
+    </div>
+</nav>
 
-        function saveSettings() {
-            settings.address = document.getElementById('address').value;
-            settings.surface = document.getElementById('surface').value;
-            localStorage.setItem('cil-settings', JSON.stringify(settings));
-            alert('Paramètres enregistrés');
-        }
+<script>
+const API='http://84.247.161.15:8001';
+const ICONS={chaudiere:'🔥',pac:'🌡️','chauffe-eau':'🚿',vmc:'💨',personnalise:'⚙️'};
+const PERIODS={chaudiere:12,pac:12,'chauffe-eau':24,vmc:36};
 
-        function saveEquipment() {
-            const type = document.getElementById('eq-type').value;
-            const name = document.getElementById('eq-name').value;
-            const date = document.getElementById('eq-date').value;
-            const notes = document.getElementById('eq-notes').value;
-            if (!name) return alert('Entrez un nom');
-            
-            const icons = { boiler: '🔥', vmc: '💨', heatpump: '🌡️', waterheater: '🚿' };
-            equipment.push({ id: Date.now(), type, name, date, notes, icon: icons[type] });
-            localStorage.setItem('cil-eq', JSON.stringify(equipment));
-            render();
-            toggleForm('eq-form');
-            document.getElementById('eq-name').value = '';
-            document.getElementById('eq-notes').value = '';
-        }
+let state=JSON.parse(localStorage.getItem('cil-state')||'{"currentPropertyId":null,"properties":[],"equipment":{},"documents":{}}');
 
-        async function classifyDocument() {
-            const content = document.getElementById('doc-content').value;
-            if (!content) return alert('Entrez du contenu');
-            
-            try {
-                const r = await fetch(API + '/ai/classify', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ content })
-                });
-                const data = await r.json();
-                const typeMap = { 'notice': 'invoice', 'contract': 'contract', 'dpe': 'dpe', 'warranty': 'warranty', 'maintenance': 'maintenance' };
-                if (typeMap[data.type]) {
-                    document.getElementById('doc-type').value = typeMap[data.type];
-                    alert('Classifié: ' + typeMap[data.type] + ' (' + Math.round(data.confidence * 100) + '%)');
-                }
-            } catch (e) {
-                alert('Erreur classification');
-            }
-        }
+function saveState(){localStorage.setItem('cil-state',JSON.stringify(state))}
+function loadState(){state=JSON.parse(localStorage.getItem('cil-state')||'{"currentPropertyId":null,"properties":[],"equipment":{},"documents":{}}');updateUI()}
 
-        function saveDocument() {
-            const type = document.getElementById('doc-type').value;
-            const name = document.getElementById('doc-name').value;
-            const date = document.getElementById('doc-date').value;
-            if (!name) return alert('Entrez un nom');
-            
-            const icons = { dpe: '📊', invoice: '🧾', contract: '📄', warranty: '🛡️', maintenance: '🔧' };
-            documents.push({ id: Date.now(), type, name, date, icon: icons[type] || '📎' });
-            localStorage.setItem('cil-docs', JSON.stringify(documents));
-            render();
-            toggleForm('doc-form');
-            document.getElementById('doc-name').value = '';
-            document.getElementById('doc-content').value = '';
-        }
+function showPage(p){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById('page-'+p).classList.add('active');document.querySelectorAll('nav a').forEach(x=>x.classList.remove('active'));document.querySelector('nav a[data-page="'+p+'"]').classList.add('active')}
+function toggleForm(id){document.getElementById(id).classList.toggle('hidden')}
 
-        function render() {
-            document.getElementById('eq-count').textContent = equipment.length;
-            document.getElementById('doc-count').textContent = documents.length;
-            document.getElementById('alert-count').textContent = getAlerts().length;
+// Properties
+function saveProperty(){const a=document.getElementById('prop-address').value;if(!a)return alert('Adresse requise');const p={id:Date.now().toString(),address:a,type:document.getElementById('prop-type').value||'Bien',surface:document.getElementById('prop-surface').value,role:document.getElementById('prop-role').value,createdAt:new Date().toISOString()};state.properties.push(p);state.equipment[p.id]=[];state.documents[p.id]=[];state.currentPropertyId=p.id;saveState();updateUI();showPage('home');document.getElementById('prop-address').value='';toggleForm('property-form')}
+function selectProperty(id){state.currentPropertyId=id;saveState();updateUI();showPage('home')}
+function deleteProperty(id){if(!confirm('Supprimer ce bien ?'))return;state.properties=state.properties.filter(p=>p.id!==id);delete state.equipment[id];delete state.documents[id];if(state.currentPropertyId===id)state.currentPropertyId=state.properties[0]?.id||null;saveState();updateUI()}
 
-            const eqList = document.getElementById('eq-list');
-            eqList.innerHTML = equipment.length === 0 
-                ? '<p class="text-center text-slate-400 py-8">Aucun équipement</p>'
-                : equipment.map(e => `
-                    <div class="bg-white rounded-xl shadow p-4">
-                        <div class="flex justify-between items-start">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-2xl">${e.icon}</span>
-                                    <span class="font-medium">${e.name}</span>
-                                </div>
-                                ${e.date ? '<p class="text-sm text-slate-500 mt-1">📅 ' + new Date(e.date).toLocaleDateString('fr-FR') + '</p>' : ''}
-                                ${e.notes ? '<p class="text-sm text-slate-400 mt-1">' + e.notes + '</p>' : ''}
-                            </div>
-                            <button onclick="deleteItem('equipment', ${e.id})" class="text-red-400 hover:text-red-600 text-sm">✕</button>
-                        </div>
-                    </div>
-                `).join('');
+// Equipment
+function saveEquipment(){if(!state.currentPropertyId)return alert('Sélectionnez un bien');const n=document.getElementById('eq-name').value;if(!n)return alert('Nom requis');const t=document.getElementById('eq-type').value;const e={id:Date.now().toString(),type:t==='personnalise'?document.getElementById('eq-type-custom').value:t,isCustom:t==='personnalise',name:n,responsable:document.getElementById('eq-responsable').value,nextMaintenance:document.getElementById('eq-date').value,periodMonths:PERIODS[t]||12,icon:ICONS[t]||'⚙️',createdAt:new Date().toISOString()};state.equipment[state.currentPropertyId].push(e);saveState();updateUI();document.getElementById('eq-name').value='';toggleForm('eq-form')}
+function deleteEquipment(id){if(!confirm('Supprimer ?'))return;state.equipment[state.currentPropertyId]=state.equipment[state.currentPropertyId].filter(e=>e.id!==id);saveState();updateUI()}
 
-            const docList = document.getElementById('doc-list');
-            docList.innerHTML = documents.length === 0
-                ? '<p class="text-center text-slate-400 py-8">Aucun document</p>'
-                : documents.map(d => `
-                    <div class="bg-white rounded-xl shadow p-4">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-2xl">${d.icon}</span>
-                                    <span class="font-medium">${d.name}</span>
-                                </div>
-                                ${d.date ? '<p class="text-sm text-slate-500">• ' + new Date(d.date).toLocaleDateString('fr-FR') + '</p>' : ''}
-                            </div>
-                            <button onclick="deleteItem('documents', ${d.id})" class="text-red-400 hover:text-red-600">✕</button>
-                        </div>
-                    </div>
-                `).join('');
+// Documents
+function setupDropZone(){const d=document.getElementById('drop-zone'),f=document.getElementById('file-input');d.onclick=()=>f.click();d.ondragover=e=>{e.preventDefault();d.classList.add('bg-blue-50')};d.ondragleave=()=>d.classList.remove('bg-blue-50');d.ondrop=e=>{e.preventDefault();d.classList.remove('bg-blue-50');handleFiles(e.dataTransfer.files)};f.onchange=e=>handleFiles(e.target.files)}
+async function handleFiles(fs){if(!state.currentPropertyId){alert('Sélectionnez un bien');showPage('properties');return}for(const f of fs){document.getElementById('upload-progress').classList.remove('hidden');document.getElementById('upload-filename').textContent=f.name;document.getElementById('upload-bar').style.width='50%';try{const r=await fetch(API+'/ai/classify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:f.name})});const d=await r.json();document.getElementById('upload-bar').style.width='100%';document.getElementById('ai-content').innerHTML='<p>Type: '+d.type+'</p><p>Confiance: '+Math.round((d.confidence||0)*100)+'%</p>';document.getElementById('ai-result').classList.remove('hidden')}catch(e){}document.getElementById('doc-form').classList.remove('hidden')}}function confirmDocument(){const d={id:Date.now().toString(),type:document.getElementById('doc-type').value,diagType:document.getElementById('diag-type').value,date:document.getElementById('doc-date').value,createdAt:new Date().toISOString()};state.documents[state.currentPropertyId].push(d);saveState();updateUI();showPage('documents')}
 
-            const alerts = getAlerts();
-            const alertsList = document.getElementById('alerts-list');
-            alertsList.innerHTML = alerts.length === 0
-                ? '<p class="text-center text-slate-400 py-8">Aucune alerte</p>'
-                : alerts.map(a => `
-                    <div class="${a.urgent ? 'bg-red-50 border-red-200' : 'bg-orange-50 border-orange-200'} border rounded-xl p-4">
-                        <p class="font-semibold ${a.urgent ? 'text-red-800' : 'text-orange-800'}">${a.icon} ${a.title}</p>
-                        <p class="text-sm ${a.urgent ? 'text-red-600' : 'text-orange-600'}">${a.message}</p>
-                    </div>
-                `).join('');
-        }
+// UI
+function updateUI(){updateProperties();updateHome();updateEquipment();updateDocuments()}
+function updateProperties(){const l=document.getElementById('properties-list'),n=document.getElementById('no-property');if(state.properties.length===0){l.innerHTML='';n.classList.remove('hidden');return}n.classList.add('hidden');l.innerHTML=state.properties.map(p=>'<div class="bg-white rounded-xl shadow p-4 '+(state.currentPropertyId===p.id?'ring-2 ring-cil-blue':'')+'"><div class="flex justify-between"><div><h3 class="font-semibold">'+p.type+'</h3><p class="text-sm text-slate-500">'+p.address+'</p></div><div>'+(state.currentPropertyId!==p.id?'<button onclick="selectProperty(\''+p.id+'\')" class="text-cil-blue mr-2">Sélectionner</button>':'<span class="text-green-600 text-sm mr-2">✓</span>')+'<button onclick="deleteProperty(\''+p.id+'\')" class="text-red-400">✕</button></div></div></div>').join('')}
+function updateHome(){const n=document.getElementById('home-no-property'),c=document.getElementById('home-content'),cp=document.getElementById('current-property');if(!state.currentPropertyId){n.classList.remove('hidden');c.classList.add('hidden');cp.textContent='Sélectionner';return}n.classList.add('hidden');c.classList.remove('hidden');const p=state.properties.find(x=>x.id===state.currentPropertyId);if(p){document.getElementById('property-title').textContent=p.type;document.getElementById('property-address-display').textContent=p.address;cp.textContent=p.address.split(',')[0]}document.getElementById('eq-count').textContent=(state.equipment[state.currentPropertyId]||[]).length;document.getElementById('doc-count').textContent=(state.documents[state.currentPropertyId]||[]).length}
+function updateEquipment(){const l=document.getElementById('eq-list'),n=document.getElementById('no-equipment'),e=state.equipment[state.currentPropertyId]||[];if(e.length===0){l.innerHTML='';n.classList.remove('hidden');return}n.classList.add('hidden');l.innerHTML=e.map(x=>'<div class="bg-white rounded-xl shadow p-4 flex justify-between"><div><span class="text-2xl mr-2">'+x.icon+'</span><span class="font-semibold">'+x.name+'</span>'+(x.nextMaintenance?'<p class="text-sm text-slate-500 mt-1">📅 '+new Date(x.nextMaintenance).toLocaleDateString('fr-FR')+'</p>':'')+'</div><button onclick="deleteEquipment(\''+x.id+'\')" class="text-red-400">✕</button></div>').join('')}
+function updateDocuments(){const l=document.getElementById('doc-list'),n=document.getElementById('no-document'),d=state.documents[state.currentPropertyId]||[];if(d.length===0){l.innerHTML='';n.classList.remove('hidden');return}n.classList.add('hidden');const t={diagnostic:'📋',facture:'🧾',notice:'📖',attestation:'✅',autre:'📎'};l.innerHTML=d.map(x=>'<div class="bg-white rounded-xl shadow p-4 flex justify-between"><div><span class="text-2xl mr-2">'+(t[x.type]||'📎')+'</span><span class="font-semibold">'+(x.type==='diagnostic'?x.diagType:x.type)+'</span>'+(x.date?'<p class="text-sm text-slate-500">'+new Date(x.date).toLocaleDateString('fr-FR')+'</p>':'')+'</div></div>').join('')}
 
-        function getAlerts() {
-            const alerts = [];
-            const today = new Date();
-            equipment.forEach(e => {
-                if (e.date) {
-                    const next = new Date(e.date);
-                    const days = Math.ceil((next - today) / (1000 * 60 * 60 * 24));
-                    if (days <= 30) {
-                        alerts.push({
-                            icon: days < 0 ? '🔴' : '⚠️',
-                            title: `Entretien ${e.name}`,
-                            message: days < 0 ? 'En retard de ' + Math.abs(days) + ' jours' : 'Dans ' + days + ' jours',
-                            urgent: days < 0
-                        });
-                    }
-                }
-            });
-            return alerts;
-        }
+function exportCIL(){const p=state.properties.find(x=>x.id===state.currentPropertyId),e=state.equipment[state.currentPropertyId]||[],d=state.documents[state.currentPropertyId]||[];const lines=['══════════════════════════════════════','CARNET D\'INFORMATION LOGEMENT','══════════════════════════════════════','','BIEN: '+(p?p.address:'Non défini'),(p&&p.surface?p.surface+' m²':''),'','─── ÉQUIPEMENTS ───',...e.map(x=>x.icon+' '+x.name+(x.nextMaintenance?' → '+new Date(x.nextMaintenance).toLocaleDateString('fr-FR'):'')),'','─── DOCUMENTS ───',...d.map(x=>'📋 '+(x.type==='diagnostic'?x.diagType:x.type)+' ('+(x.date?new Date(x.date).toLocaleDateString('fr-FR'):'-')+')'),'','Généré par CILIA - '+new Date().toLocaleDateString('fr-FR')];const blob=new Blob([lines.join('\n')],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='CIL-'+(p?p.address.substring(0,20):'export')+'-'+new Date().toISOString().split('T')[0]+'.txt';a.click()}
 
-        function deleteItem(type, id) {
-            if (type === 'equipment') {
-                equipment = equipment.filter(e => e.id !== id);
-                localStorage.setItem('cil-eq', JSON.stringify(equipment));
-            } else {
-                documents = documents.filter(d => d.id !== id);
-                localStorage.setItem('cil-docs', JSON.stringify(documents));
-            }
-            render();
-        }
-
-        function exportCIL() {
-            const lines = [];
-            lines.push('═══════════════════════════════════════════════════');
-            lines.push('       CARNET D\'INFORMATION LOGEMENT (CIL)');
-            lines.push('═══════════════════════════════════════════════════');
-            lines.push('');
-            lines.push('LOGEMENT');
-            lines.push('Adresse: ' + (settings.address || 'Non renseignée'));
-            lines.push('Surface: ' + (settings.surface || 'Non renseignée') + ' m²');
-            lines.push('Date d\'export: ' + new Date().toLocaleDateString('fr-FR'));
-            lines.push('');
-            lines.push('───────────────────────────────────────────────────');
-            lines.push('ÉQUIPEMENTS');
-            lines.push('───────────────────────────────────────────────────');
-            if (equipment.length === 0) {
-                lines.push('Aucun équipement enregistré');
-            } else {
-                equipment.forEach(e => {
-                    lines.push(e.icon + ' ' + e.name);
-                    lines.push('   Entretien: ' + (e.date ? new Date(e.date).toLocaleDateString('fr-FR') : 'Non planifié'));
-                    if (e.notes) lines.push('   Notes: ' + e.notes);
-                    lines.push('');
-                });
-            }
-            lines.push('───────────────────────────────────────────────────');
-            lines.push('DOCUMENTS');
-            lines.push('───────────────────────────────────────────────────');
-            if (documents.length === 0) {
-                lines.push('Aucun document enregistré');
-            } else {
-                documents.forEach(d => {
-                    lines.push(d.icon + ' ' + d.name + ' (' + d.type + ')');
-                    if (d.date) lines.push('   Date: ' + new Date(d.date).toLocaleDateString('fr-FR'));
-                    lines.push('');
-                });
-            }
-            lines.push('───────────────────────────────────────────────────');
-            lines.push('');
-            lines.push('Ce document constitue le carnet d\'information du logement');
-            lines.push('prévu par l\'article L. 731-1 du code de la construction.');
-            lines.push('');
-            lines.push('Généré par CIL Vault - cecilesow.fr/cil');
-            lines.push('═══════════════════════════════════════════════════');
-            
-            const text = lines.join('\n');
-            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'carnet-information-logement-' + new Date().toISOString().split('T')[0] + '.txt';
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-    </script>
+document.addEventListener('DOMContentLoaded',()=>{loadState();setupDropZone()});
+</script>
 </body>
 </html>
