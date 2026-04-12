@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CILIA Pro - Paiement</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>tailwind.config={theme:{extend:{colors:{'cil-blue':'#1e40af'}}}}</script>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-8">
+        <div class="text-center mb-6">
+            <div class="text-5xl mb-4">🚀</div>
+            <h1 class="text-2xl font-bold text-slate-800">CILIA Pro</h1>
+            <p class="text-slate-600 mt-2">Débloquez toutes les fonctionnalités</p>
+        </div>
+        
+        <div class="bg-slate-50 rounded-xl p-4 mb-6">
+            <div class="flex justify-between items-center">
+                <span class="text-lg font-medium">Abonnement mensuel</span>
+                <span class="text-2xl font-bold text-cil-blue">9€</span>
+            </div>
+            <p class="text-sm text-slate-500 mt-1">Annulez à tout moment</p>
+        </div>
+        
+        <ul class="space-y-2 mb-6">
+            <li class="flex items-center gap-2 text-slate-700">✓ Biens illimités</li>
+            <li class="flex items-center gap-2 text-slate-700">✓ Documents illimités</li>
+            <li class="flex items-center gap-2 text-slate-700">✓ Export PDF professionnel</li>
+            <li class="flex items-center gap-2 text-slate-700">✓ Alertes email</li>
+            <li class="flex items-center gap-2 text-slate-700">✓ Support prioritaire</li>
+        </ul>
+        
+        <!-- Stripe Checkout Button -->
+        <button id="checkout-btn" class="w-full bg-cil-blue text-white py-4 rounded-xl font-medium hover:bg-blue-800 transition">
+            S'abonner avec Stripe
+        </button>
+        
+        <!-- Test Mode Notice -->
+        <p class="text-center text-xs text-slate-400 mt-4">
+            🔒 Paiement sécurisé par Stripe<br>
+            Mode test - utilisez 4242 4242 4242 4242
+        </p>
+        
+        <!-- Back Link -->
+        <a href="app.html" class="block text-center text-sm text-slate-500 mt-4 hover:text-cil-blue">
+            ← Retour à l'application
+        </a>
+    </div>
+    
+    <script>
+        // Initialize Stripe (TEST KEY - replace with production)
+        // NOTE: In production, this should be a Stripe Checkout Session created server-side
+        const stripe = Stripe('pk_test_XXXXXXXXXXXXXXXXXXXXXXXX'); // Replace with actual key
+        
+        document.getElementById('checkout-btn').addEventListener('click', async () => {
+            // For demo: simulate successful payment
+            // In production: redirect to Stripe Checkout
+            if (confirm('Mode démonstration - Simuler un paiement réussi?')) {
+                localStorage.setItem('cilia-pro', '1');
+                localStorage.setItem('cilia-pro-since', new Date().toISOString());
+                alert('Merci! Votre compte Pro est activé.');
+                window.location.href = 'app.html';
+            }
+        });
+        
+        // Check if already Pro
+        if (localStorage.getItem('cilia-pro') === '1') {
+            document.getElementById('checkout-btn').textContent = '✓ Déjà Pro';
+            document.getElementById('checkout-btn').disabled = true;
+            document.getElementById('checkout-btn').classList.add('bg-green-500');
+        }
+    </script>
+</body>
+</html>
