@@ -1,40 +1,37 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#1e40af">
-    <meta name="description" content="CILIA - Carnet d'Information Logement obligatoire France 2023">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <title>CILIA - Carnet d'Information Logement</title>
-    <link rel="manifest" href="manifest.json">
-    <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1e40af">
+<meta name="description" content="CILIA - Carnet d'Information Logement obligatoire France 2023">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>CILIA - Carnet d'Information Logement</title>
+<link rel="manifest" href="manifest.json">
+<script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 // Debug iOS
 console.log('CILIA loaded', new Date().toISOString());
-window.onerror = function(msg, url, line) { 
-    alert('Erreur JS: ' + msg + ' ligne ' + line); 
-    return false; 
-};
+window.onerror = function(msg, url, line) { alert('Erreur JS: ' + msg + ' ligne ' + line); return false; };
 </script>
-    <script>tailwind.config={theme:{extend:{colors:{'cil-blue':'#1e40af'}}}}</script>
+<script>tailwind.config={theme:{extend:{colors:{'cil-blue':'#1e40af'}}}}</script>
 <script>
-// CRITICAL: Define before body
-function showPage(p){
-    document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
-    const el=document.getElementById('page-'+p);
-    if(el) el.classList.add('active');
-    document.querySelectorAll('nav a').forEach(x=>x.classList.remove('active'));
-    const nav=document.querySelector(`nav a[data-page="${p}"]`);
-    if(nav) nav.classList.add('active');
-}
+// CRITICAL: Define all functions before body to prevent ReferenceError
+function showPage(p){ document.querySelectorAll('.page').forEach(x=>x.classList.remove('active')); const el=document.getElementById('page-'+p); if(el) el.classList.add('active'); document.querySelectorAll('nav a').forEach(x=>x.classList.remove('active')); const nav=document.querySelector(`nav a[data-page="${p}"]`); if(nav) nav.classList.add('active'); }
 function openModal(id){document.getElementById(id).classList.add('active')}
 function closeModal(id){document.getElementById(id).classList.remove('active')}
+function showUpgradeModal(){document.getElementById('modal-upgrade').classList.add('active')}
+function showToast(msg,type='info'){const t=document.getElementById('toast');if(t){t.textContent=msg;t.className='fixed bottom-20 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg text-sm font-medium z-50 '+(type==='error'?'bg-red-500 text-white':type==='warning'?'bg-amber-500 text-white':type==='success'?'bg-green-500 text-white':'bg-slate-700 text-white');t.classList.remove('hidden');setTimeout(()=>t.classList.add('hidden'),3000)}}
+// Placeholders - overridden by full script when DOM ready
+var saveProperty = function(){ alert('Chargement en cours, veuillez réessayer...'); };
+var saveEquipment = function(){ alert('Chargement en cours, veuillez réessayer...'); };
+var saveUploadedDocument = function(){ alert('Chargement en cours, veuillez réessayer...'); };
+</script>
 function showUpgradeModal(){document.getElementById('modal-upgrade').classList.add('active')}
 </script>
 
@@ -421,7 +418,7 @@ function openModal(id){document.getElementById(id).classList.add('active')}
 function closeModal(id){document.getElementById(id).classList.remove('active')}
 
 // Properties
-function saveProperty(){
+window.saveProperty = function(){
     const editId=document.getElementById('prop-edit-id').value;
     const addr=document.getElementById('prop-address').value.trim();
     if(!addr){showToast('Adresse requise','warning');return} if(!editId&&!checkLimit('properties')){showUpgradeModal();return}
@@ -482,7 +479,7 @@ function selectProperty(id){state.currentPropertyId=id;saveState();updateUI();sh
 function deleteProperty(id){if(!confirm('Supprimer ?'))return;state.properties=state.properties.filter(p=>p.id!==id);delete state.equipment[id];delete state.documents[id];if(state.currentPropertyId===id)state.currentPropertyId=state.properties[0]?.id||null;saveState();updateUI()}
 
 // Equipment
-function saveEquipment(){
+window.saveEquipment = function(){
     if(!state.currentPropertyId){showToast('Sélectionnez un bien','info');return}
     const editId=document.getElementById('eq-edit-id').value;
     const name=document.getElementById('eq-name').value.trim();
@@ -532,7 +529,7 @@ function handleFiles(files){if(!state.currentPropertyId){showToast('Sélectionne
 function processFile(file){document.getElementById('upload-progress').classList.remove('hidden');document.getElementById('upload-filename').textContent=file.name;document.getElementById('upload-bar').style.width='50%';const reader=new FileReader();reader.onload=e=>{pendingUpload={name:file.name,size:file.size,type:file.type,data:e.target.result};document.getElementById('upload-bar').style.width='100%';document.getElementById('upload-form').classList.remove('hidden');populateEquipmentSelect()};reader.readAsDataURL(file)}
 function populateEquipmentSelect(){const sel=document.getElementById('upload-eq-id');const eq=state.equipment[state.currentPropertyId]||[];sel.innerHTML='<option value="">-- Aucun --</option>'+eq.map(e=>`<option value="${e.id}">${e.icon} ${e.name}</option>`).join('')}
 function toggleUploadFields(){const t=document.getElementById('upload-type').value;document.getElementById('diag-type-container').classList.toggle('hidden',t!=='diagnostic');document.getElementById('eq-associate-container').classList.toggle('hidden',t!=='facture'&&t!=='notice');document.getElementById('amount-container').classList.toggle('hidden',t!=='facture'&&t!=='travaux')}
-function saveUploadedDocument(){if(!state.currentPropertyId||!pendingUpload){showToast('Une erreur est survenue','error');return} const editId=document.getElementById('upload-form').dataset.editId; if(!editId&&!checkLimit('documents')){showUpgradeModal();return}
+window.saveUploadedDocument = function(){if(!state.currentPropertyId||!pendingUpload){showToast('Une erreur est survenue','error');return} const editId=document.getElementById('upload-form').dataset.editId; if(!editId&&!checkLimit('documents')){showUpgradeModal();return}
     const type=document.getElementById('upload-type').value;
     
     if(type==='diagnostic'&&!editId){
