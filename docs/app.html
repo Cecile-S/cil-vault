@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1e40af">
+    <meta name="description" content="CILIA - Carnet d'Information Logement obligatoire France 2023">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>CILIA - Carnet d'Information Logement</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config={theme:{extend:{colors:{'cil-blue':'#1e40af'}}}}</script>
+    <style>
+        .page{display:none}.page.active{display:block}
+        nav a.active{color:#1e40af;background-color:#eff6ff}
+        .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center}
+        .modal.active{display:flex}
+        .card-urgent{border-left:4px solid #ef4444}
+        .card-warning{border-left:4px solid #f59e0b}
+        @media print{header,nav,.no-print{display:none!important}}
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen pb-16">
+<header class="bg-cil-blue text-white px-4 py-3 sticky top-0 z-50">
+    <div class="max-w-lg mx-auto flex items-center justify-between">
+        <h1 class="text-lg font-semibold cursor-pointer" onclick="showPage('home')">🏠 CILIA</h1>
+        <div id="current-property" class="text-sm opacity-80 cursor-pointer truncate max-w-[200px]" onclick="showPage('properties')">Sélectionner un bien</div>
+    </div>
+</header>
+
+<main class="px-4 py-6 max-w-lg mx-auto">
+
+<!-- PAGE: PROPRIÉTÉS -->
+<div id="page-properties" class="page">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">Mes Biens</h2>
+        <button onclick="openModal('modal-property')" class="bg-cil-blue text-white px-4 py-2 rounded-lg">+ Ajouter</button>
+    </div>
+    <div id="properties-list" class="space-y-2"></div>
+    <p id="no-property" class="text-center text-slate-400 py-8">Créez un bien pour commencer</p>
+</div>
+
+<!-- PAGE: ACCUEIL -->
+<div id="page-home" class="page active">
+    <div id="home-no-property" class="text-center py-12">
+        <p class="text-6xl mb-4">🏠</p>
+        <p class="text-slate-600 font-medium mb-2">Bienvenue sur CILIA</p>
+        <p class="text-slate-500 mb-6">Votre Carnet d'Information Logement</p>
+        <button onclick="showPage('properties')" class="bg-cil-blue text-white px-6 py-3 rounded-xl">Commencer</button>
+    </div>
+    <div id="home-content" class="hidden">
+        <h2 class="text-2xl font-bold mb-1" id="property-title">Mon Bien</h2>
+        <p class="text-slate-500 mb-4" id="property-address-display"></p>
+        <div class="bg-white rounded-xl shadow p-4 mb-4">
+            <div class="flex items-center justify-between">
+                <div class="text-center">
+                    <p class="text-3xl font-bold" id="alert-count-home">0</p>
+                    <p class="text-xs text-slate-500">Alertes</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-3xl font-bold" id="doc-count-home">0</p>
+                    <p class="text-xs text-slate-500">Documents</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-3xl font-bold" id="eq-count-home">0</p>
+                    <p class="text-xs text-slate-500">Équipements</p>
+                </div>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            <div onclick="showPage('equipment')" class="bg-white rounded-xl shadow p-4 cursor-pointer hover:shadow-md">
+                <h3 class="font-semibold text-slate-700">🔧 Équipements</h3>
+                <p class="text-3xl font-bold mt-2" id="eq-stat">0</p>
+            </div>
+            <div onclick="showPage('documents')" class="bg-white rounded-xl shadow p-4 cursor-pointer hover:shadow-md">
+                <h3 class="font-semibold text-slate-700">📄 Documents</h3>
+                <p class="text-3xl font-bold mt-2" id="doc-stat">0</p>
+            </div>
+        </div>
+        <button onclick="showPage('upload')" class="w-full bg-cil-blue text-white py-3 rounded-xl font-medium mb-3">📤 Ajouter un document</button>
+        <button onclick="openModal('modal-equipment')" class="w-full bg-white text-cil-blue border-2 border-cil-blue py-3 rounded-xl font-medium mb-3">🔧 Ajouter un équipement</button>
+        <button onclick="exportCIL()" class="w-full bg-slate-100 text-slate-700 py-3 rounded-xl">📄 Exporter le CIL</button>
+    </div>
+</div>
+
+<!-- PAGE: UPLOAD -->
+<div id="page-upload" class="page">
+    <div class="flex items-center mb-4">
+        <button onclick="showPage('home')" class="text-slate-500 mr-3">←</button>
+        <h2 class="text-xl font-bold">Ajouter un document</h2>
+    </div>
+    <div id="drop-zone" class="border-2 border-dashed border-cil-blue rounded-xl p-8 text-center mb-4 cursor-pointer hover:bg-blue-50">
+        <p class="text-4xl mb-2">📤</p>
+        <p class="text-slate-600 font-medium">Glissez vos documents</p>
+        <p class="text-sm text-slate-400 mt-1">ou cliquez pour sélectionner</p>
+    </div>
+    <input type="file" id="file-input" class="hidden" accept=".pdf,.jpg,.jpeg,.png" multiple>
+    <div id="upload-progress" class="hidden bg-white rounded-xl shadow p-4 mb-4">
+        <p id="upload-filename" class="font-medium truncate"></p>
+        <div class="w-full bg-slate-200 rounded-full h-2 mt-2"><div id="upload-bar" class="bg-cil-blue h-2 rounded-full" style="width:0%"></div></div>
+    </div>
+    <div id="upload-form" class="hidden bg-white rounded-xl shadow p-4">
+        <h3 class="font-semibold mb-3">Informations du document</h3>
+        <label class="block text-sm font-medium mb-1">Type *</label>
+        <select id="upload-type" class="w-full p-2 border rounded-lg mb-2" onchange="toggleUploadFields()">
+            <option value="">-- Sélectionner --</option>
+            <option value="diagnostic">📋 Diagnostic</option>
+            <option value="facture">🧾 Facture</option>
+            <option value="notice">📖 Notice</option>
+            <option value="attestation">✅ Attestation</option>
+            <option value="travaux">🔨 Travaux</option>
+            <option value="autre">📎 Autre</option>
+        </select>
+        <div id="diag-type-container" class="hidden mb-2">
+            <label class="block text-sm font-medium mb-1">Diagnostics inclus</label>
+            <div class="space-y-1">
+                <label class="flex items-center gap-2"><input type="checkbox" id="diag-dpe" checked> DPE</label>
+                <label class="flex items-center gap-2"><input type="checkbox" id="diag-electricite"> Électricité</label>
+                <label class="flex items-center gap-2"><input type="checkbox" id="diag-gaz"> Gaz</label>
+                <label class="flex items-center gap-2"><input type="checkbox" id="diag-plomb"> Plomb</label>
+                <label class="flex items-center gap-2"><input type="checkbox" id="diag-amiante"> Amiante</label>
+                <label class="flex items-center gap-2"><input type="checkbox" id="diag-termites"> Termites</label>
+                <label class="flex items-center gap-2"><input type="checkbox" id="diag-erp"> ERP</label>
+                <label class="flex items-center gap-2"><input type="checkbox" id="diag-carrez"> Carrez</label>
+            </div>
+        </div>
+        <div id="eq-associate-container" class="hidden mb-2">
+            <label class="block text-sm font-medium mb-1">Équipement associé</label>
+            <select id="upload-eq-id" class="w-full p-2 border rounded-lg"><option value="">-- Aucun --</option></select>
+        </div>
+        <label class="block text-sm font-medium mb-1">Date</label>
+        <input type="date" id="upload-date" class="w-full p-2 border rounded-lg mb-2">
+        <div id="amount-container" class="hidden">
+            <label class="block text-sm font-medium mb-1">Montant (€)</label>
+            <input type="number" id="upload-amount" class="w-full p-2 border rounded-lg mb-2" placeholder="0.00">
+        </div>
+        <label class="block text-sm font-medium mb-1">Notes</label>
+        <textarea id="upload-notes" class="w-full p-2 border rounded-lg mb-3" rows="2"></textarea>
+        <button onclick="saveUploadedDocument()" class="w-full bg-cil-blue text-white py-3 rounded-lg font-medium">Enregistrer</button>
+    </div>
+</div>
+
+<!-- PAGE: ÉQUIPEMENTS -->
+<div id="page-equipment" class="page">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">Équipements</h2>
+        <button onclick="openModal('modal-equipment')" class="bg-cil-blue text-white px-4 py-2 rounded-lg">+ Ajouter</button>
+    </div>
+    <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
+        <button onclick="filterEquipment('all')" class="px-3 py-1 rounded-full bg-cil-blue text-white text-sm" data-efilter="all">Tous</button>
+        <button onclick="filterEquipment('proprietaire')" class="px-3 py-1 rounded-full bg-slate-200 text-slate-700 text-sm" data-efilter="proprietaire">Propriétaire</button>
+        <button onclick="filterEquipment('locataire')" class="px-3 py-1 rounded-full bg-slate-200 text-slate-700 text-sm" data-efilter="locataire">Locataire</button>
+    </div>
+    <div id="equipment-list" class="space-y-2"></div>
+    <p id="no-equipment" class="text-center text-slate-400 py-8 hidden">Aucun équipement</p>
+</div>
+
+<!-- PAGE: DOCUMENTS -->
+<div id="page-documents" class="page">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">Documents</h2>
+        <button onclick="showPage('upload')" class="bg-cil-blue text-white px-4 py-2 rounded-lg">+ Ajouter</button>
+    </div>
+    <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
+        <button onclick="filterDocuments('all')" class="px-3 py-1 rounded-full bg-cil-blue text-white text-sm" data-dfilter="all">Tous</button>
+        <button onclick="filterDocuments('diagnostic')" class="px-3 py-1 rounded-full bg-slate-200 text-slate-700 text-sm" data-dfilter="diagnostic">Diagnostics</button>
+        <button onclick="filterDocuments('facture')" class="px-3 py-1 rounded-full bg-slate-200 text-slate-700 text-sm" data-dfilter="facture">Factures</button>
+    </div>
+    <div id="documents-list" class="space-y-2"></div>
+    <p id="no-document" class="text-center text-slate-400 py-8 hidden">Aucun document</p>
+</div>
+
+<!-- PAGE: ALERTES -->
+<div id="page-alerts" class="page">
+    <h2 class="text-xl font-bold mb-4">Alertes</h2>
+    <select id="alert-role-filter" class="p-2 border rounded-lg mb-4" onchange="updateAlertsPage()">
+        <option value="all">Toutes les alertes</option>
+        <option value="proprietaire">Mes alertes (propriétaire)</option>
+        <option value="locataire">Alertes locataire</option>
+    </select>
+    <div id="alerts-list" class="space-y-2"></div>
+    <p id="no-alert" class="text-center text-slate-400 py-8 hidden">Aucune alerte</p>
+    <div class="bg-blue-50 rounded-xl p-4 mt-4">
+        <h3 class="font-semibold text-blue-900 mb-2">📅 Validités diagnostics</h3>
+        <ul class="text-sm text-blue-800">
+            <li>DPE : 10 ans</li>
+            <li>Élec/Gaz : 3 ans (vente) / 6 ans (loc)</li>
+            <li>Plomb : 1 an (vente) / 6 ans (loc)</li>
+        </ul>
+    </div>
+</div>
+
+</main>
+
+<!-- MODAL: BIEN -->
+<div id="modal-property" class="modal">
+    <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+        <div class="p-4 border-b flex justify-between items-center">
+            <h3 class="font-bold text-lg" id="modal-property-title">Ajouter un bien</h3>
+            <button onclick="closeModal('modal-property')" class="text-slate-400">✕</button>
+        </div>
+        <div class="p-4">
+            <input type="hidden" id="prop-edit-id">
+            <label class="block text-sm font-medium mb-1">Adresse *</label>
+            <input type="text" id="prop-address" class="w-full p-2 border rounded-lg mb-2" placeholder="10 rue de la Paix, Paris">
+            <label class="block text-sm font-medium mb-1">Type</label>
+            <select id="prop-type" class="w-full p-2 border rounded-lg mb-2">
+                <option value="Appartement">Appartement</option>
+                <option value="Maison">Maison</option>
+            </select>
+            <div class="grid grid-cols-2 gap-2 mb-2">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Surface m²</label>
+                    <input type="number" id="prop-surface" class="w-full p-2 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Pièces</label>
+                    <input type="number" id="prop-rooms" class="w-full p-2 border rounded-lg">
+                </div>
+            </div>
+            <label class="block text-sm font-medium mb-1">Mon rôle</label>
+            <select id="prop-role" class="w-full p-2 border rounded-lg mb-4">
+                <option value="proprietaire">Propriétaire</option>
+                <option value="locataire">Locataire</option>
+                <option value="mandataire">Mandataire</option>
+            </select>
+            <button onclick="saveProperty()" class="w-full bg-cil-blue text-white py-3 rounded-lg">Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: ÉQUIPEMENT -->
+<div id="modal-equipment" class="modal">
+    <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="p-4 border-b flex justify-between items-center">
+            <h3 class="font-bold text-lg" id="modal-eq-title">Ajouter un équipement</h3>
+            <button onclick="closeModal('modal-equipment')" class="text-slate-400">✕</button>
+        </div>
+        <div class="p-4">
+            <input type="hidden" id="eq-edit-id">
+            <label class="block text-sm font-medium mb-1">Type *</label>
+            <select id="eq-type" class="w-full p-2 border rounded-lg mb-2" onchange="document.getElementById('eq-type-custom').classList.toggle('hidden',this.value!=='personnalise')">
+                <optgroup label="Chauffage">
+                    <option value="chaudiere">🔥 Chaudière</option>
+                    <option value="pac">🌡️ Pompe à chaleur</option>
+                    <option value="poele">🔥 Poêle</option>
+                </optgroup>
+                <optgroup label="Eau/Ventilation">
+                    <option value="chauffe-eau">🚿 Chauffe-eau</option>
+                    <option value="vmc">💨 VMC</option>
+                </optgroup>
+                <optgroup label="Autre">
+                    <option value="piscine">🏊 Piscine</option>
+                    <option value="personnalise">⚙️ Autre...</option>
+                </optgroup>
+            </select>
+            <input type="text" id="eq-type-custom" class="w-full p-2 border rounded-lg mb-2 hidden" placeholder="Nom du type">
+            <label class="block text-sm font-medium mb-1">Nom *</label>
+            <input type="text" id="eq-name" class="w-full p-2 border rounded-lg mb-2" placeholder="Chaudière Frisquet">
+            <div class="grid grid-cols-2 gap-2 mb-2">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Marque</label>
+                    <input type="text" id="eq-brand" class="w-full p-2 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Modèle</label>
+                    <input type="text" id="eq-model" class="w-full p-2 border rounded-lg">
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 mb-2">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Date achat</label>
+                    <input type="date" id="eq-purchase-date" class="w-full p-2 border rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Garantie (mois)</label>
+                    <select id="eq-warranty" class="w-full p-2 border rounded-lg">
+                        <option value="0">Pas de garantie</option>
+                        <option value="12">1 an</option>
+                        <option value="24">2 ans</option>
+                        <option value="36">3 ans</option>
+                        <option value="60">5 ans</option>
+                    </select>
+                </div>
+            </div>
+            <label class="block text-sm font-medium mb-1">Responsable entretien</label>
+            <select id="eq-responsable" class="w-full p-2 border rounded-lg mb-2">
+                <option value="proprietaire">Propriétaire</option>
+                <option value="locataire">Locataire</option>
+            </select>
+            <label class="block text-sm font-medium mb-1">Prochain entretien</label>
+            <input type="date" id="eq-next-maint" class="w-full p-2 border rounded-lg mb-2">
+            <label class="block text-sm font-medium mb-1">Notes</label>
+            <textarea id="eq-notes" class="w-full p-2 border rounded-lg mb-3" rows="2"></textarea>
+            <button onclick="saveEquipment()" class="w-full bg-cil-blue text-white py-3 rounded-lg">Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: DÉTAIL ÉQUIPEMENT AVEC DOCUMENTS -->
+<div id="modal-equipment-detail" class="modal">
+    <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="p-4 border-b flex justify-between items-center">
+            <h3 class="font-bold text-lg" id="eq-detail-title">Équipement</h3>
+            <button onclick="closeModal('modal-equipment-detail')" class="text-slate-400">✕</button>
+        </div>
+        <div class="p-4" id="eq-detail-content"></div>
+    </div>
+</div>
+
+<!-- NAVIGATION -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white border-t">
+    <div class="max-w-lg mx-auto flex justify-around py-2">
+        <a onclick="showPage('home')" data-page="home" class="flex flex-col items-center p-2 active"><span>🏠</span><span class="text-xs">Accueil</span></a>
+        <a onclick="showPage('equipment')" data-page="equipment" class="flex flex-col items-center p-2"><span>🔧</span><span class="text-xs">Équipements</span></a>
+        <a onclick="showPage('documents')" data-page="documents" class="flex flex-col items-center p-2"><span>📄</span><span class="text-xs">Documents</span></a>
+        <a onclick="showPage('alerts')" data-page="alerts" class="flex flex-col items-center p-2 relative"><span>🔔</span><span class="text-xs">Alertes</span><span id="alert-badge" class="hidden absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">0</span></a>
+        <a onclick="showPage('properties')" data-page="properties" class="flex flex-col items-center p-2"><span>🏢</span><span class="text-xs">Biens</span></a>
+    </div>
+</nav>
+
+<script>
+// Configuration
+const DIAG_VALIDITY={dpe:10,electricite:3,gaz:3,plomb:1,amiante:999,termites:6,erp:6,carrez:999};
+const DIAG_VALIDITY_RENT={dpe:10,electricite:6,gaz:6,plomb:6,amiante:999,termites:6,erp:6,carrez:999};
+const EQ_ICONS={chaudiere:'🔥',pac:'🌡️',poele:'🔥','chauffe-eau':'🚿',vmc:'💨',piscine:'🏊',personnalise:'⚙️'};
+const DOC_ICONS={diagnostic:'📋',facture:'🧾',notice:'📖',attestation:'✅',travaux:'🔨',autre:'📎'};
+const EQ_PERIODS={chaudiere:12,pac:12,poele:12,'chauffe-eau':24,vmc:36,piscine:12};
+
+// State
+let state=JSON.parse(localStorage.getItem('cilia-v2')||'{"currentPropertyId":null,"properties":[],"equipment":{},"documents":{}}');
+let pendingUpload=null;
+let currentFilter='all';
+
+// Storage
+function saveState(){try{localStorage.setItem('cilia-v2',JSON.stringify(state))}catch(e){alert('Stockage plein')}}
+function loadState(){const d=localStorage.getItem('cilia-v2');if(d)state=JSON.parse(d);else{const old=localStorage.getItem('cil-state');if(old){state=JSON.parse(old);saveState()}}updateUI()}
+
+// Navigation
+function showPage(p){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById('page-'+p)?.classList.add('active');document.querySelectorAll('nav a').forEach(x=>x.classList.remove('active'));document.querySelector(`nav a[data-page="${p}"]`)?.classList.add('active')}
+function openModal(id){document.getElementById(id).classList.add('active')}
+function closeModal(id){document.getElementById(id).classList.remove('active')}
+
+// Properties
+function saveProperty(){
+    const editId=document.getElementById('prop-edit-id').value;
+    const addr=document.getElementById('prop-address').value.trim();
+    if(!addr){alert('Adresse requise');return}
+    
+    // Géocodage adresse
+    fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(addr)}&limit=1`)
+        .then(r=>r.json())
+        .then(data=>{
+            const geoData=data.features?.[0];
+            const prop={
+                address:geoData?.properties?.label||addr,
+                addressNormalized:geoData?.properties?.label,
+                lat:geoData?.geometry?.coordinates?.[1]||null,
+                lng:geoData?.geometry?.coordinates?.[0]||null,
+                city:geoData?.properties?.city||'',
+                postcode:geoData?.properties?.postcode||''
+            };
+            
+            if(editId){
+                const p=state.properties.find(p=>p.id===editId);
+                if(p&&p.role==='proprietaire'){Object.assign(p,prop);p.type=document.getElementById('prop-type').value;p.surface=document.getElementById('prop-surface').value||null;p.rooms=document.getElementById('prop-rooms').value||null;p.role=document.getElementById('prop-role').value;p.updatedAt=new Date().toISOString()}
+            }else{
+                const p={id:Date.now().toString(),...prop,type:document.getElementById('prop-type').value,surface:document.getElementById('prop-surface').value||null,rooms:document.getElementById('prop-rooms').value||null,role:document.getElementById('prop-role').value,createdAt:new Date().toISOString()};
+                state.properties.push(p);state.equipment[p.id]=[];state.documents[p.id]=[];state.currentPropertyId=p.id
+            }
+            saveState();updateUI();closeModal('modal-property');
+            document.getElementById('prop-edit-id').value='';
+            document.getElementById('prop-address').value='';
+        })
+        .catch(()=>{
+            // Fallback sans géocodage
+            if(editId){
+                const prop=state.properties.find(p=>p.id===editId);
+                if(prop&&prop.role==='proprietaire'){
+                    prop.address=addr;prop.type=document.getElementById('prop-type').value;prop.surface=document.getElementById('prop-surface').value||null;prop.rooms=document.getElementById('prop-rooms').value||null;prop.role=document.getElementById('prop-role').value;prop.updatedAt=new Date().toISOString()
+                }
+            }else{
+                const p={id:Date.now().toString(),address:addr,type:document.getElementById('prop-type').value,surface:document.getElementById('prop-surface').value||null,rooms:document.getElementById('prop-rooms').value||null,role:document.getElementById('prop-role').value,createdAt:new Date().toISOString()};
+                state.properties.push(p);state.equipment[p.id]=[];state.documents[p.id]=[];state.currentPropertyId=p.id
+            }
+            saveState();updateUI();closeModal('modal-property');
+        });
+}
+function editProperty(id){
+    const prop=state.properties.find(p=>p.id===id);
+    if(!prop)return;
+    if(prop.role!=='proprietaire'){alert('Seul le propriétaire peut modifier ce bien');return}
+    document.getElementById('prop-edit-id').value=id;
+    document.getElementById('prop-address').value=prop.address;
+    document.getElementById('prop-type').value=prop.type;
+    document.getElementById('prop-surface').value=prop.surface||'';
+    document.getElementById('prop-rooms').value=prop.rooms||'';
+    document.getElementById('prop-role').value=prop.role;
+    document.getElementById('modal-property-title').textContent='Modifier le bien';
+    openModal('modal-property');
+}
+function selectProperty(id){state.currentPropertyId=id;saveState();updateUI();showPage('home')}
+function deleteProperty(id){if(!confirm('Supprimer ?'))return;state.properties=state.properties.filter(p=>p.id!==id);delete state.equipment[id];delete state.documents[id];if(state.currentPropertyId===id)state.currentPropertyId=state.properties[0]?.id||null;saveState();updateUI()}
+
+// Equipment
+function saveEquipment(){
+    if(!state.currentPropertyId){alert('Sélectionnez un bien');return}
+    const editId=document.getElementById('eq-edit-id').value;
+    const name=document.getElementById('eq-name').value.trim();
+    if(!name){alert('Nom requis');return}
+    const type=document.getElementById('eq-type').value;
+    const purchaseDate=document.getElementById('eq-purchase-date').value;
+    const warranty=parseInt(document.getElementById('eq-warranty').value)||0;
+    
+    const e={name:name,type:type==='personnalise'?document.getElementById('eq-type-custom').value:type,brand:document.getElementById('eq-brand').value,model:document.getElementById('eq-model').value,purchaseDate:purchaseDate,warrantyMonths:warranty,warrantyEnd:warranty&&purchaseDate?new Date(new Date(purchaseDate).setMonth(new Date(purchaseDate).getMonth()+warranty)).toISOString().split('T')[0]:null,responsable:document.getElementById('eq-responsable').value,nextMaintenance:document.getElementById('eq-next-maint').value,periodMonths:EQ_PERIODS[type]||12,notes:document.getElementById('eq-notes').value,icon:EQ_ICONS[type]||'⚙️',updatedAt:new Date().toISOString()};
+    
+    if(editId){
+        const eq=state.equipment[state.currentPropertyId].find(x=>x.id===editId);
+        if(eq){Object.assign(eq,e);eq.id=editId}
+    }else{
+        e.id=Date.now().toString();
+        e.createdAt=new Date().toISOString();
+        state.equipment[state.currentPropertyId].push(e);
+    }
+    saveState();updateUI();closeModal('modal-equipment');
+    document.getElementById('eq-edit-id').value='';
+    document.getElementById('eq-name').value='';
+}
+function editEquipment(id){
+    const eq=(state.equipment[state.currentPropertyId]||[]).find(e=>e.id===id);
+    if(!eq)return;
+    document.getElementById('eq-edit-id').value=id;
+    document.getElementById('eq-type').value=eq.type;
+    document.getElementById('eq-type-custom').value=eq.type;
+    document.getElementById('eq-type-custom').classList.toggle('hidden',!['personnalise','autre'].includes(eq.type));
+    document.getElementById('eq-name').value=eq.name;
+    document.getElementById('eq-brand').value=eq.brand||'';
+    document.getElementById('eq-model').value=eq.model||'';
+    document.getElementById('eq-purchase-date').value=eq.purchaseDate||'';
+    document.getElementById('eq-warranty').value=eq.warrantyMonths||0;
+    document.getElementById('eq-responsable').value=eq.responsable||'proprietaire';
+    document.getElementById('eq-next-maint').value=eq.nextMaintenance||'';
+    document.getElementById('eq-notes').value=eq.notes||'';
+    document.getElementById('modal-eq-title').textContent='Modifier l\'équipement';
+    openModal('modal-equipment');
+}
+function deleteEquipment(id){if(!confirm('Supprimer ?'))return;state.equipment[state.currentPropertyId]=state.equipment[state.currentPropertyId].filter(e=>e.id!==id);saveState();updateUI()}
+function filterEquipment(f){currentFilter=f;document.querySelectorAll('[data-efilter]').forEach(b=>{b.className=b.getAttribute('data-efilter')===f?'px-3 py-1 rounded-full bg-cil-blue text-white text-sm':'px-3 py-1 rounded-full bg-slate-200 text-slate-700 text-sm'});updateEquipmentPage()}
+
+// Documents & Upload
+function setupUpload(){const dropZone=document.getElementById('drop-zone');const fileInput=document.getElementById('file-input');dropZone.onclick=()=>fileInput.click();dropZone.ondragover=e=>{e.preventDefault();dropZone.classList.add('bg-blue-50')};dropZone.ondragleave=()=>dropZone.classList.remove('bg-blue-50');dropZone.ondrop=e=>{e.preventDefault();dropZone.classList.remove('bg-blue-50');handleFiles(e.dataTransfer.files)};fileInput.onchange=e=>handleFiles(e.target.files)}
+function handleFiles(files){if(!state.currentPropertyId){alert('Sélectionnez un bien');showPage('properties');return}for(const f of files)processFile(f)}
+function processFile(file){document.getElementById('upload-progress').classList.remove('hidden');document.getElementById('upload-filename').textContent=file.name;document.getElementById('upload-bar').style.width='50%';const reader=new FileReader();reader.onload=e=>{pendingUpload={name:file.name,size:file.size,type:file.type,data:e.target.result};document.getElementById('upload-bar').style.width='100%';document.getElementById('upload-form').classList.remove('hidden');populateEquipmentSelect()};reader.readAsDataURL(file)}
+function populateEquipmentSelect(){const sel=document.getElementById('upload-eq-id');const eq=state.equipment[state.currentPropertyId]||[];sel.innerHTML='<option value="">-- Aucun --</option>'+eq.map(e=>`<option value="${e.id}">${e.icon} ${e.name}</option>`).join('')}
+function toggleUploadFields(){const t=document.getElementById('upload-type').value;document.getElementById('diag-type-container').classList.toggle('hidden',t!=='diagnostic');document.getElementById('eq-associate-container').classList.toggle('hidden',t!=='facture'&&t!=='notice');document.getElementById('amount-container').classList.toggle('hidden',t!=='facture'&&t!=='travaux')}
+function saveUploadedDocument(){if(!state.currentPropertyId||!pendingUpload){alert('Erreur');return}
+    const editId=document.getElementById('upload-form').dataset.editId;
+    const type=document.getElementById('upload-type').value;
+    
+    if(type==='diagnostic'&&!editId){
+        // Multi-diagnostic: créer un document par diagnostic coché
+        const diagTypes=[];
+        if(document.getElementById('diag-dpe').checked)diagTypes.push('dpe');
+        if(document.getElementById('diag-electricite').checked)diagTypes.push('electricite');
+        if(document.getElementById('diag-gaz').checked)diagTypes.push('gaz');
+        if(document.getElementById('diag-plomb').checked)diagTypes.push('plomb');
+        if(document.getElementById('diag-amiante').checked)diagTypes.push('amiante');
+        if(document.getElementById('diag-termites').checked)diagTypes.push('termites');
+        if(document.getElementById('diag-erp').checked)diagTypes.push('erp');
+        if(document.getElementById('diag-carrez').checked)diagTypes.push('carrez');
+        
+        if(diagTypes.length===0){alert('Sélectionnez au moins un diagnostic');return}
+        
+        const baseDoc={
+            type:'diagnostic',
+            equipmentId:document.getElementById('upload-eq-id').value,
+            date:document.getElementById('upload-date').value,
+            notes:document.getElementById('upload-notes').value,
+            filename:pendingUpload.name,
+            filedata:pendingUpload.data,
+            createdAt:new Date().toISOString()
+        };
+        
+        diagTypes.forEach(dt=>{
+            const d={...baseDoc,id:Date.now().toString()+dt,diagType:dt};
+            state.documents[state.currentPropertyId].push(d);
+        });
+    }else{
+        const d={type:type,diagType:type==='diagnostic'?'dpe':'',equipmentId:document.getElementById('upload-eq-id').value,date:document.getElementById('upload-date').value,amount:document.getElementById('upload-amount').value,notes:document.getElementById('upload-notes').value,filename:pendingUpload.name,filedata:pendingUpload.data,updatedAt:new Date().toISOString()};
+        
+        if(editId){
+            const doc=state.documents[state.currentPropertyId].find(x=>x.id===editId);
+            if(doc){Object.assign(doc,d);doc.id=editId}
+        }else{
+            d.id=Date.now().toString();
+            d.createdAt=new Date().toISOString();
+            state.documents[state.currentPropertyId].push(d);
+        }
+    }
+    saveState();
+    pendingUpload=null;
+    document.getElementById('upload-form').dataset.editId='';
+    document.getElementById('upload-progress').classList.add('hidden');
+    document.getElementById('upload-form').classList.add('hidden');
+    showPage('documents');
+}
+function downloadDocument(id){const d=(state.documents[state.currentPropertyId]||[]).find(x=>x.id===id);if(!d||!d.filedata){alert('Fichier indisponible');return}const a=document.createElement('a');a.href=d.filedata;a.download=d.filename;a.click()}
+function deleteDocument(id){if(!confirm('Supprimer ?'))return;state.documents[state.currentPropertyId]=state.documents[state.currentPropertyId].filter(d=>d.id!==id);saveState();updateUI()}
+function filterDocuments(f){currentFilter=f;document.querySelectorAll('[data-dfilter]').forEach(b=>{b.className=b.getAttribute('data-dfilter')===f?'px-3 py-1 rounded-full bg-cil-blue text-white text-sm':'px-3 py-1 rounded-full bg-slate-200 text-slate-700 text-sm'});updateDocumentsPage()}
+
+// UI Updates
+function updateUI(){updatePropertiesPage();updateHomePage();updateEquipmentPage();updateDocumentsPage();updateAlertsPage()}
+function updatePropertiesPage(){const list=document.getElementById('properties-list');const noProp=document.getElementById('no-property');if(state.properties.length===0){list.innerHTML='';noProp.classList.remove('hidden');return}noProp.classList.add('hidden');list.innerHTML=state.properties.map(p=>`<div class="bg-white rounded-xl shadow p-4 ${state.currentPropertyId===p.id?'ring-2 ring-cil-blue':''}"><div class="flex justify-between items-start"><div><h3 class="font-semibold">${p.type}</h3><p class="text-sm text-slate-500">${p.address}</p>${p.surface?`<p class="text-xs text-slate-400">${p.surface} m²</p>`:''}<span class="inline-block mt-1 px-2 py-0.5 rounded text-xs ${p.role==='proprietaire'?'bg-blue-100 text-blue-800':'bg-green-100 text-green-800'}">${p.role}</span></div><div class="flex gap-2 items-center">${state.currentPropertyId!==p.id?`<button onclick="selectProperty('${p.id}')" class="text-cil-blue text-sm">Sélectionner</button>`:'<span class="text-green-600 text-sm">✓</span>'}${p.role==='proprietaire'?`<button onclick="editProperty('${p.id}')" class="text-amber-500 text-sm">✎</button>`:''}<button onclick="deleteProperty('${p.id}')" class="text-red-400">✕</button></div></div></div>`).join('')}
+function updateHomePage(){const noProp=document.getElementById('home-no-property');const content=document.getElementById('home-content');const currProp=document.getElementById('current-property');if(!state.currentPropertyId){noProp.classList.remove('hidden');content.classList.add('hidden');currProp.textContent='Sélectionner';return}noProp.classList.add('hidden');content.classList.remove('hidden');const p=state.properties.find(x=>x.id===state.currentPropertyId);if(p){document.getElementById('property-title').textContent=p.type;document.getElementById('property-address-display').textContent=p.address;currProp.textContent=p.address.split(',')[0]}const eqCount=(state.equipment[state.currentPropertyId]||[]).length;const docCount=(state.documents[state.currentPropertyId]||[]).length;const alertCount=generateAlerts().length;document.getElementById('eq-count-home').textContent=eqCount;document.getElementById('doc-count-home').textContent=docCount;document.getElementById('alert-count-home').textContent=alertCount;document.getElementById('eq-stat').textContent=eqCount;document.getElementById('doc-stat').textContent=docCount;if(alertCount>0){document.getElementById('alert-badge').textContent=alertCount;document.getElementById('alert-badge').classList.remove('hidden')}else{document.getElementById('alert-badge').classList.add('hidden')}}
+function updateEquipmentPage(){const list=document.getElementById('equipment-list');const noEq=document.getElementById('no-equipment');let eq=state.equipment[state.currentPropertyId]||[];if(currentFilter!=='all')eq=eq.filter(e=>e.responsable===currentFilter);if(eq.length===0){list.innerHTML='';noEq.classList.remove('hidden');return}noEq.classList.add('hidden');list.innerHTML=eq.map(e=>{const warrantyStatus=e.warrantyEnd?daysUntil(e.warrantyEnd):null;const maintStatus=e.nextMaintenance?daysUntil(e.nextMaintenance):null;const docs=(state.documents[state.currentPropertyId]||[]).filter(d=>d.equipmentId===e.id);const docCount=docs.length;return`<div class="bg-white rounded-xl shadow p-4 ${maintStatus!==null&&maintStatus<0?'card-urgent':maintStatus!==null&&maintStatus<30?'card-warning':''}"><div class="flex justify-between items-start cursor-pointer" onclick="showEquipmentDetail('${e.id}')"><div><div class="flex items-center gap-2"><span class="text-2xl">${e.icon}</span><div><h3 class="font-semibold">${e.name}</h3>${e.brand||e.model?`<p class="text-sm text-slate-500">${e.brand||''} ${e.model||''}</p>`:''}</div></div>${e.purchaseDate?`<p class="text-xs text-slate-400 mt-1">Acheté: ${new Date(e.purchaseDate).toLocaleDateString('fr-FR')}</p>`:''}${e.warrantyEnd?`<p class="text-xs ${warrantyStatus<0?'text-red-600':warrantyStatus<30?'text-amber-600':'text-slate-400'}">Garantie: ${new Date(e.warrantyEnd).toLocaleDateString('fr-FR')} ${warrantyStatus<0?'(Expirée)':warrantyStatus<30?'(Expire bientôt)':''}</p>`:''}${e.nextMaintenance?`<p class="text-xs ${maintStatus<0?'text-red-600':maintStatus<30?'text-amber-600':'text-slate-400'} mt-1">Entretien: ${new Date(e.nextMaintenance).toLocaleDateString('fr-FR')} ${maintStatus<0?'(En retard)':''}</p>`:''}${docCount>0?`<p class="text-xs text-cil-blue mt-1">📎 ${docCount} document(s)</p>`:''}<span class="inline-block mt-1 px-2 py-0.5 rounded text-xs ${e.responsable==='proprietaire'?'bg-blue-100 text-blue-800':'bg-green-100 text-green-800'}">${e.responsable}</span></div></div><div class="flex gap-2 mt-2 pt-2 border-t"><button onclick="event.stopPropagation();editEquipment('${e.id}')" class="text-amber-500 text-sm">✎ Modifier</button><button onclick="event.stopPropagation();deleteEquipment('${e.id}')" class="text-red-400 text-sm">✕ Supprimer</button></div></div>`}).join('')}
+function showEquipmentDetail(id){
+    const e=(state.equipment[state.currentPropertyId]||[]).find(x=>x.id===id);
+    if(!e)return;
+    const docs=(state.documents[state.currentPropertyId]||[]).filter(d=>d.equipmentId===id);
+    document.getElementById('eq-detail-title').innerHTML=`${e.icon} ${e.name}`;
+    document.getElementById('eq-detail-content').innerHTML=`
+        <div class="space-y-3">
+            ${e.brand?`<p><strong>Marque:</strong> ${e.brand}</p>`:''}
+            ${e.model?`<p><strong>Modèle:</strong> ${e.model}</p>`:''}
+            ${e.purchaseDate?`<p><strong>Date achat:</strong> ${new Date(e.purchaseDate).toLocaleDateString('fr-FR')}</p>`:''}
+            ${e.warrantyEnd?`<p><strong>Garantie:</strong> ${new Date(e.warrantyEnd).toLocaleDateString('fr-FR')}</p>`:''}
+            ${e.nextMaintenance?`<p><strong>Prochain entretien:</strong> ${new Date(e.nextMaintenance).toLocaleDateString('fr-FR')}</p>`:''}
+            ${e.notes?`<p><strong>Notes:</strong> ${e.notes}</p>`:''}
+            
+            <div class="border-t pt-3 mt-3">
+                <h4 class="font-semibold mb-2">📎 Documents (${docs.length})</h4>
+                ${docs.length>0?docs.map(d=>`<div class="flex justify-between items-center py-1"><span>${DOC_ICONS[d.type]||'📎'} ${d.filename}</span><button onclick="downloadDocument('${d.id}')" class="text-cil-blue text-sm">⬇</button></div>`).join(''):'<p class="text-slate-400 text-sm">Aucun document</p>'}
+                <button onclick="attachDocToEq('${id}')" class="w-full mt-2 bg-slate-100 text-slate-700 py-2 rounded-lg text-sm">+ Ajouter un document</button>
+            </div>
+        </div>
+    `;
+    openModal('modal-equipment-detail');
+}
+function attachDocToEq(eqId){
+    closeModal('modal-equipment-detail');
+    pendingUpload=null;
+    document.getElementById('upload-form').dataset.editId='';
+    document.getElementById('upload-type').value='';
+    
+    document.getElementById('upload-date').value='';
+    document.getElementById('upload-amount').value='';
+    document.getElementById('upload-notes').value='';
+    populateEquipmentSelect();
+    document.getElementById('upload-eq-id').value=eqId;
+    document.getElementById('upload-progress').classList.add('hidden');
+    document.getElementById('upload-form').classList.remove('hidden');
+    document.getElementById('upload-filename').textContent='Sélectionnez un fichier';
+    showPage('upload');
+}
+function updateDocumentsPage(){const list=document.getElementById('documents-list');const noDoc=document.getElementById('no-document');let docs=state.documents[state.currentPropertyId]||[];if(currentFilter!=='all')docs=docs.filter(d=>d.type===currentFilter);if(docs.length===0){list.innerHTML='';noDoc.classList.remove('hidden');return}noDoc.classList.add('hidden');list.innerHTML=docs.map(d=>`<div class="bg-white rounded-xl shadow p-4"><div class="flex justify-between items-start"><div class="flex-1"><div class="flex items-center gap-2"><span class="text-2xl">${DOC_ICONS[d.type]||'📎'}</span><div><h3 class="font-semibold">${d.type==='diagnostic'?(d.diagType||'DPE').toUpperCase():d.type}</h3><p class="text-sm text-slate-500">${d.filename}</p></div></div>${d.date?`<p class="text-xs text-slate-400 mt-1">📅 ${new Date(d.date).toLocaleDateString('fr-FR')}</p>`:''}${d.amount?`<p class="text-xs text-slate-400">💰 ${d.amount} €</p>`:''}${d.equipmentId?`<p class="text-xs text-slate-400">📎 ${(state.equipment[state.currentPropertyId]||[]).find(e=>e.id===d.equipmentId)?.name||''}</p>`:''}</div><div class="flex gap-2"><button onclick="editDocument('${d.id}')" class="text-amber-500">✎</button><button onclick="downloadDocument('${d.id}')" class="bg-cil-blue text-white px-3 py-1 rounded text-sm">⬇</button><button onclick="deleteDocument('${d.id}')" class="text-red-400">✕</button></div></div></div>`).join('')}
+function editDocument(id){
+    const d=(state.documents[state.currentPropertyId]||[]).find(x=>x.id===id);
+    if(!d)return;
+    pendingUpload={name:d.filename,data:d.filedata,type:d.filetype||'application/pdf'};
+    document.getElementById('upload-type').value=d.type;
+    
+    document.getElementById('upload-date').value=d.date||'';
+    document.getElementById('upload-amount').value=d.amount||'';
+    document.getElementById('upload-notes').value=d.notes||'';
+    populateEquipmentSelect();
+    document.getElementById('upload-eq-id').value=d.equipmentId||'';
+    toggleUploadFields();
+    document.getElementById('upload-progress').classList.add('hidden');
+    document.getElementById('upload-form').classList.remove('hidden');
+    document.getElementById('upload-filename').textContent='[Édition] '+d.filename;
+    // Stocker l'ID pour le mode édition
+    document.getElementById('upload-form').dataset.editId=id;
+    showPage('upload');
+}
+function generateAlerts(){const alerts=[];const today=new Date();const propId=state.currentPropertyId;const roleFilter=document.getElementById('alert-role-filter')?document.getElementById('alert-role-filter').value:'all';const prop=state.properties.find(p=>p.id===propId);const isLocation=prop&&prop.role==='locataire';const isProprietaire=prop&&prop.role==='proprietaire';const eq=state.equipment[propId]||[];const docs=state.documents[propId]||[];eq.forEach(e=>{if(e.nextMaintenance){const days=daysUntil(e.nextMaintenance);if(days<=30&&(roleFilter==='all'||roleFilter===e.responsable))alerts.push({id:'eq-'+e.id,title:`${e.icon} ${e.name}`,message:days<0?`En retard de ${Math.abs(days)} jours`:`Dans ${days} jours`,urgent:days<0,responsable:e.responsable});if(days<0&&e.responsable==='locataire'&&isProprietaire&&roleFilter==='all')alerts.push({id:'eq-loc-'+e.id,title:`⚠️ ${e.icon} ${e.name} (locataire)`,message:`Entretien en retard de ${Math.abs(days)} jours - Contactez votre locataire`,urgent:true,responsable:'proprietaire',isOwnerAlert:true})}if(e.warrantyEnd){const days=daysUntil(e.warrantyEnd);if(days<=30&&(roleFilter==='all'||roleFilter===e.responsable))alerts.push({id:'warranty-'+e.id,title:`Garantie: ${e.name}`,message:days<0?`Expirée`:`Expire dans ${days} jours`,urgent:days<0,responsable:'proprietaire'})}});docs.filter(d=>d.type==='diagnostic').forEach(d=>{const years=isLocation?(DIAG_VALIDITY_RENT[d.diagType]||10):(DIAG_VALIDITY[d.diagType]||10);if(d.date){const date=new Date(d.date);const expiry=new Date(date);expiry.setFullYear(expiry.getFullYear()+years);const days=daysUntil(expiry.toISOString().split('T')[0]);if(days<=90&&(roleFilter==='all'||roleFilter==='proprietaire'))alerts.push({id:'diag-'+d.id,title:`📋 ${(d.diagType||'DPE').toUpperCase()}`,message:days<0?`Expiré depuis ${Math.abs(days)} jours`:`Expire dans ${days} jours`,urgent:days<0,responsable:'proprietaire'})}});return alerts.sort((a,b)=>b.urgent-a.urgent)}
+function updateAlertsPage(){const list=document.getElementById('alerts-list');const noAlert=document.getElementById('no-alert');const alerts=generateAlerts();if(alerts.length===0){list.innerHTML='';noAlert.classList.remove('hidden');return}noAlert.classList.add('hidden');list.innerHTML=alerts.map(a=>`<div class="bg-white rounded-xl shadow p-4 ${a.urgent?'card-urgent':a.warning?'card-warning':''}"><div class="flex justify-between items-center"><div><h3 class="font-semibold ${a.urgent?'text-red-600':''}">${a.title}</h3><p class="text-sm ${a.urgent?'text-red-500':'text-slate-500'}">${a.message}</p><span class="inline-block mt-1 px-2 py-0.5 rounded text-xs ${a.responsable==='proprietaire'?'bg-blue-100 text-blue-800':'bg-green-100 text-green-800'}">${a.responsable}</span></div></div></div>`).join('')}
+function daysUntil(dateStr){if(!dateStr)return null;const today=new Date();today.setHours(0,0,0,0);const target=new Date(dateStr);target.setHours(0,0,0,0);return Math.ceil((target-today)/(1000*60*60*24))}
+function exportCIL(){const p=state.properties.find(x=>x.id===state.currentPropertyId);const eq=state.equipment[state.currentPropertyId]||[];const docs=state.documents[state.currentPropertyId]||[];const lines=['══════════════════════════════════════════════════════','CARNET D\'INFORMATION LOGEMENT (CIL)','══════════════════════════════════════════════════════','',`📍 BIEN: ${p?p.address:'Non défini'}`,p&&p.surface?`   Surface: ${p.surface} m²`:'',p&&p.rooms?`   Pièces: ${p.rooms}`:'','','─── ÉQUIPEMENTS ───',...eq.map(e=>`   ${e.icon} ${e.name}${e.brand?` (${e.brand})`:''}${e.purchaseDate?` - Acheté: ${new Date(e.purchaseDate).toLocaleDateString('fr-FR')}`:''}${e.warrantyEnd?` - Garantie jusqu'au ${new Date(e.warrantyEnd).toLocaleDateString('fr-FR')}`:''}${e.nextMaintenance?` - Entretien: ${new Date(e.nextMaintenance).toLocaleDateString('fr-FR')}`:''}`),eq.length===0?'   Aucun équipement':'','─── DOCUMENTS ───',...docs.map(d=>`   ${DOC_ICONS[d.type]||'📎'} ${d.type==='diagnostic'?(d.diagType||'DPE').toUpperCase():d.type}${d.date?` (${new Date(d.date).toLocaleDateString('fr-FR')})`:''}`),docs.length===0?'   Aucun document':'','══════════════════════════════════════════════════════',`Généré par CILIA - ${new Date().toLocaleDateString('fr-FR')}`,'Carnet d\'Information Logement obligatoire (France 2023)','══════════════════════════════════════════════════════'];const blob=new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`CIL-${p?p.address.substring(0,30).replace(/[^a-zA-Z0-9]/g,'_'):'export'}-${new Date().toISOString().split('T')[0]}.txt`;a.click()}
+document.addEventListener('DOMContentLoaded',()=>{loadState();setupUpload()});
+</script>
+</body>
+</html>
