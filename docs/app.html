@@ -44,7 +44,7 @@ window.onerror = function(msg, url, line) {
 <div id="page-properties" class="page">
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-bold">Mes Biens</h2>
-        <button onclick="openModal('modal-property')" class="bg-cil-blue text-white px-4 py-2 rounded-lg">+ Ajouter</button>
+        <button onclick="openModal('modal-property')" class="bg-cil-blue text-white px-6 py-4 rounded-xl min-h-[48px]">+ Ajouter</button>
     </div>
     <div id="properties-list" class="space-y-2"></div>
     <p id="no-property" class="text-center text-slate-400 py-8">Créez un bien pour commencer</p>
@@ -87,7 +87,7 @@ window.onerror = function(msg, url, line) {
                 <p class="text-3xl font-bold mt-2" id="doc-stat">0</p>
             </div>
         </div>
-        <button onclick="showPage('upload')" class="w-full bg-cil-blue text-white py-3 rounded-xl font-medium mb-3">📤 Ajouter un document</button>
+        <button onclick="showPage('upload')" class="w-full bg-cil-blue text-white py-4 rounded-xl min-h-[48px] font-medium mb-3">📤 Ajouter un document</button>
         <button onclick="openModal('modal-equipment')" class="w-full bg-white text-cil-blue border-2 border-cil-blue py-3 rounded-xl font-medium mb-3">🔧 Ajouter un équipement</button>
         <button onclick="exportCIL()" class="w-full bg-slate-100 text-slate-700 py-3 rounded-xl mb-2">📄 Exporter le CIL</button>
 <button onclick="shareCIL()" class="w-full bg-slate-100 text-slate-700 py-3 rounded-xl">🔗 Partager le CIL</button>
@@ -180,7 +180,7 @@ window.onerror = function(msg, url, line) {
 <div id="page-equipment" class="page">
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-bold">Équipements</h2>
-        <button onclick="openModal('modal-equipment')" class="bg-cil-blue text-white px-4 py-2 rounded-lg">+ Ajouter</button>
+        <button onclick="openModal('modal-equipment')" class="bg-cil-blue text-white px-6 py-4 rounded-xl min-h-[48px]">+ Ajouter</button>
     </div>
     <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
         <button onclick="filterEquipment('all')" class="px-3 py-1 rounded-full bg-cil-blue text-white text-sm" data-efilter="all">Tous</button>
@@ -195,7 +195,7 @@ window.onerror = function(msg, url, line) {
 <div id="page-documents" class="page">
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-bold">Documents</h2>
-        <button onclick="showPage('upload')" class="bg-cil-blue text-white px-4 py-2 rounded-lg">+ Ajouter</button>
+        <button onclick="showPage('upload')" class="bg-cil-blue text-white px-6 py-4 rounded-xl min-h-[48px]">+ Ajouter</button>
     </div>
     <div class="flex gap-2 mb-4 overflow-x-auto pb-2">
         <button onclick="filterDocuments('all')" class="px-3 py-1 rounded-full bg-cil-blue text-white text-sm" data-dfilter="all">Tous</button>
@@ -406,7 +406,7 @@ function closeModal(id){document.getElementById(id).classList.remove('active')}
 function saveProperty(){
     const editId=document.getElementById('prop-edit-id').value;
     const addr=document.getElementById('prop-address').value.trim();
-    if(!addr){alert('Adresse requise');return} if(!editId&&!checkLimit('properties')){showUpgradeModal();return}
+    if(!addr){showToast('Adresse requise','warning');return} if(!editId&&!checkLimit('properties')){showUpgradeModal();return}
     
     // Géocodage adresse
     fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(addr)}&limit=1`)
@@ -465,10 +465,10 @@ function deleteProperty(id){if(!confirm('Supprimer ?'))return;state.properties=s
 
 // Equipment
 function saveEquipment(){
-    if(!state.currentPropertyId){alert('Sélectionnez un bien');return}
+    if(!state.currentPropertyId){showToast('Sélectionnez un bien','info');return}
     const editId=document.getElementById('eq-edit-id').value;
     const name=document.getElementById('eq-name').value.trim();
-    if(!name){alert('Nom requis');return}
+    if(!name){showToast('Nom requis','warning');return}
     const type=document.getElementById('eq-type').value;
     const purchaseDate=document.getElementById('eq-purchase-date').value;
     const warranty=parseInt(document.getElementById('eq-warranty').value)||0;
@@ -510,11 +510,11 @@ function filterEquipment(f){currentFilter=f;document.querySelectorAll('[data-efi
 
 // Documents & Upload
 function setupUpload(){const dropZone=document.getElementById('drop-zone');const fileInput=document.getElementById('file-input');dropZone.onclick=()=>fileInput.click();dropZone.ondragover=e=>{e.preventDefault();dropZone.classList.add('bg-blue-50')};dropZone.ondragleave=()=>dropZone.classList.remove('bg-blue-50');dropZone.ondrop=e=>{e.preventDefault();dropZone.classList.remove('bg-blue-50');handleFiles(e.dataTransfer.files)};fileInput.onchange=e=>handleFiles(e.target.files)}
-function handleFiles(files){if(!state.currentPropertyId){alert('Sélectionnez un bien');showPage('properties');return}for(const f of files)processFile(f)}
+function handleFiles(files){if(!state.currentPropertyId){showToast('Sélectionnez un bien','info');showPage('properties');return}for(const f of files)processFile(f)}
 function processFile(file){document.getElementById('upload-progress').classList.remove('hidden');document.getElementById('upload-filename').textContent=file.name;document.getElementById('upload-bar').style.width='50%';const reader=new FileReader();reader.onload=e=>{pendingUpload={name:file.name,size:file.size,type:file.type,data:e.target.result};document.getElementById('upload-bar').style.width='100%';document.getElementById('upload-form').classList.remove('hidden');populateEquipmentSelect()};reader.readAsDataURL(file)}
 function populateEquipmentSelect(){const sel=document.getElementById('upload-eq-id');const eq=state.equipment[state.currentPropertyId]||[];sel.innerHTML='<option value="">-- Aucun --</option>'+eq.map(e=>`<option value="${e.id}">${e.icon} ${e.name}</option>`).join('')}
 function toggleUploadFields(){const t=document.getElementById('upload-type').value;document.getElementById('diag-type-container').classList.toggle('hidden',t!=='diagnostic');document.getElementById('eq-associate-container').classList.toggle('hidden',t!=='facture'&&t!=='notice');document.getElementById('amount-container').classList.toggle('hidden',t!=='facture'&&t!=='travaux')}
-function saveUploadedDocument(){if(!state.currentPropertyId||!pendingUpload){alert('Erreur');return} const editId=document.getElementById('upload-form').dataset.editId; if(!editId&&!checkLimit('documents')){showUpgradeModal();return}
+function saveUploadedDocument(){if(!state.currentPropertyId||!pendingUpload){showToast('Une erreur est survenue','error');return} const editId=document.getElementById('upload-form').dataset.editId; if(!editId&&!checkLimit('documents')){showUpgradeModal();return}
     const editId=document.getElementById('upload-form').dataset.editId;
     const type=document.getElementById('upload-type').value;
     
@@ -565,7 +565,7 @@ function saveUploadedDocument(){if(!state.currentPropertyId||!pendingUpload){ale
     document.getElementById('upload-form').classList.add('hidden');
     showPage('documents');
 }
-function downloadDocument(id){const d=(state.documents[state.currentPropertyId]||[]).find(x=>x.id===id);if(!d||!d.filedata){alert('Fichier indisponible');return}const a=document.createElement('a');a.href=d.filedata;a.download=d.filename;a.click()}
+function downloadDocument(id){const d=(state.documents[state.currentPropertyId]||[]).find(x=>x.id===id);if(!d||!d.filedata){showToast('Fichier indisponible','error');return}const a=document.createElement('a');a.href=d.filedata;a.download=d.filename;a.click()}
 function deleteDocument(id){if(!confirm('Supprimer ?'))return;state.documents[state.currentPropertyId]=state.documents[state.currentPropertyId].filter(d=>d.id!==id);saveState();updateUI()}
 function filterDocuments(f){currentFilter=f;document.querySelectorAll('[data-dfilter]').forEach(b=>{b.className=b.getAttribute('data-dfilter')===f?'px-3 py-1 rounded-full bg-cil-blue text-white text-sm':'px-3 py-1 rounded-full bg-slate-200 text-slate-700 text-sm'});updateDocumentsPage()}
 
@@ -638,7 +638,7 @@ function updateAlertsPage(){const list=document.getElementById('alerts-list');co
 function daysUntil(dateStr){if(!dateStr)return null;const today=new Date();today.setHours(0,0,0,0);const target=new Date(dateStr);target.setHours(0,0,0,0);return Math.ceil((target-today)/(1000*60*60*24))}
 function shareCIL(){
 const p=state.properties.find(x=>x.id===state.currentPropertyId);
-if(!p){alert('Sélectionnez un bien');return}
+if(!p){showToast('Sélectionnez un bien','info');return}
 const shareData={
 title:'CIL - '+p.address,
 text:'Carnet d'Information Logement pour '+p.address,
@@ -660,6 +660,26 @@ if(!localStorage.getItem('cilia-onboarded')){
 document.getElementById('modal-onboarding').classList.add('active');
 }
 });
+</script>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container" class="fixed top-4 right-4 z-[200] space-y-2"></div>
+<script>
+function showToast(message, type='info', duration=3000){
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    const colors = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        warning: 'bg-amber-500',
+        info: 'bg-cil-blue'
+    };
+    toast.className = `${colors[type]||'bg-cil-blue'} text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 transform translate-x-full transition-transform duration-300`;
+    toast.innerHTML = `<span>${message}</span><button onclick="this.parentElement.remove()" class="ml-2 opacity-70 hover:opacity-100">✕</button>`;
+    container.appendChild(toast);
+    setTimeout(()=>toast.classList.remove('translate-x-full'), 10);
+    setTimeout(()=>{toast.classList.add('translate-x-full');setTimeout(()=>toast.remove(),300)}, duration);
+}
 </script>
 </body>
 </html>
