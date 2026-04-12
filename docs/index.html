@@ -294,6 +294,17 @@
     </div>
 </div>
 
+<!-- MODAL: DÉTAIL ÉQUIPEMENT AVEC DOCUMENTS -->
+<div id="modal-equipment-detail" class="modal">
+    <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="p-4 border-b flex justify-between items-center">
+            <h3 class="font-bold text-lg" id="eq-detail-title">Équipement</h3>
+            <button onclick="closeModal('modal-equipment-detail')" class="text-slate-400">✕</button>
+        </div>
+        <div class="p-4" id="eq-detail-content"></div>
+    </div>
+</div>
+
 <!-- NAVIGATION -->
 <nav class="fixed bottom-0 left-0 right-0 bg-white border-t">
     <div class="max-w-lg mx-auto flex justify-around py-2">
@@ -450,7 +461,46 @@ function filterDocuments(f){currentFilter=f;document.querySelectorAll('[data-dfi
 function updateUI(){updatePropertiesPage();updateHomePage();updateEquipmentPage();updateDocumentsPage();updateAlertsPage()}
 function updatePropertiesPage(){const list=document.getElementById('properties-list');const noProp=document.getElementById('no-property');if(state.properties.length===0){list.innerHTML='';noProp.classList.remove('hidden');return}noProp.classList.add('hidden');list.innerHTML=state.properties.map(p=>`<div class="bg-white rounded-xl shadow p-4 ${state.currentPropertyId===p.id?'ring-2 ring-cil-blue':''}"><div class="flex justify-between items-start"><div><h3 class="font-semibold">${p.type}</h3><p class="text-sm text-slate-500">${p.address}</p>${p.surface?`<p class="text-xs text-slate-400">${p.surface} m²</p>`:''}<span class="inline-block mt-1 px-2 py-0.5 rounded text-xs ${p.role==='proprietaire'?'bg-blue-100 text-blue-800':'bg-green-100 text-green-800'}">${p.role}</span></div><div class="flex gap-2 items-center">${state.currentPropertyId!==p.id?`<button onclick="selectProperty('${p.id}')" class="text-cil-blue text-sm">Sélectionner</button>`:'<span class="text-green-600 text-sm">✓</span>'}${p.role==='proprietaire'?`<button onclick="editProperty('${p.id}')" class="text-amber-500 text-sm">✎</button>`:''}<button onclick="deleteProperty('${p.id}')" class="text-red-400">✕</button></div></div></div>`).join('')}
 function updateHomePage(){const noProp=document.getElementById('home-no-property');const content=document.getElementById('home-content');const currProp=document.getElementById('current-property');if(!state.currentPropertyId){noProp.classList.remove('hidden');content.classList.add('hidden');currProp.textContent='Sélectionner';return}noProp.classList.add('hidden');content.classList.remove('hidden');const p=state.properties.find(x=>x.id===state.currentPropertyId);if(p){document.getElementById('property-title').textContent=p.type;document.getElementById('property-address-display').textContent=p.address;currProp.textContent=p.address.split(',')[0]}const eqCount=(state.equipment[state.currentPropertyId]||[]).length;const docCount=(state.documents[state.currentPropertyId]||[]).length;const alertCount=generateAlerts().length;document.getElementById('eq-count-home').textContent=eqCount;document.getElementById('doc-count-home').textContent=docCount;document.getElementById('alert-count-home').textContent=alertCount;document.getElementById('eq-stat').textContent=eqCount;document.getElementById('doc-stat').textContent=docCount;if(alertCount>0){document.getElementById('alert-badge').textContent=alertCount;document.getElementById('alert-badge').classList.remove('hidden')}else{document.getElementById('alert-badge').classList.add('hidden')}}
-function updateEquipmentPage(){const list=document.getElementById('equipment-list');const noEq=document.getElementById('no-equipment');let eq=state.equipment[state.currentPropertyId]||[];if(currentFilter!=='all')eq=eq.filter(e=>e.responsable===currentFilter);if(eq.length===0){list.innerHTML='';noEq.classList.remove('hidden');return}noEq.classList.add('hidden');list.innerHTML=eq.map(e=>{const warrantyStatus=e.warrantyEnd?daysUntil(e.warrantyEnd):null;const maintStatus=e.nextMaintenance?daysUntil(e.nextMaintenance):null;return`<div class="bg-white rounded-xl shadow p-4 ${maintStatus!==null&&maintStatus<0?'card-urgent':maintStatus!==null&&maintStatus<30?'card-warning':''}"><div class="flex justify-between items-start"><div><div class="flex items-center gap-2"><span class="text-2xl">${e.icon}</span><div><h3 class="font-semibold">${e.name}</h3>${e.brand||e.model?`<p class="text-sm text-slate-500">${e.brand||''} ${e.model||''}</p>`:''}</div></div>${e.purchaseDate?`<p class="text-xs text-slate-400 mt-1">Acheté: ${new Date(e.purchaseDate).toLocaleDateString('fr-FR')}</p>`:''}${e.warrantyEnd?`<p class="text-xs ${warrantyStatus<0?'text-red-600':warrantyStatus<30?'text-amber-600':'text-slate-400'}">Garantie: ${new Date(e.warrantyEnd).toLocaleDateString('fr-FR')} ${warrantyStatus<0?'(Expirée)':warrantyStatus<30?'(Expire bientôt)':''}</p>`:''}${e.nextMaintenance?`<p class="text-xs ${maintStatus<0?'text-red-600':maintStatus<30?'text-amber-600':'text-slate-400'} mt-1">Entretien: ${new Date(e.nextMaintenance).toLocaleDateString('fr-FR')} ${maintStatus<0?'(En retard)':maintStatus<30?'(À ven</p>`:''}<span class="inline-block mt-1 px-2 py-0.5 rounded text-xs ${e.responsable==='proprietaire'?'bg-blue-100 text-blue-800':'bg-green-100 text-green-800'}">${e.responsable}</span></div><div class="flex gap-2"><button onclick="editEquipment('${e.id}')" class="text-amber-500">✎</button><button onclick="deleteEquipment('${e.id}')" class="text-red-400">✕</button></div></div></div>`}).join('')}
+function updateEquipmentPage(){const list=document.getElementById('equipment-list');const noEq=document.getElementById('no-equipment');let eq=state.equipment[state.currentPropertyId]||[];if(currentFilter!=='all')eq=eq.filter(e=>e.responsable===currentFilter);if(eq.length===0){list.innerHTML='';noEq.classList.remove('hidden');return}noEq.classList.add('hidden');list.innerHTML=eq.map(e=>{const warrantyStatus=e.warrantyEnd?daysUntil(e.warrantyEnd):null;const maintStatus=e.nextMaintenance?daysUntil(e.nextMaintenance):null;const docs=(state.documents[state.currentPropertyId]||[]).filter(d=>d.equipmentId===e.id);const docCount=docs.length;return`<div class="bg-white rounded-xl shadow p-4 ${maintStatus!==null&&maintStatus<0?'card-urgent':maintStatus!==null&&maintStatus<30?'card-warning':''}"><div class="flex justify-between items-start cursor-pointer" onclick="showEquipmentDetail('${e.id}')"><div><div class="flex items-center gap-2"><span class="text-2xl">${e.icon}</span><div><h3 class="font-semibold">${e.name}</h3>${e.brand||e.model?`<p class="text-sm text-slate-500">${e.brand||''} ${e.model||''}</p>`:''}</div></div>${e.purchaseDate?`<p class="text-xs text-slate-400 mt-1">Acheté: ${new Date(e.purchaseDate).toLocaleDateString('fr-FR')}</p>`:''}${e.warrantyEnd?`<p class="text-xs ${warrantyStatus<0?'text-red-600':warrantyStatus<30?'text-amber-600':'text-slate-400'}">Garantie: ${new Date(e.warrantyEnd).toLocaleDateString('fr-FR')} ${warrantyStatus<0?'(Expirée)':warrantyStatus<30?'(Expire bientôt)':''}</p>`:''}${e.nextMaintenance?`<p class="text-xs ${maintStatus<0?'text-red-600':maintStatus<30?'text-amber-600':'text-slate-400'} mt-1">Entretien: ${new Date(e.nextMaintenance).toLocaleDateString('fr-FR')} ${maintStatus<0?'(En retard)':''}</p>`:''}${docCount>0?`<p class="text-xs text-cil-blue mt-1">📎 ${docCount} document(s)</p>`:''}<span class="inline-block mt-1 px-2 py-0.5 rounded text-xs ${e.responsable==='proprietaire'?'bg-blue-100 text-blue-800':'bg-green-100 text-green-800'}">${e.responsable}</span></div></div><div class="flex gap-2 mt-2 pt-2 border-t"><button onclick="event.stopPropagation();editEquipment('${e.id}')" class="text-amber-500 text-sm">✎ Modifier</button><button onclick="event.stopPropagation();deleteEquipment('${e.id}')" class="text-red-400 text-sm">✕ Supprimer</button></div></div>`}).join('')}
+function showEquipmentDetail(id){
+    const e=(state.equipment[state.currentPropertyId]||[]).find(x=>x.id===id);
+    if(!e)return;
+    const docs=(state.documents[state.currentPropertyId]||[]).filter(d=>d.equipmentId===id);
+    document.getElementById('eq-detail-title').innerHTML=`${e.icon} ${e.name}`;
+    document.getElementById('eq-detail-content').innerHTML=`
+        <div class="space-y-3">
+            ${e.brand?`<p><strong>Marque:</strong> ${e.brand}</p>`:''}
+            ${e.model?`<p><strong>Modèle:</strong> ${e.model}</p>`:''}
+            ${e.purchaseDate?`<p><strong>Date achat:</strong> ${new Date(e.purchaseDate).toLocaleDateString('fr-FR')}</p>`:''}
+            ${e.warrantyEnd?`<p><strong>Garantie:</strong> ${new Date(e.warrantyEnd).toLocaleDateString('fr-FR')}</p>`:''}
+            ${e.nextMaintenance?`<p><strong>Prochain entretien:</strong> ${new Date(e.nextMaintenance).toLocaleDateString('fr-FR')}</p>`:''}
+            ${e.notes?`<p><strong>Notes:</strong> ${e.notes}</p>`:''}
+            
+            <div class="border-t pt-3 mt-3">
+                <h4 class="font-semibold mb-2">📎 Documents (${docs.length})</h4>
+                ${docs.length>0?docs.map(d=>`<div class="flex justify-between items-center py-1"><span>${DOC_ICONS[d.type]||'📎'} ${d.filename}</span><button onclick="downloadDocument('${d.id}')" class="text-cil-blue text-sm">⬇</button></div>`).join(''):'<p class="text-slate-400 text-sm">Aucun document</p>'}
+                <button onclick="attachDocToEq('${id}')" class="w-full mt-2 bg-slate-100 text-slate-700 py-2 rounded-lg text-sm">+ Ajouter un document</button>
+            </div>
+        </div>
+    `;
+    openModal('modal-equipment-detail');
+}
+function attachDocToEq(eqId){
+    closeModal('modal-equipment-detail');
+    pendingUpload=null;
+    document.getElementById('upload-form').dataset.editId='';
+    document.getElementById('upload-type').value='';
+    document.getElementById('upload-diag-type').value='dpe';
+    document.getElementById('upload-date').value='';
+    document.getElementById('upload-amount').value='';
+    document.getElementById('upload-notes').value='';
+    populateEquipmentSelect();
+    document.getElementById('upload-eq-id').value=eqId;
+    document.getElementById('upload-progress').classList.add('hidden');
+    document.getElementById('upload-form').classList.remove('hidden');
+    document.getElementById('upload-filename').textContent='Sélectionnez un fichier';
+    showPage('upload');
+}
 function updateDocumentsPage(){const list=document.getElementById('documents-list');const noDoc=document.getElementById('no-document');let docs=state.documents[state.currentPropertyId]||[];if(currentFilter!=='all')docs=docs.filter(d=>d.type===currentFilter);if(docs.length===0){list.innerHTML='';noDoc.classList.remove('hidden');return}noDoc.classList.add('hidden');list.innerHTML=docs.map(d=>`<div class="bg-white rounded-xl shadow p-4"><div class="flex justify-between items-start"><div class="flex-1"><div class="flex items-center gap-2"><span class="text-2xl">${DOC_ICONS[d.type]||'📎'}</span><div><h3 class="font-semibold">${d.type==='diagnostic'?(d.diagType||'DPE').toUpperCase():d.type}</h3><p class="text-sm text-slate-500">${d.filename}</p></div></div>${d.date?`<p class="text-xs text-slate-400 mt-1">📅 ${new Date(d.date).toLocaleDateString('fr-FR')}</p>`:''}${d.amount?`<p class="text-xs text-slate-400">💰 ${d.amount} €</p>`:''}${d.equipmentId?`<p class="text-xs text-slate-400">📎 ${(state.equipment[state.currentPropertyId]||[]).find(e=>e.id===d.equipmentId)?.name||''}</p>`:''}</div><div class="flex gap-2"><button onclick="editDocument('${d.id}')" class="text-amber-500">✎</button><button onclick="downloadDocument('${d.id}')" class="bg-cil-blue text-white px-3 py-1 rounded text-sm">⬇</button><button onclick="deleteDocument('${d.id}')" class="text-red-400">✕</button></div></div></div>`).join('')}
 function editDocument(id){
     const d=(state.documents[state.currentPropertyId]||[]).find(x=>x.id===id);
