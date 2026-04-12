@@ -113,13 +113,17 @@
             <option value="autre">📎 Autre</option>
         </select>
         <div id="diag-type-container" class="hidden mb-2">
-            <select id="upload-diag-type" class="w-full p-2 border rounded-lg">
-                <option value="dpe">DPE</option>
-                <option value="electricite">Électricité</option>
-                <option value="gaz">Gaz</option>
-                <option value="plomb">Plomb</option>
-                <option value="amiante">Amiante</option>
-            </select>
+            <label class="block text-sm font-medium mb-1">Diagnostics inclus</label>
+            <div class="space-y-1">
+                <label class="flex items-center gap-2"><input type="checkbox" id="diag-dpe" checked> DPE</label>
+                <label class="flex items-center gap-2"><input type="checkbox" id="diag-electricite"> Électricité</label>
+                <label class="flex items-center gap-2"><input type="checkbox" id="diag-gaz"> Gaz</label>
+                <label class="flex items-center gap-2"><input type="checkbox" id="diag-plomb"> Plomb</label>
+                <label class="flex items-center gap-2"><input type="checkbox" id="diag-amiante"> Amiante</label>
+                <label class="flex items-center gap-2"><input type="checkbox" id="diag-termites"> Termites</label>
+                <label class="flex items-center gap-2"><input type="checkbox" id="diag-erp"> ERP</label>
+                <label class="flex items-center gap-2"><input type="checkbox" id="diag-carrez"> Carrez</label>
+            </div>
         </div>
         <div id="eq-associate-container" class="hidden mb-2">
             <label class="block text-sm font-medium mb-1">Équipement associé</label>
@@ -452,15 +456,47 @@ function populateEquipmentSelect(){const sel=document.getElementById('upload-eq-
 function toggleUploadFields(){const t=document.getElementById('upload-type').value;document.getElementById('diag-type-container').classList.toggle('hidden',t!=='diagnostic');document.getElementById('eq-associate-container').classList.toggle('hidden',t!=='facture'&&t!=='notice');document.getElementById('amount-container').classList.toggle('hidden',t!=='facture'&&t!=='travaux')}
 function saveUploadedDocument(){if(!state.currentPropertyId||!pendingUpload){alert('Erreur');return}
     const editId=document.getElementById('upload-form').dataset.editId;
-    const d={type:document.getElementById('upload-type').value,diagType:document.getElementById('upload-diag-type').value,equipmentId:document.getElementById('upload-eq-id').value,date:document.getElementById('upload-date').value,amount:document.getElementById('upload-amount').value,notes:document.getElementById('upload-notes').value,filename:pendingUpload.name,filedata:pendingUpload.data,updatedAt:new Date().toISOString()};
+    const type=document.getElementById('upload-type').value;
     
-    if(editId){
-        const doc=state.documents[state.currentPropertyId].find(x=>x.id===editId);
-        if(doc){Object.assign(doc,d);doc.id=editId}
+    if(type==='diagnostic'&&!editId){
+        // Multi-diagnostic: créer un document par diagnostic coché
+        const diagTypes=[];
+        if(document.getElementById('diag-dpe').checked)diagTypes.push('dpe');
+        if(document.getElementById('diag-electricite').checked)diagTypes.push('electricite');
+        if(document.getElementById('diag-gaz').checked)diagTypes.push('gaz');
+        if(document.getElementById('diag-plomb').checked)diagTypes.push('plomb');
+        if(document.getElementById('diag-amiante').checked)diagTypes.push('amiante');
+        if(document.getElementById('diag-termites').checked)diagTypes.push('termites');
+        if(document.getElementById('diag-erp').checked)diagTypes.push('erp');
+        if(document.getElementById('diag-carrez').checked)diagTypes.push('carrez');
+        
+        if(diagTypes.length===0){alert('Sélectionnez au moins un diagnostic');return}
+        
+        const baseDoc={
+            type:'diagnostic',
+            equipmentId:document.getElementById('upload-eq-id').value,
+            date:document.getElementById('upload-date').value,
+            notes:document.getElementById('upload-notes').value,
+            filename:pendingUpload.name,
+            filedata:pendingUpload.data,
+            createdAt:new Date().toISOString()
+        };
+        
+        diagTypes.forEach(dt=>{
+            const d={...baseDoc,id:Date.now().toString()+dt,diagType:dt};
+            state.documents[state.currentPropertyId].push(d);
+        });
     }else{
-        d.id=Date.now().toString();
-        d.createdAt=new Date().toISOString();
-        state.documents[state.currentPropertyId].push(d);
+        const d={type:type,diagType:type==='diagnostic'?'dpe':'',equipmentId:document.getElementById('upload-eq-id').value,date:document.getElementById('upload-date').value,amount:document.getElementById('upload-amount').value,notes:document.getElementById('upload-notes').value,filename:pendingUpload.name,filedata:pendingUpload.data,updatedAt:new Date().toISOString()};
+        
+        if(editId){
+            const doc=state.documents[state.currentPropertyId].find(x=>x.id===editId);
+            if(doc){Object.assign(doc,d);doc.id=editId}
+        }else{
+            d.id=Date.now().toString();
+            d.createdAt=new Date().toISOString();
+            state.documents[state.currentPropertyId].push(d);
+        }
     }
     saveState();
     pendingUpload=null;
