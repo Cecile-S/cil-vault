@@ -542,7 +542,7 @@ function attachDocToEq(eqId){
     pendingUpload=null;
     document.getElementById('upload-form').dataset.editId='';
     document.getElementById('upload-type').value='';
-    document.getElementById('upload-diag-type').value='dpe';
+    
     document.getElementById('upload-date').value='';
     document.getElementById('upload-amount').value='';
     document.getElementById('upload-notes').value='';
@@ -559,7 +559,7 @@ function editDocument(id){
     if(!d)return;
     pendingUpload={name:d.filename,data:d.filedata,type:d.filetype||'application/pdf'};
     document.getElementById('upload-type').value=d.type;
-    document.getElementById('upload-diag-type').value=d.diagType||'dpe';
+    
     document.getElementById('upload-date').value=d.date||'';
     document.getElementById('upload-amount').value=d.amount||'';
     document.getElementById('upload-notes').value=d.notes||'';
