@@ -23,6 +23,21 @@ window.onerror = function(msg, url, line) {
 };
 </script>
     <script>tailwind.config={theme:{extend:{colors:{'cil-blue':'#1e40af'}}}}</script>
+<script>
+// CRITICAL: Define before body
+function showPage(p){
+    document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+    const el=document.getElementById('page-'+p);
+    if(el) el.classList.add('active');
+    document.querySelectorAll('nav a').forEach(x=>x.classList.remove('active'));
+    const nav=document.querySelector(`nav a[data-page="${p}"]`);
+    if(nav) nav.classList.add('active');
+}
+function openModal(id){document.getElementById(id).classList.add('active')}
+function closeModal(id){document.getElementById(id).classList.remove('active')}
+function showUpgradeModal(){document.getElementById('modal-upgrade').classList.add('active')}
+</script>
+
     <style>
         .page{display:none}.page.active{display:block}
         nav a.active{color:#1e40af;background-color:#eff6ff}
