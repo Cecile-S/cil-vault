@@ -80,7 +80,8 @@
         </div>
         <button onclick="showPage('upload')" class="w-full bg-cil-blue text-white py-3 rounded-xl font-medium mb-3">📤 Ajouter un document</button>
         <button onclick="openModal('modal-equipment')" class="w-full bg-white text-cil-blue border-2 border-cil-blue py-3 rounded-xl font-medium mb-3">🔧 Ajouter un équipement</button>
-        <button onclick="exportCIL()" class="w-full bg-slate-100 text-slate-700 py-3 rounded-xl">📄 Exporter le CIL</button>
+        <button onclick="exportCIL()" class="w-full bg-slate-100 text-slate-700 py-3 rounded-xl mb-2">📄 Exporter le CIL</button>
+<button onclick="shareCIL()" class="w-full bg-slate-100 text-slate-700 py-3 rounded-xl">🔗 Partager le CIL</button>
     </div>
 </div>
 
@@ -626,6 +627,23 @@ function editDocument(id){
 function generateAlerts(){const alerts=[];const today=new Date();const propId=state.currentPropertyId;const roleFilter=document.getElementById('alert-role-filter')?document.getElementById('alert-role-filter').value:'all';const prop=state.properties.find(p=>p.id===propId);const isLocation=prop&&prop.role==='locataire';const isProprietaire=prop&&prop.role==='proprietaire';const eq=state.equipment[propId]||[];const docs=state.documents[propId]||[];eq.forEach(e=>{if(e.nextMaintenance){const days=daysUntil(e.nextMaintenance);if(days<=30&&(roleFilter==='all'||roleFilter===e.responsable))alerts.push({id:'eq-'+e.id,title:`${e.icon} ${e.name}`,message:days<0?`En retard de ${Math.abs(days)} jours`:`Dans ${days} jours`,urgent:days<0,responsable:e.responsable});if(days<0&&e.responsable==='locataire'&&isProprietaire&&roleFilter==='all')alerts.push({id:'eq-loc-'+e.id,title:`⚠️ ${e.icon} ${e.name} (locataire)`,message:`Entretien en retard de ${Math.abs(days)} jours - Contactez votre locataire`,urgent:true,responsable:'proprietaire',isOwnerAlert:true})}if(e.warrantyEnd){const days=daysUntil(e.warrantyEnd);if(days<=30&&(roleFilter==='all'||roleFilter===e.responsable))alerts.push({id:'warranty-'+e.id,title:`Garantie: ${e.name}`,message:days<0?`Expirée`:`Expire dans ${days} jours`,urgent:days<0,responsable:'proprietaire'})}});docs.filter(d=>d.type==='diagnostic').forEach(d=>{const years=isLocation?(DIAG_VALIDITY_RENT[d.diagType]||10):(DIAG_VALIDITY[d.diagType]||10);if(d.date){const date=new Date(d.date);const expiry=new Date(date);expiry.setFullYear(expiry.getFullYear()+years);const days=daysUntil(expiry.toISOString().split('T')[0]);if(days<=90&&(roleFilter==='all'||roleFilter==='proprietaire'))alerts.push({id:'diag-'+d.id,title:`📋 ${(d.diagType||'DPE').toUpperCase()}`,message:days<0?`Expiré depuis ${Math.abs(days)} jours`:`Expire dans ${days} jours`,urgent:days<0,responsable:'proprietaire'})}});return alerts.sort((a,b)=>b.urgent-a.urgent)}
 function updateAlertsPage(){const list=document.getElementById('alerts-list');const noAlert=document.getElementById('no-alert');const alerts=generateAlerts();if(alerts.length===0){list.innerHTML='';noAlert.classList.remove('hidden');return}noAlert.classList.add('hidden');list.innerHTML=alerts.map(a=>`<div class="bg-white rounded-xl shadow p-4 ${a.urgent?'card-urgent':a.warning?'card-warning':''}"><div class="flex justify-between items-center"><div><h3 class="font-semibold ${a.urgent?'text-red-600':''}">${a.title}</h3><p class="text-sm ${a.urgent?'text-red-500':'text-slate-500'}">${a.message}</p><span class="inline-block mt-1 px-2 py-0.5 rounded text-xs ${a.responsable==='proprietaire'?'bg-blue-100 text-blue-800':'bg-green-100 text-green-800'}">${a.responsable}</span></div></div></div>`).join('')}
 function daysUntil(dateStr){if(!dateStr)return null;const today=new Date();today.setHours(0,0,0,0);const target=new Date(dateStr);target.setHours(0,0,0,0);return Math.ceil((target-today)/(1000*60*60*24))}
+function shareCIL(){
+const p=state.properties.find(x=>x.id===state.currentPropertyId);
+if(!p){alert('Sélectionnez un bien');return}
+const shareData={
+title:'CIL - '+p.address,
+text:'Carnet d'Information Logement pour '+p.address,
+url:window.location.href
+};
+if(navigator.share){
+navigator.share(shareData).catch(()=>{});
+}else{
+// Fallback: copy to clipboard
+const text='CIL pour '+p.address+'
+'+Object.keys(state.equipment[state.currentPropertyId]||{}).length+' équipements, '+(state.documents[state.currentPropertyId]||[]).length+' documents';
+navigator.clipboard.writeText(text).then(()=>alert('Copié!')).catch(()=>alert('Copiez le lien: '+window.location.href));
+}
+}
 function exportCIL(){const p=state.properties.find(x=>x.id===state.currentPropertyId);const eq=state.equipment[state.currentPropertyId]||[];const docs=state.documents[state.currentPropertyId]||[];const lines=['══════════════════════════════════════════════════════','CARNET D\'INFORMATION LOGEMENT (CIL)','══════════════════════════════════════════════════════','',`📍 BIEN: ${p?p.address:'Non défini'}`,p&&p.surface?`   Surface: ${p.surface} m²`:'',p&&p.rooms?`   Pièces: ${p.rooms}`:'','','─── ÉQUIPEMENTS ───',...eq.map(e=>`   ${e.icon} ${e.name}${e.brand?` (${e.brand})`:''}${e.purchaseDate?` - Acheté: ${new Date(e.purchaseDate).toLocaleDateString('fr-FR')}`:''}${e.warrantyEnd?` - Garantie jusqu'au ${new Date(e.warrantyEnd).toLocaleDateString('fr-FR')}`:''}${e.nextMaintenance?` - Entretien: ${new Date(e.nextMaintenance).toLocaleDateString('fr-FR')}`:''}`),eq.length===0?'   Aucun équipement':'','─── DOCUMENTS ───',...docs.map(d=>`   ${DOC_ICONS[d.type]||'📎'} ${d.type==='diagnostic'?(d.diagType||'DPE').toUpperCase():d.type}${d.date?` (${new Date(d.date).toLocaleDateString('fr-FR')})`:''}`),docs.length===0?'   Aucun document':'','══════════════════════════════════════════════════════',`Généré par CILIA - ${new Date().toLocaleDateString('fr-FR')}`,'Carnet d\'Information Logement obligatoire (France 2023)','══════════════════════════════════════════════════════'];const blob=new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`CIL-${p?p.address.substring(0,30).replace(/[^a-zA-Z0-9]/g,'_'):'export'}-${new Date().toISOString().split('T')[0]}.txt`;a.click()}
 function showUpgradeModal(){document.getElementById("modal-upgrade").classList.add("active")} document.addEventListener("DOMContentLoaded",()=>{
 loadState();
