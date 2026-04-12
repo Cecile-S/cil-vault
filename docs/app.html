@@ -299,6 +299,24 @@
 </div>
 
 <!-- MODAL: DÉTAIL ÉQUIPEMENT AVEC DOCUMENTS -->
+<div id="modal-upgrade" class="modal">
+<div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+<div class="p-6 text-center">
+<div class="text-5xl mb-4">🚀</div>
+<h3 class="font-bold text-xl mb-2">Passez à CILIA Pro</h3>
+<p class="text-slate-600 mb-4">Limite gratuite atteinte.<br>Débloquez tout pour 9€/mois.</p>
+<ul class="text-left text-sm mb-4">
+<li>✓ Biens illimités</li>
+<li>✓ Documents illimités</li>
+<li>✓ Export PDF</li>
+<li>✓ Alertes email</li>
+</ul>
+<button onclick="localStorage.setItem('cilia-pro','1');document.getElementById('modal-upgrade').classList.remove('active');updateUI()" class="w-full bg-cil-blue text-white py-3 rounded-lg font-medium mb-2">Débloquer (test)</button>
+<button onclick="document.getElementById('modal-upgrade').classList.remove('active')" class="w-full text-slate-500 py-2">Plus tard</button>
+</div>
+</div>
+</div>
+<!-- MODAL: DÉTAIL ÉQUIPEMENT AVEC DOCUMENTS -->
 <div id="modal-equipment-detail" class="modal">
     <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
         <div class="p-4 border-b flex justify-between items-center">
@@ -327,6 +345,10 @@ const DIAG_VALIDITY_RENT={dpe:10,electricite:6,gaz:6,plomb:6,amiante:999,termite
 const EQ_ICONS={chaudiere:'🔥',pac:'🌡️',poele:'🔥','chauffe-eau':'🚿',vmc:'💨',piscine:'🏊',personnalise:'⚙️'};
 const DOC_ICONS={diagnostic:'📋',facture:'🧾',notice:'📖',attestation:'✅',travaux:'🔨',autre:'📎'};
 const EQ_PERIODS={chaudiere:12,pac:12,poele:12,'chauffe-eau':24,vmc:36,piscine:12};
+// Freemium limits
+const FREE_LIMITS={properties:1,documents:10,equipment:5};
+function isPro(){return localStorage.getItem('cilia-pro')==='1'}
+function checkLimit(type){if(isPro())return true;const counts={properties:state.properties.length,documents:(state.documents[state.currentPropertyId]||[]).length,equipment:(state.equipment[state.currentPropertyId]||[]).length};return counts[type]<FREE_LIMITS[type]}
 
 // State
 let state=JSON.parse(localStorage.getItem('cilia-v2')||'{"currentPropertyId":null,"properties":[],"equipment":{},"documents":{}}');
@@ -346,7 +368,7 @@ function closeModal(id){document.getElementById(id).classList.remove('active')}
 function saveProperty(){
     const editId=document.getElementById('prop-edit-id').value;
     const addr=document.getElementById('prop-address').value.trim();
-    if(!addr){alert('Adresse requise');return}
+    if(!addr){alert('Adresse requise');return} if(!editId&&!checkLimit('properties')){showUpgradeModal();return}
     
     // Géocodage adresse
     fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(addr)}&limit=1`)
@@ -454,7 +476,7 @@ function handleFiles(files){if(!state.currentPropertyId){alert('Sélectionnez un
 function processFile(file){document.getElementById('upload-progress').classList.remove('hidden');document.getElementById('upload-filename').textContent=file.name;document.getElementById('upload-bar').style.width='50%';const reader=new FileReader();reader.onload=e=>{pendingUpload={name:file.name,size:file.size,type:file.type,data:e.target.result};document.getElementById('upload-bar').style.width='100%';document.getElementById('upload-form').classList.remove('hidden');populateEquipmentSelect()};reader.readAsDataURL(file)}
 function populateEquipmentSelect(){const sel=document.getElementById('upload-eq-id');const eq=state.equipment[state.currentPropertyId]||[];sel.innerHTML='<option value="">-- Aucun --</option>'+eq.map(e=>`<option value="${e.id}">${e.icon} ${e.name}</option>`).join('')}
 function toggleUploadFields(){const t=document.getElementById('upload-type').value;document.getElementById('diag-type-container').classList.toggle('hidden',t!=='diagnostic');document.getElementById('eq-associate-container').classList.toggle('hidden',t!=='facture'&&t!=='notice');document.getElementById('amount-container').classList.toggle('hidden',t!=='facture'&&t!=='travaux')}
-function saveUploadedDocument(){if(!state.currentPropertyId||!pendingUpload){alert('Erreur');return}
+function saveUploadedDocument(){if(!state.currentPropertyId||!pendingUpload){alert('Erreur');return} const editId=document.getElementById('upload-form').dataset.editId; if(!editId&&!checkLimit('documents')){showUpgradeModal();return}
     const editId=document.getElementById('upload-form').dataset.editId;
     const type=document.getElementById('upload-type').value;
     
@@ -577,7 +599,7 @@ function generateAlerts(){const alerts=[];const today=new Date();const propId=st
 function updateAlertsPage(){const list=document.getElementById('alerts-list');const noAlert=document.getElementById('no-alert');const alerts=generateAlerts();if(alerts.length===0){list.innerHTML='';noAlert.classList.remove('hidden');return}noAlert.classList.add('hidden');list.innerHTML=alerts.map(a=>`<div class="bg-white rounded-xl shadow p-4 ${a.urgent?'card-urgent':a.warning?'card-warning':''}"><div class="flex justify-between items-center"><div><h3 class="font-semibold ${a.urgent?'text-red-600':''}">${a.title}</h3><p class="text-sm ${a.urgent?'text-red-500':'text-slate-500'}">${a.message}</p><span class="inline-block mt-1 px-2 py-0.5 rounded text-xs ${a.responsable==='proprietaire'?'bg-blue-100 text-blue-800':'bg-green-100 text-green-800'}">${a.responsable}</span></div></div></div>`).join('')}
 function daysUntil(dateStr){if(!dateStr)return null;const today=new Date();today.setHours(0,0,0,0);const target=new Date(dateStr);target.setHours(0,0,0,0);return Math.ceil((target-today)/(1000*60*60*24))}
 function exportCIL(){const p=state.properties.find(x=>x.id===state.currentPropertyId);const eq=state.equipment[state.currentPropertyId]||[];const docs=state.documents[state.currentPropertyId]||[];const lines=['══════════════════════════════════════════════════════','CARNET D\'INFORMATION LOGEMENT (CIL)','══════════════════════════════════════════════════════','',`📍 BIEN: ${p?p.address:'Non défini'}`,p&&p.surface?`   Surface: ${p.surface} m²`:'',p&&p.rooms?`   Pièces: ${p.rooms}`:'','','─── ÉQUIPEMENTS ───',...eq.map(e=>`   ${e.icon} ${e.name}${e.brand?` (${e.brand})`:''}${e.purchaseDate?` - Acheté: ${new Date(e.purchaseDate).toLocaleDateString('fr-FR')}`:''}${e.warrantyEnd?` - Garantie jusqu'au ${new Date(e.warrantyEnd).toLocaleDateString('fr-FR')}`:''}${e.nextMaintenance?` - Entretien: ${new Date(e.nextMaintenance).toLocaleDateString('fr-FR')}`:''}`),eq.length===0?'   Aucun équipement':'','─── DOCUMENTS ───',...docs.map(d=>`   ${DOC_ICONS[d.type]||'📎'} ${d.type==='diagnostic'?(d.diagType||'DPE').toUpperCase():d.type}${d.date?` (${new Date(d.date).toLocaleDateString('fr-FR')})`:''}`),docs.length===0?'   Aucun document':'','══════════════════════════════════════════════════════',`Généré par CILIA - ${new Date().toLocaleDateString('fr-FR')}`,'Carnet d\'Information Logement obligatoire (France 2023)','══════════════════════════════════════════════════════'];const blob=new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`CIL-${p?p.address.substring(0,30).replace(/[^a-zA-Z0-9]/g,'_'):'export'}-${new Date().toISOString().split('T')[0]}.txt`;a.click()}
-document.addEventListener('DOMContentLoaded',()=>{loadState();setupUpload()});
+function showUpgradeModal(){document.getElementById("modal-upgrade").classList.add("active")} document.addEventListener("DOMContentLoaded",()=>{loadState();setupUpload()});
 </script>
 </body>
 </html>
