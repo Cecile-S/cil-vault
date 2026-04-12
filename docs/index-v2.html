@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CILIA - Le carnet de santé de votre logement</title>
+<meta name="description" content="Centralisez tous vos documents logement : DPE, diagnostics, factures, manuels. Obligatoire depuis 2023. Gratuit, sans inscription.">
+<link rel="canonical" href="https://cecile-s.github.io/cil-vault/">
+<link rel="manifest" href="manifest.json">
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        cream: '#FEF7ED',
+        marine: '#1E3A5F',
+        terracotta: '#E07A5F',
+        sage: '#6B9080',
+        brick: '#C44536'
+      },
+      fontFamily: {
+        bricolage: ['Bricolage Grotesque', 'sans-serif'],
+        plex: ['IBM Plex Sans', 'sans-serif']
+      }
+    }
+  }
+}
+</script>
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+.hero-bg {
+  background: 
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 100px,
+      rgba(224, 122, 95, 0.03) 100px,
+      rgba(224, 122, 95, 0.03) 101px
+    ),
+    linear-gradient(to bottom, #FEF7ED 0%, #FFFFFF 50%, #FEF7ED 100%);
+}
+.stagger > * { animation: fadeUp 0.5s ease-out backwards; }
+.stagger > *:nth-child(1) { animation-delay: 0.1s; }
+.stagger > *:nth-child(2) { animation-delay: 0.2s; }
+.stagger > *:nth-child(3) { animation-delay: 0.3s; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body class="font-plex text-marine bg-cream">
+
+<!-- NAV -->
+<nav class="fixed top-0 w-full bg-cream/90 backdrop-blur-sm z-50 border-b border-terracotta/10">
+  <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+    <a href="/" class="font-bricolage font-bold text-xl text-marine">CILIA</a>
+    <div class="flex gap-6 items-center">
+      <a href="#comment-ca-marche" class="text-sm hover:text-terracotta transition hidden sm:block">Comment ça marche</a>
+      <a href="#tarifs" class="text-sm hover:text-terracotta transition hidden sm:block">Tarifs</a>
+      <a href="app.html" class="bg-terracotta text-white px-5 py-2.5 rounded-lg font-medium text-sm hover:bg-terracotta/90 transition">Créer mon carnet</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero-bg min-h-screen pt-24 pb-16 px-6">
+  <div class="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+    <!-- Text -->
+    <div class="stagger">
+      <p class="text-terracotta font-medium mb-4 tracking-wide uppercase text-sm">Obligatoire depuis 2023</p>
+      <h1 class="font-bricolage font-bold text-4xl md:text-5xl lg:text-6xl leading-tight mb-6">
+        Le carnet de santé<br>de votre logement
+      </h1>
+      <p class="text-lg md:text-xl text-marine/70 mb-8 max-w-lg">
+        Tous vos documents en un seul endroit. DPE, diagnostics, factures, manuels...
+        Prêt en 2 minutes pour votre vente ou location.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4">
+        <a href="app.html" class="bg-terracotta text-white px-8 py-4 rounded-xl font-bricolage font-semibold text-lg hover:bg-terracotta/90 transition text-center">
+          Créer gratuitement
+        </a>
+        <a href="#comment-ca-marche" class="border-2 border-marine/20 text-marine px-8 py-4 rounded-xl font-medium hover:border-marine/40 transition text-center">
+          Voir comment ça marche
+        </a>
+      </div>
+      <p class="mt-6 text-sm text-marine/50">
+        <span class="inline-flex items-center gap-2">
+          <i data-lucide="check" class="w-4 h-4"></i> Gratuit
+        </span>
+        <span class="mx-3">•</span>
+        <span class="inline-flex items-center gap-2">
+          <i data-lucide="check" class="w-4 h-4"></i> Sans inscription
+        </span>
+        <span class="mx-3">•</span>
+        <span class="inline-flex items-center gap-2">
+          <i data-lucide="shield-check" class="w-4 h-4"></i> Données sur votre téléphone
+        </span>
+      </p>
+    </div>
+    <!-- Illustration -->
+    <div class="relative">
+      <svg viewBox="0 0 400 300" class="w-full max-w-md mx-auto">
+        <!-- House illustration minimal -->
+        <rect x="100" y="120" width="200" height="150" fill="#FEF7ED" stroke="#1E3A5F" stroke-width="2"/>
+        <polygon points="100,120 200,50 300,120" fill="#E07A5F" stroke="#1E3A5F" stroke-width="2"/>
+        <!-- Windows -->
+        <rect x="130" y="150" width="50" height="40" fill="#6B9080" opacity="0.3" stroke="#1E3A5F" stroke-width="1.5"/>
+        <rect x="220" y="150" width="50" height="40" fill="#6B9080" opacity="0.3" stroke="#1E3A5F" stroke-width="1.5"/>
+        <!-- Door -->
+        <rect x="175" y="200" width="50" height="70" fill="#E07A5F" stroke="#1E3A5F" stroke-width="1.5"/>
+        <!-- Document floating -->
+        <g transform="translate(280, 80)">
+          <rect x="0" y="0" width="60" height="75" fill="white" stroke="#1E3A5F" stroke-width="1.5" rx="4"/>
+          <line x1="10" y1="15" x2="50" y2="15" stroke="#E07A5F" stroke-width="2"/>
+          <line x1="10" y1="28" x2="45" y2="28" stroke="#1E3A5F" opacity="0.3"/>
+          <line x1="10" y1="40" x2="48" y2="40" stroke="#1E3A5F" opacity="0.3"/>
+          <line x1="10" y1="52" x2="40" y2="52" stroke="#1E3A5F" opacity="0.3"/>
+        </g>
+        <!-- Check mark -->
+        <circle cx="320" cy="100" r="15" fill="#6B9080"/>
+        <polyline points="312,100 318,106 328,94" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- C'EST QUOI -->
+<section id="comment-ca-marche" class="py-20 px-6 bg-white">
+  <div class="max-w-4xl mx-auto">
+    <div class="text-center mb-16">
+      <p class="text-terracotta font-medium mb-2 text-sm uppercase tracking-wide">Simple et rapide</p>
+      <h2 class="font-bricolage font-bold text-3xl md:text-4xl">C'est quoi le Carnet d'Information Logement ?</h2>
+    </div>
+    
+    <div class="bg-cream rounded-2xl p-8 mb-12">
+      <p class="text-lg text-marine/80 mb-6">
+        Le <strong>Carnet d'Information Logement</strong> est un dossier qui centralise tous les documents de votre bien. 
+        C'est le "carnet de santé" de votre logement, obligatoire lors d'une vente depuis 2023.
+      </p>
+      <div class="grid sm:grid-cols-2 gap-6">
+        <div>
+          <h3 class="font-bricolage font-semibold mb-3">Ce qu'il contient :</h3>
+          <ul class="space-y-2 text-marine/70">
+            <li class="flex items-start gap-2">
+              <i data-lucide="file-text" class="w-5 h-5 text-terracotta mt-0.5"></i>
+              DPE et diagnostics obligatoires
+            </li>
+            <li class="flex items-start gap-2">
+              <i data-lucide="receipt" class="w-5 h-5 text-terracotta mt-0.5"></i>
+              Factures d'énergie (EDF, gaz...)
+            </li>
+            <li class="flex items-start gap-2">
+              <i data-lucide="book-open" class="w-5 h-5 text-terracotta mt-0.5"></i>
+              Manuels de vos équipements
+            </li>
+            <li class="flex items-start gap-2">
+              <i data-lucade="shield-check" class="w-5 h-5 text-terracotta mt-0.5"></i>
+              Garanties et contrats
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="font-bricolage font-semibold mb-3">Pourquoi c'est utile :</h3>
+          <ul class="space-y-2 text-marine/70">
+            <li class="flex items-start gap-2">
+              <i data-lucide="alert-triangle" class="w-5 h-5 text-brick mt-0.5"></i>
+              Éviter l'amende (jusqu'à 3750€)
+            </li>
+            <li class="flex items-start gap-2">
+              <i data-lucide="clock" class="w-5 h-5 text-sage mt-0.5"></i>
+              Gagner du temps en vente
+            </li>
+            <li class="flex items-start gap-2">
+              <i data-lucide="bell" class="w-5 h-5 text-sage mt-0.5"></i>
+              Rappels d'entretien automatiques
+            </li>
+            <li class="flex items-start gap-2">
+              <i data-lucide="trending-up" class="w-5 h-5 text-sage mt-0.5"></i>
+              Valoriser votre bien
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Steps - NOT 3 boxes -->
+    <div class="space-y-6">
+      <div class="flex gap-6 items-start p-6 bg-cream/50 rounded-xl border border-terracotta/10">
+        <div class="w-12 h-12 bg-terracotta text-white rounded-xl flex items-center justify-center font-bricolage font-bold text-xl shrink-0">1</div>
+        <div>
+          <h3 class="font-bricolage font-semibold text-lg mb-1">Créez votre carnet</h3>
+          <p class="text-marine/70">Ajoutez votre adresse et quelques infos de base. 2 minutes chrono.</p>
+        </div>
+      </div>
+      <div class="flex gap-6 items-start p-6 bg-cream/50 rounded-xl border border-terracotta/10">
+        <div class="w-12 h-12 bg-terracotta text-white rounded-xl flex items-center justify-center font-bricolage font-bold text-xl shrink-0">2</div>
+        <div>
+          <h3 class="font-bricolage font-semibold text-lg mb-1">Scannez vos documents</h3>
+          <p class="text-marine/70">DPE, factures, manuels... Prenez-les en photo, on les range pour vous.</p>
+        </div>
+      </div>
+      <div class="flex gap-6 items-start p-6 bg-cream/50 rounded-xl border border-terracotta/10">
+        <div class="w-12 h-12 bg-terracotta text-white rounded-xl flex items-center justify-center font-bricolage font-bold text-xl shrink-0">3</div>
+        <div>
+          <h3 class="font-bricolage font-semibold text-lg mb-1">Recevez des alertes</h3>
+          <p class="text-marine/70">On vous rappelle les échéances : entretien chaudière, expiration DPE...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TARIFS -->
+<section id="tarifs" class="py-20 px-6 bg-cream">
+  <div class="max-w-5xl mx-auto">
+    <div class="text-center mb-12">
+      <p class="text-terracotta font-medium mb-2 text-sm uppercase tracking-wide">Tarifs simples</p>
+      <h2 class="font-bricolage font-bold text-3xl md:text-4xl">Combien ça coûte ?</h2>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6">
+      <!-- Gratuit -->
+      <div class="bg-white rounded-2xl p-6 border border-marine/10">
+        <h3 class="font-bricolage font-semibold text-xl mb-2">Gratuit</h3>
+        <div class="font-bricolage font-bold text-4xl mb-4">0€</div>
+        <p class="text-marine/60 text-sm mb-6">Pour commencer sans risque</p>
+        <ul class="space-y-3 mb-8">
+          <li class="flex items-center gap-2 text-sm">
+            <i data-lucide="check" class="w-4 h-4 text-sage"></i>
+            1 bien immobilier
+          </li>
+          <li class="flex items-center gap-2 text-sm">
+            <i data-lucide="check" class="w-4 h-4 text-sage"></i>
+            15 documents
+          </li>
+          <li class="flex items-center gap-2 text-sm">
+            <i data-lucide="check" class="w-4 h-4 text-sage"></i>
+            Alertes basiques
+          </li>
+          <li class="flex items-center gap-2 text-sm">
+            <i data-lucide="check" class="w-4 h-4 text-sage"></i>
+            Export texte
+          </li>
+        </ul>
+        <a href="app.html" class="block w-full text-center bg-marine/5 text-marine py-3 rounded-lg font-medium hover:bg-marine/10 transition">
+          Commencer
+        </a>
+      </div>
+
+      <!-- Pro -->
+      <div class="bg-marine text-white rounded-2xl p-6 relative">
+        <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-terracotta text-white px-4 py-1 rounded-full text-xs font-medium">
+          Populaire
+        </div>
+        <h3 class="font-bricolage font-semibold text-xl mb-2">Pro</h3>
+        <div class="font-bricolage font-bold text-4xl mb-1">19€</div>
+        <p class="text-white/60 text-sm mb-6">par an • moins que le forfait fiscal</p>
+        <ul class="space-y-3 mb-8">
+          <li class="flex items-center gap-2 text-sm">
+            <i data-lucide="check" class="w-4 h-4 text-terracotta"></i>
+            Biens illimités
+          </li>
+          <li class="flex items-center gap-2 text-sm">
+            <i data-lucide="check" class="w-4 h-4 text-terracotta"></i>
+            Documents illimités
+          </li>
+          <li class="flex items-center gap-2 text-sm">
+            <i data-lucide="check" class="w-4 h-4 text-terracotta"></i>
+            Alertes email
+          </li>
+          <li class="flex items-center gap-2 text-sm">
+            <i data-lucide="check" class="w-4 h-4 text-terracotta"></i>
+            Export PDF
+          </li>
+          <li class="flex items-center gap-2 text-sm">
+            <i data-lucide="check" class="w-4 h-4 text-terracotta"></i>
+            Partage notaire/agence
+          </li>
+        </ul>
+        <button class="w-full bg-terracotta text-white py-3 rounded-lg font-medium hover:bg-terracotta/90 transition" onclick="alert('Inscription bientôt disponible')">
+          S'inscrire
+        </button>
+      </div>
+
+      <!-- Agency -->
+      <div class="bg-white rounded-2xl p-6 border border-marine/10">
+        <h3 class="font-bricolage font-semibold text-xl mb-2">Agency</h3>
+        <div class="font-bricolage font-bold text-4xl mb-1">99€</div>
+        <p class="text-marine/60 text-sm mb-6">par an • pour les réseaux</p>
+        <ul class="space-y-3 mb-8">
+          <li class="flex items-center gap-2 text-sm">
+            <i data-lucide="check" class="w-4 h-4 text-sage"></i>
+            Tout Pro inclus
+          </li>
+          <li class="flex items-center gap-2 text-sm">
+            <i data-lucide="check" class="w-4 h-4 text-sage"></i>
+            Multi-utilisateurs
+          </li>
+          <li class="flex items-center gap-2 text-sm">
+            <i data-lucide="check" class="w-4 h-4 text-sage"></i>
+            Marque blanche
+          </li>
+          <li class="flex items-center gap-2 text-sm">
+            <i data-lucide="check" class="w-4 h-4 text-sage"></i>
+            API
+          </li>
+          <li class="flex items-center gap-2 text-sm">
+            <i data-lucide="check" class="w-4 h-4 text-sage"></i>
+            Support prioritaire
+          </li>
+        </ul>
+        <button class="w-full bg-marine text-white py-3 rounded-lg font-medium hover:bg-marine/90 transition" onclick="alert('Contactez-nous')">
+          Nous contacter
+        </button>
+      </div>
+    </div>
+
+    <p class="text-center text-sm text-marine/50 mt-8">
+      <i data-lucide="info" class="w-4 h-4 inline mr-1"></i>
+      Propriétaire bailleur ? 19€/an est déductible de vos revenus fonciers (forfait 20€).
+    </p>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="py-20 px-6 bg-white">
+  <div class="max-w-3xl mx-auto">
+    <h2 class="font-bricolage font-bold text-3xl text-center mb-12">Questions fréquentes</h2>
+    
+    <div class="space-y-4">
+      <details class="bg-cream rounded-xl p-5 group">
+        <summary class="font-bricolage font-semibold cursor-pointer flex justify-between items-center">
+          C'est obligatoire pour qui ?
+          <i data-lucide="chevron-down" class="w-5 h-5 group-open:rotate-180 transition-transform"></i>
+        </summary>
+        <p class="mt-4 text-marine/70">
+          Pour tous les propriétaires en France. Depuis janvier 2023, vous devez remettre ce carnet à l'acheteur lors d'une vente. 
+          Pour les locations, c'est recommandé mais pas encore obligatoire.
+        </p>
+      </details>
+      
+      <details class="bg-cream rounded-xl p-5 group">
+        <summary class="font-bricolage font-semibold cursor-pointer flex justify-between items-center">
+          Mes données sont-elles sécurisées ?
+          <i data-lucide="chevron-down" class="w-5 h-5 group-open:rotate-180 transition-transform"></i>
+        </summary>
+        <p class="mt-4 text-marine/70">
+          Vos documents restent sur votre téléphone. Rien n'est envoyé sur nos serveurs. 
+          C'est 100% privé, comme un dossier papier mais mieux organisé.
+        </p>
+      </details>
+      
+      <details class="bg-cream rounded-xl p-5 group">
+        <summary class="font-bricolage font-semibold cursor-pointer flex justify-between items-center">
+          Combien de temps pour créer mon carnet ?
+          <i data-lucide="chevron-down" class="w-5 h-5 group-open:rotate-180 transition-transform"></i>
+        </summary>
+        <p class="mt-4 text-marine/70">
+          2 minutes pour créer le carnet. 15-30 minutes pour scanner vos documents principaux. 
+          Ensuite, vous ajoutez les équipements au fur et à mesure.
+        </p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="py-20 px-6 bg-marine text-white">
+  <div class="max-w-2xl mx-auto text-center">
+    <h2 class="font-bricolage font-bold text-3xl md:text-4xl mb-4">
+      Prêt à organiser vos documents ?
+    </h2>
+    <p class="text-white/70 text-lg mb-8">
+      Créez votre carnet en 2 minutes. Gratuit, sans inscription.
+    </p>
+    <a href="app.html" class="inline-block bg-terracotta text-white px-10 py-4 rounded-xl font-bricolage font-semibold text-lg hover:bg-terracotta/90 transition">
+      Créer mon carnet gratuitement
+    </a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="py-8 px-6 bg-cream border-t border-marine/10">
+  <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+    <p class="font-bricolage font-bold text-marine">CILIA</p>
+    <p class="text-sm text-marine/50">© 2026 CILIA - France</p>
+  </div>
+</footer>
+
+<script>lucide.createIcons();</script>
+</body>
+</html>
