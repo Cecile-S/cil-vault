@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CILIA vs Mon Suivi Logement vs HOME ID - Comparaison CIL</title>
-<meta name="description" content="Comparez CILIA avec Mon Suivi Logement et HOME ID. Prix, fonctionnalités, limites. Choisissez le meilleur CIL pour vous.">
+<title>CILIA vs Concurrents - Comparaison CIL</title>
+<meta name="description" content="Comparez CILIA avec Mon Suivi Logement, HOME ID et Mon Carnet Logement. Prix, fonctionnalités, IA.">
 <link rel="canonical" href="https://cecile-s.github.io/cil-vault/comparaison.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -34,12 +34,12 @@ tailwind.config = {
 <body class="font-plex text-marine bg-cream">
 
 <!-- NAV -->
-<nav class="fixed top-0 w-full bg-cream/95 backdrop-blur-sm z-50 border-b border-marine/10">
+<nav class="fixed top-0 w-full bg-cream/95 backdrop-blur-sm z-50 border-b border-cil-blue/10">
   <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
     <a href="index-origami.html" class="font-bricolage font-bold text-2xl text-cil-blue">🏠 CILIA</a>
     <div class="flex gap-6 items-center">
-      <a href="index-origami.html" class="text-sm hover:text-corail transition">Accueil</a>
-      <a href="app.html" class="bg-corail text-white px-5 py-2.5 rounded-lg font-medium text-sm hover:bg-corail/90 transition">Créer mon carnet</a>
+      <a href="index-origami.html" class="text-sm hover:text-cil-blue transition">Accueil</a>
+      <a href="app.html" class="bg-cil-blue text-white px-5 py-2.5 rounded-lg font-medium text-sm hover:bg-cil-blue/90 transition">Créer mon carnet</a>
     </div>
   </div>
 </nav>
@@ -52,235 +52,110 @@ tailwind.config = {
       Comparaison objective
     </div>
     <h1 class="font-bricolage font-bold text-4xl md:text-5xl mb-6">
-      <span class="text-corail">CILIA</span> vs la concurrence
+      <span class="text-cil-blue">CILIA</span> vs la concurrence
     </h1>
     <p class="text-lg text-marine/70 max-w-2xl mx-auto">
-      Comparez les solutions de Carnet d'Information Logement en France. Prix, fonctionnalités, limites... Tout est là.
+      Comparez les 4 principales solutions de Carnet d'Information Logement en France.
     </p>
   </div>
 </section>
 
-<!-- TABLEAU COMPARATIF -->
+<!-- TABLEAU -->
 <section class="py-12 px-6 bg-white">
   <div class="max-w-6xl mx-auto">
     <div class="overflow-x-auto">
-      <table class="w-full">
+      <table class="w-full text-sm">
         <thead>
-          <tr class="border-b-2 border-marine/10">
-            <th class="text-left py-4 px-4 font-bricolage font-semibold">Critère</th>
-            <th class="text-center py-4 px-4">
-              <div class="inline-flex flex-col items-center">
-                <span class="font-bricolage font-bold text-lg text-cil-blue">CILIA</span>
-                <span class="text-xs text-marine/50 mt-1">Notre solution</span>
-              </div>
+          <tr class="border-b-2 border-cil-blue/20">
+            <th class="text-left py-4 px-3 font-bricolage font-semibold">Critère</th>
+            <th class="text-center py-4 px-3 bg-cil-blue/5">
+              <div class="font-bricolage font-bold text-cil-blue">CILIA</div>
+              <div class="text-xs text-marine/50">Notre solution</div>
             </th>
-            <th class="text-center py-4 px-4">
-              <div class="inline-flex flex-col items-center">
-                <span class="font-bricolage font-semibold text-lg text-marine/70">Mon Suivi Logement</span>
-                <span class="text-xs text-marine/50 mt-1">Leader</span>
-              </div>
+            <th class="text-center py-4 px-3">
+              <div class="font-bricolage font-semibold">Mon Suivi Logement</div>
+              <div class="text-xs text-marine/50">Leader (170k)</div>
             </th>
-            <th class="text-center py-4 px-4">
-              <div class="inline-flex flex-col items-center">
-                <span class="font-bricolage font-semibold text-lg text-marine/70">HOME ID</span>
-                <span class="text-xs text-marine/50 mt-1">Papier + Digital</span>
-              </div>
+            <th class="text-center py-4 px-3">
+              <div class="font-bricolage font-semibold">HOME ID</div>
+              <div class="text-xs text-marine/50">Papier</div>
+            </th>
+            <th class="text-center py-4 px-3">
+              <div class="font-bricolage font-semibold">Mon Carnet Logement</div>
+              <div class="text-xs text-marine/50">ML + Gestion</div>
             </th>
           </tr>
         </thead>
         <tbody>
-          <!-- PRIX -->
-          <tr class="border-b border-marine/5 bg-corail/5">
-            <td class="py-4 px-4 font-semibold">
-              <i data-lucide="euro" class="w-4 h-4 inline mr-2 text-corail"></i>Prix Premium
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="inline-block bg-cil-blue text-white px-3 py-1 rounded-full font-bold">9,99€/an</span>
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="text-marine/70">9,99€/an</span>
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="text-marine/50">Sur devis</span>
-            </td>
+          <tr class="border-b border-marine/5 bg-cil-blue/5">
+            <td class="py-3 px-3 font-semibold">💰 Prix Premium</td>
+            <td class="text-center py-3 px-3"><span class="bg-cil-blue text-white px-2 py-1 rounded font-bold">9,99€/an</span></td>
+            <td class="text-center py-3 px-3">9,99€/an</td>
+            <td class="text-center py-3 px-3 text-marine/50">Sur devis</td>
+            <td class="text-center py-3 px-3 text-marine/50">Gratuit ?</td>
           </tr>
-          
-          <!-- GRATUIT -->
           <tr class="border-b border-marine/5">
-            <td class="py-4 px-4 font-semibold">
-              <i data-lucide="gift" class="w-4 h-4 inline mr-2 text-menthe"></i>Version gratuite
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="inline-block bg-menthe text-white px-3 py-1 rounded-full font-bold">15 docs</span>
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="text-marine/70">5 docs</span>
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="text-marine/50">Non</span>
-            </td>
+            <td class="py-3 px-3 font-semibold">🎁 Version gratuite</td>
+            <td class="text-center py-3 px-3"><span class="bg-menthe text-white px-2 py-1 rounded font-bold">15 docs</span></td>
+            <td class="text-center py-3 px-3">5 docs</td>
+            <td class="text-center py-3 px-3 text-marine/50">Non</td>
+            <td class="text-center py-3 px-3">Oui</td>
           </tr>
-          
-          <!-- STOCKAGE -->
-          <tr class="border-b border-marine/5 bg-menthe/5">
-            <td class="py-4 px-4 font-semibold">
-              <i data-lucide="hard-drive" class="w-4 h-4 inline mr-2 text-menthe"></i>Stockage Pro
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="text-marine/70">Illimité</span>
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="text-marine/70">1 Go</span>
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="text-marine/50">Variable</span>
-            </td>
+          <tr class="border-b border-marine/5 bg-cil-blue/5">
+            <td class="py-3 px-3 font-semibold">🤖 Classification IA</td>
+            <td class="text-center py-3 px-3"><span class="bg-cil-blue text-white px-2 py-1 rounded">✅ Oui</span></td>
+            <td class="text-center py-3 px-3 text-marine/50">Non</td>
+            <td class="text-center py-3 px-3 text-marine/50">Non</td>
+            <td class="text-center py-3 px-3 text-marine/50">Non</td>
           </tr>
-          
-          <!-- IA -->
           <tr class="border-b border-marine/5">
-            <td class="py-4 px-4 font-semibold">
-              <i data-lucide="sparkles" class="w-4 h-4 inline mr-2 text-corail"></i>Classification IA
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="inline-block bg-cil-blue text-white px-3 py-1 rounded-full">
-                <i data-lucide="check" class="w-4 h-4 inline"></i> Oui
-              </span>
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="text-marine/50">Non</span>
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="text-marine/50">Non</span>
-            </td>
+            <td class="py-3 px-3 font-semibold">⚡ Suivi consommation</td>
+            <td class="text-center py-3 px-3 text-marine/50">À venir</td>
+            <td class="text-center py-3 px-3"><span class="text-menthe">✅ Oui</span></td>
+            <td class="text-center py-3 px-3 text-marine/50">Non</td>
+            <td class="text-center py-3 px-3 text-marine/50">Non</td>
           </tr>
-          
-          <!-- ALERTES -->
-          <tr class="border-b border-marine/5 bg-soleil/10">
-            <td class="py-4 px-4 font-semibold">
-              <i data-lucide="bell" class="w-4 h-4 inline mr-2 text-soleil"></i>Alertes entretien
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="inline-block bg-menthe text-white px-3 py-1 rounded-full">
-                <i data-lucide="check" class="w-4 h-4 inline"></i>
-              </span>
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="inline-block bg-menthe text-white px-3 py-1 rounded-full">
-                <i data-lucide="check" class="w-4 h-4 inline"></i>
-              </span>
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="inline-block bg-menthe text-white px-3 py-1 rounded-full">
-                <i data-lucide="check" class="w-4 h-4 inline"></i>
-              </span>
-            </td>
+          <tr class="border-b border-marine/5 bg-cil-blue/5">
+            <td class="py-3 px-3 font-semibold">📱 App mobile</td>
+            <td class="text-center py-3 px-3">PWA</td>
+            <td class="text-center py-3 px-3">iOS + Android</td>
+            <td class="text-center py-3 px-3">Web</td>
+            <td class="text-center py-3 px-3">Web</td>
           </tr>
-          
-          <!-- EXPORT -->
           <tr class="border-b border-marine/5">
-            <td class="py-4 px-4 font-semibold">
-              <i data-lucide="download" class="w-4 h-4 inline mr-2"></i>Export PDF
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="inline-block bg-menthe text-white px-3 py-1 rounded-full">
-                <i data-lucide="check" class="w-4 h-4 inline"></i>
-              </span>
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="inline-block bg-menthe text-white px-3 py-1 rounded-full">
-                <i data-lucide="check" class="w-4 h-4 inline"></i>
-              </span>
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="inline-block bg-menthe text-white px-3 py-1 rounded-full">
-                <i data-lucide="check" class="w-4 h-4 inline"></i>
-              </span>
-            </td>
+            <td class="py-3 px-3 font-semibold">🔒 Données locales</td>
+            <td class="text-center py-3 px-3"><span class="bg-cil-blue text-white px-2 py-1 rounded font-bold">100% local</span></td>
+            <td class="text-center py-3 px-3 text-marine/50">Cloud</td>
+            <td class="text-center py-3 px-3 text-marine/50">Cloud</td>
+            <td class="text-center py-3 px-3 text-marine/50">Cloud</td>
           </tr>
-          
-          <!-- SUIVI CONSO -->
-          <tr class="border-b border-marine/5 bg-marine/5">
-            <td class="py-4 px-4 font-semibold">
-              <i data-lucide="zap" class="w-4 h-4 inline mr-2"></i>Suivi consommation
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="text-marine/50">À venir</span>
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="inline-block bg-menthe text-white px-3 py-1 rounded-full">
-                <i data-lucide="check" class="w-4 h-4 inline"></i>
-              </span>
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="text-marine/50">Non</span>
-            </td>
+          <tr class="border-b border-marine/5 bg-cil-blue/5">
+            <td class="py-3 px-3 font-semibold">🏢 Cible B2B</td>
+            <td class="text-center py-3 px-3"><span class="bg-cil-blue text-white px-2 py-1 rounded font-bold">Mandataires</span></td>
+            <td class="text-center py-3 px-3">Constructeurs</td>
+            <td class="text-center py-3 px-3">Revendeurs</td>
+            <td class="text-center py-3 px-3">Promoteurs</td>
           </tr>
-          
-          <!-- PAPIER -->
           <tr class="border-b border-marine/5">
-            <td class="py-4 px-4 font-semibold">
-              <i data-lucide="book" class="w-4 h-4 inline mr-2"></i>Version papier
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="text-marine/50">Non</span>
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="text-marine/50">Non</span>
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="inline-block bg-menthe text-white px-3 py-1 rounded-full">
-                <i data-lucide="check" class="w-4 h-4 inline"></i>
-              </span>
-            </td>
+            <td class="py-3 px-3 font-semibold">📄 Version papier</td>
+            <td class="text-center py-3 px-3 text-marine/50">Non</td>
+            <td class="text-center py-3 px-3 text-marine/50">Non</td>
+            <td class="text-center py-3 px-3"><span class="text-menthe">✅ Oui</span></td>
+            <td class="text-center py-3 px-3 text-marine/50">Non</td>
           </tr>
-          
-          <!-- MOBILE -->
-          <tr class="border-b border-marine/5 bg-menthe/5">
-            <td class="py-4 px-4 font-semibold">
-              <i data-lucide="smartphone" class="w-4 h-4 inline mr-2"></i>App mobile
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="text-marine/70">PWA</span>
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="text-marine/70">iOS + Android</span>
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="text-marine/70">Web</span>
-            </td>
+          <tr class="border-b border-marine/5 bg-cil-blue/5">
+            <td class="py-3 px-3 font-semibold">🏠 Gestion locative</td>
+            <td class="text-center py-3 px-3 text-marine/50">Non</td>
+            <td class="text-center py-3 px-3 text-marine/50">Non</td>
+            <td class="text-center py-3 px-3 text-marine/50">Non</td>
+            <td class="text-center py-3 px-3"><span class="text-menthe">✅ Oui</span></td>
           </tr>
-          
-          <!-- PRIVACY -->
           <tr class="border-b border-marine/5">
-            <td class="py-4 px-4 font-semibold">
-              <i data-lucide="shield-check" class="w-4 h-4 inline mr-2 text-menthe"></i>Données locales
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="inline-block bg-cil-blue text-white px-3 py-1 rounded-full font-bold">100% local</span>
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="text-marine/50">Cloud</span>
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="text-marine/50">Cloud</span>
-            </td>
-          </tr>
-          
-          <!-- B2B -->
-          <tr class="border-b border-marine/5 bg-soleil/10">
-            <td class="py-4 px-4 font-semibold">
-              <i data-lucide="building" class="w-4 h-4 inline mr-2"></i>Offre B2B mandataires
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="inline-block bg-cil-blue text-white px-3 py-1 rounded-full font-bold">1€/an</span>
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="text-marine/50">Constructeurs</span>
-            </td>
-            <td class="text-center py-4 px-4">
-              <span class="text-marine/50">Revendeurs</span>
-            </td>
+            <td class="py-3 px-3 font-semibold">📊 Simulateur DPE</td>
+            <td class="text-center py-3 px-3 text-marine/50">Non</td>
+            <td class="text-center py-3 px-3 text-marine/50">Non</td>
+            <td class="text-center py-3 px-3 text-marine/50">Non</td>
+            <td class="text-center py-3 px-3"><span class="text-menthe">✅ ML</span></td>
           </tr>
         </tbody>
       </table>
@@ -290,91 +165,64 @@ tailwind.config = {
 
 <!-- RÉSUMÉ -->
 <section class="py-16 px-6 bg-cream">
-  <div class="max-w-4xl mx-auto">
+  <div class="max-w-5xl mx-auto">
     <h2 class="font-bricolage font-bold text-2xl mb-8 text-center">En résumé</h2>
     
-    <div class="grid md:grid-cols-3 gap-6">
+    <div class="grid md:grid-cols-4 gap-4">
       <!-- CILIA -->
-      <div class="bg-white rounded-2xl p-6 border-2 border-cil-blue relative">
-        <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-cil-blue text-white px-4 py-1 rounded-full text-sm font-bold">
+      <div class="bg-white rounded-2xl p-5 border-2 border-cil-blue relative">
+        <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-cil-blue text-white px-3 py-1 rounded-full text-xs font-bold">
           Notre choix
         </div>
-        <h3 class="font-bricolage font-bold text-xl mb-4 mt-2 text-cil-blue">CILIA</h3>
-        <p class="text-sm text-marine/70 mb-4">Pour ceux qui veulent :</p>
-        <ul class="space-y-2 text-sm">
-          <li class="flex items-start gap-2">
-            <i data-lucide="check" class="w-4 h-4 text-menthe mt-0.5"></i>
-            <span><strong>3x plus</strong> de documents gratuits</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <i data-lucide="sparkles" class="w-4 h-4 text-cil-blue mt-0.5"></i>
-            <span><strong>Classification IA</strong> automatique</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <i data-lucide="check" class="w-4 h-4 text-menthe mt-0.5"></i>
-            <span><strong>100% privé</strong> (données locales)</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <i data-lucide="check" class="w-4 h-4 text-menthe mt-0.5"></i>
-            <span><strong>Design moderne</strong> et ludique</span>
-          </li>
+        <h3 class="font-bricolage font-bold text-lg mb-3 mt-2 text-cil-blue">CILIA</h3>
+        <ul class="space-y-1 text-xs">
+          <li><i data-lucide="check" class="w-3 h-3 inline text-menthe"></i> <strong>IA</strong> classification auto</li>
+          <li><i data-lucide="check" class="w-3 h-3 inline text-menthe"></i> <strong>15 docs</strong> gratuits</li>
+          <li><i data-lucide="check" class="w-3 h-3 inline text-menthe"></i> <strong>100% privé</strong> (local)</li>
+          <li><i data-lucide="check" class="w-3 h-3 inline text-menthe"></i> <strong>Mandataires</strong></li>
         </ul>
-        <a href="app.html" class="block w-full mt-6 bg-cil-blue text-white text-center py-3 rounded-lg font-medium hover:bg-cil-blue/90 transition">
-          Essayer gratuitement
-        </a>
+        <a href="app.html" class="block w-full mt-4 bg-cil-blue text-white text-center py-2 rounded-lg text-sm font-medium">Essayer</a>
       </div>
       
       <!-- MSL -->
-      <div class="bg-white rounded-2xl p-6 border border-marine/10">
-        <h3 class="font-bricolage font-semibold text-xl mb-4">Mon Suivi Logement</h3>
-        <p class="text-sm text-marine/70 mb-4">Pour ceux qui veulent :</p>
-        <ul class="space-y-2 text-sm">
-          <li class="flex items-start gap-2">
-            <i data-lucide="check" class="w-4 h-4 text-marine/50 mt-0.5"></i>
-            <span><strong>Suivi consommation</strong> d'énergie</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <i data-lucide="check" class="w-4 h-4 text-marine/50 mt-0.5"></i>
-            <span><strong>App native</strong> iOS/Android</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <i data-lucide="check" class="w-4 h-4 text-marine/50 mt-0.5"></i>
-            <span><strong>Leader</strong> du marché (170k users)</span>
-          </li>
+      <div class="bg-white rounded-2xl p-5 border border-marine/10">
+        <h3 class="font-bricolage font-semibold text-lg mb-3">Mon Suivi Logement</h3>
+        <ul class="space-y-1 text-xs">
+          <li><i data-lucide="check" class="w-3 h-3 inline text-marine/50"></i> <strong>Suivi conso</strong></li>
+          <li><i data-lucide="check" class="w-3 h-3 inline text-marine/50"></i> <strong>App native</strong></li>
+          <li><i data-lucide="check" class="w-3 h-3 inline text-marine/50"></i> <strong>Leader</strong> (170k)</li>
+          <li><i data-lucide="check" class="w-3 h-3 inline text-marine/50"></i> Constructeurs</li>
         </ul>
-        <a href="https://www.monsuivilogement.fr" target="_blank" class="block w-full mt-6 bg-marine/5 text-marine text-center py-3 rounded-lg font-medium hover:bg-marine/10 transition">
-          Voir leur site
-        </a>
+        <a href="https://www.monsuivilogement.fr" target="_blank" class="block w-full mt-4 bg-marine/5 text-marine text-center py-2 rounded-lg text-sm font-medium">Voir →</a>
       </div>
       
       <!-- HOME ID -->
-      <div class="bg-white rounded-2xl p-6 border border-marine/10">
-        <h3 class="font-bricolage font-semibold text-xl mb-4">HOME ID</h3>
-        <p class="text-sm text-marine/70 mb-4">Pour ceux qui veulent :</p>
-        <ul class="space-y-2 text-sm">
-          <li class="flex items-start gap-2">
-            <i data-lucide="check" class="w-4 h-4 text-marine/50 mt-0.5"></i>
-            <span><strong>Version papier</strong> physique</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <i data-lucide="check" class="w-4 h-4 text-marine/50 mt-0.5"></i>
-            <span><strong>Réseau</strong> de revendeurs</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <i data-lucide="check" class="w-4 h-4 text-marine/50 mt-0.5"></i>
-            <span><strong>Éco-responsable</strong></span>
-          </li>
+      <div class="bg-white rounded-2xl p-5 border border-marine/10">
+        <h3 class="font-bricolage font-semibold text-lg mb-3">HOME ID</h3>
+        <ul class="space-y-1 text-xs">
+          <li><i data-lucide="check" class="w-3 h-3 inline text-marine/50"></i> <strong>Papier</strong> physique</li>
+          <li><i data-lucide="check" class="w-3 h-3 inline text-marine/50"></i> <strong>Réseau</strong> revendeurs</li>
+          <li><i data-lucide="check" class="w-3 h-3 inline text-marine/50"></i> Éco-responsable</li>
         </ul>
-        <a href="https://www.home-id.fr" target="_blank" class="block w-full mt-6 bg-marine/5 text-marine text-center py-3 rounded-lg font-medium hover:bg-marine/10 transition">
-          Voir leur site
-        </a>
+        <a href="https://www.home-id.fr" target="_blank" class="block w-full mt-4 bg-marine/5 text-marine text-center py-2 rounded-lg text-sm font-medium">Voir →</a>
+      </div>
+      
+      <!-- Mon Carnet Logement -->
+      <div class="bg-white rounded-2xl p-5 border border-marine/10">
+        <h3 class="font-bricolage font-semibold text-lg mb-3">Mon Carnet Logement</h3>
+        <ul class="space-y-1 text-xs">
+          <li><i data-lucide="check" class="w-3 h-3 inline text-marine/50"></i> <strong>ML</strong> simulateur</li>
+          <li><i data-lucide="check" class="w-3 h-3 inline text-marine/50"></i> <strong>Gestion locative</strong></li>
+          <li><i data-lucide="check" class="w-3 h-3 inline text-marine/50"></i> Vérif locataires</li>
+        </ul>
+        <a href="https://moncarnetlogement.fr" target="_blank" class="block w-full mt-4 bg-marine/5 text-marine text-center py-2 rounded-lg text-sm font-medium">Voir →</a>
       </div>
     </div>
   </div>
 </section>
 
 <!-- CTA -->
-<section class="py-20 px-6 bg-cil-blue relative">
+<section class="py-20 px-6 bg-cil-blue">
   <div class="max-w-2xl mx-auto text-center">
     <h2 class="font-bricolage font-bold text-3xl text-white mb-4">
       Prêt à essayer CILIA ?
