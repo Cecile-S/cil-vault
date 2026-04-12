@@ -5,7 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CILIA - Le carnet de santé de votre logement</title>
-<meta name="description" content="Centralisez tous vos documents logement : DPE, diagnostics, factures, manuels. Obligatoire depuis 2023. Gratuit, sans inscription.">
+<meta name="description" content="Centralisez tous vos documents logement : DPE, diagnostics, factures, manuels. Classification IA automatique. Obligatoire depuis 2023.">
 <link rel="canonical" href="https://cecile-s.github.io/cil-vault/">
 <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,6 +17,7 @@ tailwind.config = {
   theme: {
     extend: {
       colors: {
+        'cil-blue': '#1e40af',
         cream: '#FEF7ED',
         marine: '#2C3E50',
         corail: '#FF6B6B',
@@ -34,16 +35,16 @@ tailwind.config = {
 <style>
 .hero-bg {
   background: 
-    linear-gradient(135deg, rgba(255,107,107,0.08) 0%, transparent 50%),
+    linear-gradient(135deg, rgba(30,64,175,0.05) 0%, transparent 50%),
     linear-gradient(225deg, rgba(78,205,196,0.08) 0%, transparent 50%),
-    linear-gradient(315deg, rgba(255,230,109,0.1) 0%, transparent 50%),
+    linear-gradient(315deg, rgba(255,230,109,0.06) 0%, transparent 50%),
     #FEF7ED;
 }
 .accent-blob {
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.4;
+  filter: blur(100px);
+  opacity: 0.3;
   pointer-events: none;
 }
 .stagger > * { animation: fadeUp 0.5s ease-out backwards; }
@@ -54,21 +55,26 @@ tailwind.config = {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
+@keyframes pulse-ai {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+}
+.ai-pulse { animation: pulse-ai 2s ease-in-out infinite; }
 </style>
 </head>
 <body class="font-plex text-marine bg-cream">
 
 <!-- NAV -->
-<nav class="fixed top-0 w-full bg-cream/95 backdrop-blur-sm z-50 border-b border-corail/20">
+<nav class="fixed top-0 w-full bg-cream/95 backdrop-blur-sm z-50 border-b border-cil-blue/10">
   <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-    <a href="/" class="font-bricolage font-bold text-2xl text-marine">
-      <span class="text-corail">C</span><span class="text-menthe">I</span><span class="text-soleil">L</span><span class="text-marine">IA</span>
-    </a>
+    <a href="/" class="font-bricolage font-bold text-2xl text-cil-blue">🏠 CILIA</a>
     <div class="flex gap-6 items-center">
-      <a href="#comment" class="text-sm hover:text-corail transition hidden sm:block">Comment ça marche</a>
-      <a href="comparaison.html" class="text-sm hover:text-menthe transition hidden sm:block">Comparaison</a>
-      <a href="#tarifs" class="text-sm hover:text-soleil transition hidden sm:block">Tarifs</a>
-      <a href="app.html" class="bg-corail text-white px-5 py-2.5 rounded-lg font-medium text-sm hover:bg-corail/90 transition shadow-lg shadow-corail/30">Créer mon carnet</a>
+      <a href="#ia" class="text-sm hover:text-cil-blue transition hidden sm:flex items-center gap-1">
+        <i data-lucide="sparkles" class="w-4 h-4"></i> IA
+      </a>
+      <a href="#comment" class="text-sm hover:text-cil-blue transition hidden sm:block">Comment ça marche</a>
+      <a href="comparaison.html" class="text-sm hover:text-cil-blue transition hidden sm:block">Comparaison</a>
+      <a href="app.html" class="bg-cil-blue text-white px-5 py-2.5 rounded-lg font-medium text-sm hover:bg-cil-blue/90 transition">Créer mon carnet</a>
     </div>
   </div>
 </nav>
@@ -76,57 +82,118 @@ tailwind.config = {
 <!-- HERO -->
 <section class="hero-bg min-h-screen pt-24 pb-16 px-6 relative overflow-hidden">
   <!-- Blobs décoratifs -->
-  <div class="accent-blob w-96 h-96 bg-corail top-20 -left-48"></div>
+  <div class="accent-blob w-96 h-96 bg-cil-blue top-20 -left-48"></div>
   <div class="accent-blob w-80 h-80 bg-menthe top-40 right-0"></div>
   <div class="accent-blob w-64 h-64 bg-soleil bottom-20 left-1/4"></div>
   
   <div class="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center relative z-10">
     <div class="stagger">
-      <div class="inline-flex items-center gap-2 bg-corail/10 text-corail px-4 py-2 rounded-full mb-6 font-medium text-sm">
-        <span class="w-2 h-2 bg-corail rounded-full animate-pulse"></span>
-        Obligatoire depuis 2023
+      <!-- Badge IA -->
+      <div class="inline-flex items-center gap-2 bg-cil-blue/10 text-cil-blue px-4 py-2 rounded-full mb-6 font-medium text-sm">
+        <i data-lucide="sparkles" class="w-4 h-4 ai-pulse"></i>
+        <span>Propulsé par l'Intelligence Artificielle</span>
       </div>
+      
       <h1 class="font-bricolage font-bold text-4xl md:text-5xl lg:text-6xl leading-tight mb-6">
         Le carnet de santé<br>
-        <span class="text-corail">de votre</span> <span class="text-menthe">logement</span>
+        <span class="text-cil-blue">de votre logement</span>
       </h1>
       <p class="text-lg md:text-xl text-marine/70 mb-8 max-w-lg">
-        Tous vos documents en un seul endroit. <strong class="text-corail">DPE</strong>, <strong class="text-menthe">diagnostics</strong>, factures, manuels...
+        Prenez vos documents en photo, <strong class="text-cil-blue">notre IA les analyse, saisit les infos et les range</strong> pour vous. 
         Prêt en 2 minutes pour votre vente ou location.
       </p>
       <div class="flex flex-col sm:flex-row gap-4">
-        <a href="app.html" class="bg-corail text-white px-8 py-4 rounded-xl font-bricolage font-semibold text-lg hover:bg-corail/90 transition text-center shadow-xl shadow-corail/30">
-          Créer gratuitement
+        <a href="app.html" class="bg-cil-blue text-white px-8 py-4 rounded-xl font-bricolage font-semibold text-lg hover:bg-cil-blue/90 transition text-center shadow-xl shadow-cil-blue/30">
+          <i data-lucide="camera" class="w-5 h-5 inline mr-2"></i>
+          Essayer l'IA gratuitement
         </a>
-        <a href="comparaison.html" class="border-2 border-menthe text-menthe px-8 py-4 rounded-xl font-medium hover:bg-menthe hover:text-white transition text-center">
+        <a href="comparaison.html" class="border-2 border-cil-blue/20 text-cil-blue px-8 py-4 rounded-xl font-medium hover:border-cil-blue/40 transition text-center">
           Voir la comparaison
         </a>
       </div>
       <div class="mt-8 flex flex-wrap gap-4">
-        <div class="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
-          <i data-lucide="check-circle" class="w-5 h-5 text-menthe"></i>
-          <span class="text-sm font-medium">Gratuit</span>
+        <div class="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm border border-cil-blue/10">
+          <i data-lucide="sparkles" class="w-5 h-5 text-cil-blue"></i>
+          <span class="text-sm font-medium">IA incluse</span>
         </div>
-        <div class="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
+        <div class="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm border border-cil-blue/10">
           <i data-lucide="check-circle" class="w-5 h-5 text-menthe"></i>
-          <span class="text-sm font-medium">Sans inscription</span>
+          <span class="text-sm font-medium">15 documents gratuits</span>
         </div>
-        <div class="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
+        <div class="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm border border-cil-blue/10">
           <i data-lucide="shield-check" class="w-5 h-5 text-menthe"></i>
-          <span class="text-sm font-medium">Données locales</span>
+          <span class="text-sm font-medium">100% privé</span>
         </div>
       </div>
     </div>
     <div class="relative flex justify-center">
-      <div class="absolute inset-0 bg-gradient-to-br from-corail/20 via-menthe/20 to-soleil/20 rounded-3xl transform rotate-3"></div>
+      <div class="absolute inset-0 bg-gradient-to-br from-cil-blue/10 via-menthe/10 to-soleil/10 rounded-3xl transform rotate-3"></div>
       <img src="assets/hero-illustration.svg" alt="Illustration CILIA" class="w-full max-w-lg relative z-10">
     </div>
   </div>
 </section>
 
-<!-- FEATURES COLORÉES -->
-<section class="py-20 px-6 bg-white relative overflow-hidden">
-  <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-corail via-menthe to-soleil"></div>
+<!-- SECTION IA -->
+<section id="ia" class="py-20 px-6 bg-cil-blue text-white relative overflow-hidden">
+  <div class="max-w-6xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full mb-4">
+        <i data-lucide="sparkles" class="w-5 h-5 ai-pulse"></i>
+        <span class="text-sm font-medium">Technologie exclusive</span>
+      </div>
+      <h2 class="font-bricolage font-bold text-3xl md:text-4xl mb-4">
+        L'IA qui comprend vos documents
+      </h2>
+      <p class="text-white/70 text-lg max-w-2xl mx-auto">
+        Fini la saisie manuelle. Notre intelligence artificielle extrait automatiquement les informations de vos documents.
+      </p>
+    </div>
+    
+    <div class="grid md:grid-cols-3 gap-8">
+      <div class="bg-white/10 rounded-2xl p-8 backdrop-blur">
+        <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mb-6">
+          <i data-lucide="camera" class="w-8 h-8"></i>
+        </div>
+        <h3 class="font-bricolage font-semibold text-xl mb-3">1. Prenez en photo</h3>
+        <p class="text-white/70">Scannez votre DPE, facture, manuel... L'IA accepte tous les formats.</p>
+      </div>
+      
+      <div class="bg-white/20 rounded-2xl p-8 backdrop-blur border-2 border-white/30">
+        <div class="w-16 h-16 bg-menthe rounded-xl flex items-center justify-center mb-6">
+          <i data-lucide="sparkles" class="w-8 h-8 text-cil-blue ai-pulse"></i>
+        </div>
+        <h3 class="font-bricolage font-semibold text-xl mb-3">2. L'IA analyse</h3>
+        <p class="text-white/70"><strong>Reconnaissance automatique :</strong> type de document, dates, équipements, caractéristiques...</p>
+      </div>
+      
+      <div class="bg-white/10 rounded-2xl p-8 backdrop-blur">
+        <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center mb-6">
+          <i data-lucide="check-check" class="w-8 h-8"></i>
+        </div>
+        <h3 class="font-bricolage font-semibold text-xl mb-3">3. C'est rangé</h3>
+        <p class="text-white/70">Les infos sont saisies et classées. Plus qu'à valider. Gain de temps : <strong>90%</strong>.</p>
+      </div>
+    </div>
+    
+    <div class="mt-12 text-center">
+      <div class="inline-flex items-center gap-4 bg-white/10 rounded-xl px-6 py-4">
+        <div class="text-left">
+          <p class="text-sm text-white/60">Temps de saisie moyen</p>
+          <p class="font-bricolage font-bold text-2xl"><span class="text-menthe">30 sec</span> vs 5 min</p>
+        </div>
+        <div class="w-px h-12 bg-white/20"></div>
+        <div class="text-left">
+          <p class="text-sm text-white/60">Précision de l'IA</p>
+          <p class="font-bricolage font-bold text-2xl"><span class="text-menthe">98%</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- C'EST QUOI -->
+<section id="comment" class="py-20 px-6 bg-white relative">
+  <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-cil-blue via-menthe to-soleil"></div>
   
   <div class="max-w-6xl mx-auto">
     <div class="text-center mb-16">
@@ -135,15 +202,15 @@ tailwind.config = {
     </div>
     
     <div class="grid md:grid-cols-3 gap-8 mb-16">
-      <div class="bg-corail/5 border-2 border-corail/20 rounded-2xl p-8 hover:border-corail/50 transition">
-        <div class="w-14 h-14 bg-corail text-white rounded-xl flex items-center justify-center mb-6">
+      <div class="bg-cream rounded-2xl p-8 border-2 border-cil-blue/10 hover:border-cil-blue/30 transition">
+        <div class="w-14 h-14 bg-cil-blue text-white rounded-xl flex items-center justify-center mb-6">
           <i data-lucide="file-text" class="w-7 h-7"></i>
         </div>
         <h3 class="font-bricolage font-semibold text-xl mb-3">Documents</h3>
-        <p class="text-marine/70">DPE, diagnostics, factures... Tout au même endroit, classé automatiquement.</p>
+        <p class="text-marine/70">DPE, diagnostics, factures... <strong class="text-cil-blue">Scannez, l'IA fait le reste.</strong></p>
       </div>
       
-      <div class="bg-menthe/5 border-2 border-menthe/20 rounded-2xl p-8 hover:border-menthe/50 transition">
+      <div class="bg-cream rounded-2xl p-8 border-2 border-menthe/20 hover:border-menthe/40 transition">
         <div class="w-14 h-14 bg-menthe text-white rounded-xl flex items-center justify-center mb-6">
           <i data-lucide="bell" class="w-7 h-7"></i>
         </div>
@@ -151,7 +218,7 @@ tailwind.config = {
         <p class="text-marine/70">Rappels automatiques : entretien chaudière, expiration DPE, garanties...</p>
       </div>
       
-      <div class="bg-soleil/5 border-2 border-soleil/30 rounded-2xl p-8 hover:border-soleil/60 transition">
+      <div class="bg-cream rounded-2xl p-8 border-2 border-soleil/30 hover:border-soleil/60 transition">
         <div class="w-14 h-14 bg-soleil text-marine rounded-xl flex items-center justify-center mb-6">
           <i data-lucide="share-2" class="w-7 h-7"></i>
         </div>
@@ -160,10 +227,10 @@ tailwind.config = {
       </div>
     </div>
 
-    <!-- Étapes avec couleurs -->
+    <!-- Étapes -->
     <div class="space-y-6">
-      <div class="flex gap-6 items-start p-6 bg-corail/5 rounded-2xl border-l-4 border-corail">
-        <div class="w-12 h-12 bg-corail text-white rounded-xl flex items-center justify-center font-bricolage font-bold text-xl shrink-0">1</div>
+      <div class="flex gap-6 items-start p-6 bg-cil-blue/5 rounded-2xl border-l-4 border-cil-blue">
+        <div class="w-12 h-12 bg-cil-blue text-white rounded-xl flex items-center justify-center font-bricolage font-bold text-xl shrink-0">1</div>
         <div>
           <h3 class="font-bricolage font-semibold text-lg mb-1">Créez votre carnet</h3>
           <p class="text-marine/70">Ajoutez votre adresse. 2 minutes chrono.</p>
@@ -172,8 +239,8 @@ tailwind.config = {
       <div class="flex gap-6 items-start p-6 bg-menthe/5 rounded-2xl border-l-4 border-menthe">
         <div class="w-12 h-12 bg-menthe text-white rounded-xl flex items-center justify-center font-bricolage font-bold text-xl shrink-0">2</div>
         <div>
-          <h3 class="font-bricolage font-semibold text-lg mb-1">Scannez vos documents</h3>
-          <p class="text-marine/70">Prenez-les en photo, on les range pour vous.</p>
+          <h3 class="font-bricolage font-semibold text-lg mb-1">Photographiez vos documents</h3>
+          <p class="text-marine/70"><strong class="text-cil-blue">L'IA les analyse, saisit les infos et les range pour vous.</strong> Vous validez.</p>
         </div>
       </div>
       <div class="flex gap-6 items-start p-6 bg-soleil/10 rounded-2xl border-l-4 border-soleil">
@@ -188,7 +255,7 @@ tailwind.config = {
 </section>
 
 <!-- TARIFS -->
-<section id="tarifs" class="py-20 px-6 bg-gradient-to-b from-cream to-white">
+<section id="tarifs" class="py-20 px-6 bg-cream">
   <div class="max-w-5xl mx-auto">
     <div class="text-center mb-12">
       <span class="inline-block bg-soleil/20 text-marine px-4 py-2 rounded-full font-medium text-sm mb-4">Tarifs simples</span>
@@ -196,37 +263,37 @@ tailwind.config = {
     </div>
 
     <div class="grid md:grid-cols-3 gap-6">
-      <div class="bg-white rounded-2xl p-6 border-2 border-marine/10 shadow-lg">
+      <div class="bg-white rounded-2xl p-6 border-2 border-cil-blue/10 shadow-lg">
         <h3 class="font-bricolage font-semibold text-xl mb-2">Gratuit</h3>
-        <div class="font-bricolage font-bold text-5xl mb-1 text-corail">0€</div>
+        <div class="font-bricolage font-bold text-5xl mb-1 text-cil-blue">0€</div>
         <p class="text-marine/60 text-sm mb-6">Pour commencer sans risque</p>
         <ul class="space-y-3 mb-8">
           <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i>1 bien immobilier</li>
-          <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i><strong class="text-corail">15 documents</strong> (vs 5 ailleurs)</li>
+          <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i><strong class="text-cil-blue">15 documents</strong> (vs 5 ailleurs)</li>
+          <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i><strong class="text-cil-blue">IA incluse</strong></li>
           <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i>Alertes basiques</li>
-          <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i>Export texte</li>
         </ul>
-        <a href="app.html" class="block w-full text-center bg-marine/5 text-marine py-3 rounded-lg font-medium hover:bg-marine/10 transition">Commencer</a>
+        <a href="app.html" class="block w-full text-center bg-cil-blue/10 text-cil-blue py-3 rounded-lg font-medium hover:bg-cil-blue/20 transition">Commencer</a>
       </div>
 
-      <div class="bg-gradient-to-b from-marine to-marine/95 text-white rounded-2xl p-6 relative shadow-2xl transform md:-translate-y-2">
+      <div class="bg-cil-blue text-white rounded-2xl p-6 relative shadow-2xl transform md:-translate-y-2">
         <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-corail to-menthe text-white px-6 py-1.5 rounded-full text-sm font-bold">Populaire</div>
         <h3 class="font-bricolage font-semibold text-xl mb-2 mt-2">Pro</h3>
         <div class="font-bricolage font-bold text-5xl mb-1">9,99€</div>
         <p class="text-white/60 text-sm mb-6">par an • moins d'1€/mois</p>
         <ul class="space-y-3 mb-8">
-          <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-corail"></i>Biens illimités</li>
-          <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-corail"></i>Documents illimités</li>
+          <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i>Biens illimités</li>
+          <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i>Documents illimités</li>
+          <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i><strong>IA illimitée</strong></li>
           <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i>Alertes email</li>
-          <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i>Export PDF</li>
-          <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-soleil"></i>Partage notaire</li>
+          <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-soleil"></i>Export PDF</li>
         </ul>
-        <button class="w-full bg-gradient-to-r from-corail to-menthe text-white py-3 rounded-lg font-medium hover:opacity-90 transition" onclick="alert('Inscription bientôt disponible')">S'inscrire</button>
+        <button class="w-full bg-white text-cil-blue py-3 rounded-lg font-medium hover:bg-cream transition" onclick="alert('Inscription bientôt disponible')">S'inscrire</button>
       </div>
 
-      <div class="bg-white rounded-2xl p-6 border-2 border-menthe/30 shadow-lg">
+      <div class="bg-white rounded-2xl p-6 border-2 border-cil-blue/10 shadow-lg">
         <h3 class="font-bricolage font-semibold text-xl mb-2">Agency</h3>
-        <div class="font-bricolage font-bold text-5xl mb-1 text-menthe">49€</div>
+        <div class="font-bricolage font-bold text-5xl mb-1 text-cil-blue">49€</div>
         <p class="text-marine/60 text-sm mb-6">par an • pour les réseaux</p>
         <ul class="space-y-3 mb-8">
           <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i>Tout Pro inclus</li>
@@ -234,12 +301,12 @@ tailwind.config = {
           <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i>Marque blanche</li>
           <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i>API</li>
         </ul>
-        <button class="w-full bg-menthe text-white py-3 rounded-lg font-medium hover:bg-menthe/90 transition" onclick="alert('Contactez-nous')">Nous contacter</button>
+        <button class="w-full bg-cil-blue text-white py-3 rounded-lg font-medium hover:bg-cil-blue/90 transition" onclick="alert('Contactez-nous')">Nous contacter</button>
       </div>
     </div>
 
     <div class="mt-10 text-center">
-      <a href="comparaison.html" class="inline-flex items-center gap-2 bg-soleil/20 text-marine px-6 py-3 rounded-xl font-medium hover:bg-soleil/40 transition">
+      <a href="comparaison.html" class="inline-flex items-center gap-2 bg-cil-blue/10 text-cil-blue px-6 py-3 rounded-xl font-medium hover:bg-cil-blue/20 transition">
         <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
         Voir la comparaison détaillée avec nos concurrents
       </a>
@@ -251,19 +318,19 @@ tailwind.config = {
 <section class="py-20 px-6 bg-white">
   <div class="max-w-3xl mx-auto">
     <div class="text-center mb-12">
-      <span class="inline-block bg-corail/10 text-corail px-4 py-2 rounded-full font-medium text-sm mb-4">FAQ</span>
+      <span class="inline-block bg-cil-blue/10 text-cil-blue px-4 py-2 rounded-full font-medium text-sm mb-4">FAQ</span>
       <h2 class="font-bricolage font-bold text-3xl">Questions fréquentes</h2>
     </div>
     
     <div class="space-y-4">
-      <details class="bg-cream rounded-xl p-5 group border-l-4 border-corail">
+      <details class="bg-cream rounded-xl p-5 group border-l-4 border-cil-blue">
         <summary class="font-bricolage font-semibold cursor-pointer flex justify-between items-center">
-          C'est obligatoire pour qui ?
+          L'IA fonctionne avec tous les documents ?
           <i data-lucide="chevron-down" class="w-5 h-5 group-open:rotate-180 transition-transform"></i>
         </summary>
         <p class="mt-4 text-marine/70">
-          Pour tous les propriétaires en France. Depuis janvier 2023, vous devez remettre ce carnet à l'acheteur lors d'une vente. 
-          Pour les locations, c'est recommandé mais pas encore obligatoire.
+          Oui ! Notre IA reconnaît les DPE, diagnostics, factures d'énergie, manuels d'équipements, contrats... 
+          Elle extrait automatiquement les dates, numéros, caractéristiques et équipements.
         </p>
       </details>
       
@@ -273,19 +340,19 @@ tailwind.config = {
           <i data-lucide="chevron-down" class="w-5 h-5 group-open:rotate-180 transition-transform"></i>
         </summary>
         <p class="mt-4 text-marine/70">
-          Vos documents restent sur votre téléphone. Rien n'est envoyé sur nos serveurs. 
-          C'est 100% privé, comme un dossier papier mais mieux organisé.
+          Vos documents restent sur votre téléphone. L'IA analyse localement. 
+          Rien n'est envoyé sur nos serveurs. C'est 100% privé.
         </p>
       </details>
       
       <details class="bg-cream rounded-xl p-5 group border-l-4 border-soleil">
         <summary class="font-bricolage font-semibold cursor-pointer flex justify-between items-center">
-          Combien de temps pour créer mon carnet ?
+          C'est obligatoire pour qui ?
           <i data-lucide="chevron-down" class="w-5 h-5 group-open:rotate-180 transition-transform"></i>
         </summary>
         <p class="mt-4 text-marine/70">
-          2 minutes pour créer le carnet. 15-30 minutes pour scanner vos documents principaux. 
-          Ensuite, vous ajoutez les équipements au fur et à mesure.
+          Pour tous les propriétaires en France. Depuis janvier 2023, vous devez remettre ce carnet à l'acheteur lors d'une vente. 
+          Pour les locations, c'est recommandé mais pas encore obligatoire.
         </p>
       </details>
     </div>
@@ -293,37 +360,40 @@ tailwind.config = {
 </section>
 
 <!-- CTA -->
-<section class="py-24 px-6 bg-gradient-to-br from-corail via-menthe to-soleil relative overflow-hidden">
-  <div class="absolute inset-0 bg-marine/20"></div>
+<section class="py-24 px-6 bg-cil-blue text-white relative overflow-hidden">
+  <div class="absolute inset-0 bg-gradient-to-br from-cil-blue via-cil-blue/80 to-menthe/30"></div>
   <div class="max-w-2xl mx-auto text-center relative z-10">
-    <h2 class="font-bricolage font-bold text-3xl md:text-4xl mb-4 text-white drop-shadow-lg">
-      Prêt à organiser vos documents ?
+    <div class="inline-flex items-center gap-2 bg-white/10 px-4 py-2 rounded-full mb-6">
+      <i data-lucide="sparkles" class="w-5 h-5 ai-pulse"></i>
+      <span class="text-sm font-medium">IA incluse dans tous les plans</span>
+    </div>
+    <h2 class="font-bricolage font-bold text-3xl md:text-4xl mb-4">
+      Prêt à essayer l'IA ?
     </h2>
-    <p class="text-white/90 text-lg mb-8 drop-shadow">
-      Créez votre carnet en 2 minutes. Gratuit, sans inscription.
+    <p class="text-white/80 text-lg mb-8">
+      Prenez un document en photo. L'IA fait le reste. Gratuit, sans inscription.
     </p>
-    <a href="app.html" class="inline-block bg-white text-marine px-10 py-4 rounded-xl font-bricolage font-semibold text-lg hover:bg-cream transition shadow-2xl">
-      Créer mon carnet gratuitement
+    <a href="app.html" class="inline-block bg-white text-cil-blue px-10 py-4 rounded-xl font-bricolage font-semibold text-lg hover:bg-cream transition shadow-2xl">
+      <i data-lucide="camera" class="w-5 h-5 inline mr-2"></i>
+      Tester l'IA maintenant
     </a>
   </div>
 </section>
 
 <!-- FOOTER -->
-<footer class="py-12 px-6 bg-marine text-white">
+<footer class="py-12 px-6 bg-cil-blue text-white">
   <div class="max-w-6xl mx-auto">
     <div class="grid md:grid-cols-4 gap-8 mb-8">
       <div>
-        <p class="font-bricolage font-bold text-xl mb-4">
-          <span class="text-corail">C</span><span class="text-menthe">I</span><span class="text-soleil">L</span><span>IA</span>
-        </p>
-        <p class="text-white/60 text-sm">Le carnet de santé de votre logement</p>
+        <p class="font-bricolage font-bold text-xl mb-4">🏠 CILIA</p>
+        <p class="text-white/60 text-sm">Le carnet de santé de votre logement, propulsé par l'IA.</p>
       </div>
       <div>
         <p class="font-bricolage font-semibold mb-4">Produit</p>
         <ul class="space-y-2 text-sm text-white/60">
           <li><a href="app.html" class="hover:text-white transition">Créer un carnet</a></li>
           <li><a href="#tarifs" class="hover:text-white transition">Tarifs</a></li>
-          <li><a href="#comment" class="hover:text-white transition">Comment ça marche</a></li>
+          <li><a href="#ia" class="hover:text-white transition">Notre IA</a></li>
         </ul>
       </div>
       <div>

@@ -15,6 +15,7 @@ tailwind.config = {
   theme: {
     extend: {
       colors: {
+        'cil-blue': '#1e40af',
         cream: '#FEF7ED',
         marine: '#2C3E50',
         corail: '#FF6B6B',
@@ -35,9 +36,7 @@ tailwind.config = {
 <!-- NAV -->
 <nav class="fixed top-0 w-full bg-cream/95 backdrop-blur-sm z-50 border-b border-marine/10">
   <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-    <a href="index-origami.html" class="font-bricolage font-bold text-2xl">
-      <span class="text-corail">C</span><span class="text-menthe">I</span><span class="text-soleil">L</span><span class="text-marine">IA</span>
-    </a>
+    <a href="index-origami.html" class="font-bricolage font-bold text-2xl text-cil-blue">🏠 CILIA</a>
     <div class="flex gap-6 items-center">
       <a href="index-origami.html" class="text-sm hover:text-corail transition">Accueil</a>
       <a href="app.html" class="bg-corail text-white px-5 py-2.5 rounded-lg font-medium text-sm hover:bg-corail/90 transition">Créer mon carnet</a>
@@ -71,7 +70,7 @@ tailwind.config = {
             <th class="text-left py-4 px-4 font-bricolage font-semibold">Critère</th>
             <th class="text-center py-4 px-4">
               <div class="inline-flex flex-col items-center">
-                <span class="font-bricolage font-bold text-lg text-corail">CILIA</span>
+                <span class="font-bricolage font-bold text-lg text-cil-blue">CILIA</span>
                 <span class="text-xs text-marine/50 mt-1">Notre solution</span>
               </div>
             </th>
@@ -96,7 +95,7 @@ tailwind.config = {
               <i data-lucide="euro" class="w-4 h-4 inline mr-2 text-corail"></i>Prix Premium
             </td>
             <td class="text-center py-4 px-4">
-              <span class="inline-block bg-corail text-white px-3 py-1 rounded-full font-bold">9,99€/an</span>
+              <span class="inline-block bg-cil-blue text-white px-3 py-1 rounded-full font-bold">9,99€/an</span>
             </td>
             <td class="text-center py-4 px-4">
               <span class="text-marine/70">9,99€/an</span>
@@ -144,7 +143,7 @@ tailwind.config = {
               <i data-lucide="sparkles" class="w-4 h-4 inline mr-2 text-corail"></i>Classification IA
             </td>
             <td class="text-center py-4 px-4">
-              <span class="inline-block bg-corail text-white px-3 py-1 rounded-full">
+              <span class="inline-block bg-cil-blue text-white px-3 py-1 rounded-full">
                 <i data-lucide="check" class="w-4 h-4 inline"></i> Oui
               </span>
             </td>
@@ -258,7 +257,7 @@ tailwind.config = {
               <i data-lucide="shield-check" class="w-4 h-4 inline mr-2 text-menthe"></i>Données locales
             </td>
             <td class="text-center py-4 px-4">
-              <span class="inline-block bg-corail text-white px-3 py-1 rounded-full font-bold">100% local</span>
+              <span class="inline-block bg-cil-blue text-white px-3 py-1 rounded-full font-bold">100% local</span>
             </td>
             <td class="text-center py-4 px-4">
               <span class="text-marine/50">Cloud</span>
@@ -274,7 +273,7 @@ tailwind.config = {
               <i data-lucide="building" class="w-4 h-4 inline mr-2"></i>Offre B2B mandataires
             </td>
             <td class="text-center py-4 px-4">
-              <span class="inline-block bg-corail text-white px-3 py-1 rounded-full font-bold">1€/an</span>
+              <span class="inline-block bg-cil-blue text-white px-3 py-1 rounded-full font-bold">1€/an</span>
             </td>
             <td class="text-center py-4 px-4">
               <span class="text-marine/50">Constructeurs</span>
@@ -296,11 +295,11 @@ tailwind.config = {
     
     <div class="grid md:grid-cols-3 gap-6">
       <!-- CILIA -->
-      <div class="bg-white rounded-2xl p-6 border-2 border-corail relative">
-        <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-corail text-white px-4 py-1 rounded-full text-sm font-bold">
+      <div class="bg-white rounded-2xl p-6 border-2 border-cil-blue relative">
+        <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-cil-blue text-white px-4 py-1 rounded-full text-sm font-bold">
           Notre choix
         </div>
-        <h3 class="font-bricolage font-bold text-xl mb-4 mt-2 text-corail">CILIA</h3>
+        <h3 class="font-bricolage font-bold text-xl mb-4 mt-2 text-cil-blue">CILIA</h3>
         <p class="text-sm text-marine/70 mb-4">Pour ceux qui veulent :</p>
         <ul class="space-y-2 text-sm">
           <li class="flex items-start gap-2">
@@ -308,7 +307,7 @@ tailwind.config = {
             <span><strong>3x plus</strong> de documents gratuits</span>
           </li>
           <li class="flex items-start gap-2">
-            <i data-lucide="check" class="w-4 h-4 text-menthe mt-0.5"></i>
+            <i data-lucide="sparkles" class="w-4 h-4 text-cil-blue mt-0.5"></i>
             <span><strong>Classification IA</strong> automatique</span>
           </li>
           <li class="flex items-start gap-2">
@@ -320,7 +319,7 @@ tailwind.config = {
             <span><strong>Design moderne</strong> et ludique</span>
           </li>
         </ul>
-        <a href="app.html" class="block w-full mt-6 bg-corail text-white text-center py-3 rounded-lg font-medium hover:bg-corail/90 transition">
+        <a href="app.html" class="block w-full mt-6 bg-cil-blue text-white text-center py-3 rounded-lg font-medium hover:bg-cil-blue/90 transition">
           Essayer gratuitement
         </a>
       </div>
@@ -375,27 +374,24 @@ tailwind.config = {
 </section>
 
 <!-- CTA -->
-<section class="py-20 px-6 bg-gradient-to-br from-corail via-menthe to-soleil relative">
-  <div class="absolute inset-0 bg-marine/20"></div>
-  <div class="max-w-2xl mx-auto text-center relative z-10">
-    <h2 class="font-bricolage font-bold text-3xl text-white mb-4 drop-shadow-lg">
+<section class="py-20 px-6 bg-cil-blue relative">
+  <div class="max-w-2xl mx-auto text-center">
+    <h2 class="font-bricolage font-bold text-3xl text-white mb-4">
       Prêt à essayer CILIA ?
     </h2>
-    <p class="text-white/90 mb-8 drop-shadow">
-      15 documents gratuits, sans inscription, 100% privé.
+    <p class="text-white/80 mb-8">
+      15 documents gratuits, IA incluse, sans inscription.
     </p>
-    <a href="app.html" class="inline-block bg-white text-marine px-10 py-4 rounded-xl font-bricolage font-semibold text-lg hover:bg-cream transition shadow-2xl">
+    <a href="app.html" class="inline-block bg-white text-cil-blue px-10 py-4 rounded-xl font-bricolage font-semibold text-lg hover:bg-cream transition shadow-2xl">
       Créer mon carnet gratuitement
     </a>
   </div>
 </section>
 
 <!-- FOOTER -->
-<footer class="py-8 px-6 bg-marine text-white">
+<footer class="py-8 px-6 bg-cil-blue text-white">
   <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-    <p class="font-bricolage font-bold">
-      <span class="text-corail">C</span><span class="text-menthe">I</span><span class="text-soleil">L</span><span>IA</span>
-    </p>
+    <p class="font-bricolage font-bold">🏠 CILIA</p>
     <p class="text-sm text-white/40">© 2026 CILIA - France</p>
   </div>
 </footer>
