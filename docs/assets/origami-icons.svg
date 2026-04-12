@@ -1,0 +1,109 @@
+<!-- Icônes Origami CILIA -->
+<!-- Style: ligne fine, couleurs vives, formes géométriques -->
+
+<!-- MAISON ORIGAMI -->
+<svg id="origami-home" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M24 8L6 24H12V40H36V24H42L24 8Z" fill="#FFE66D" stroke="#2C3E50" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M24 8L6 24" stroke="#FF6B6B" stroke-width="1.5"/>
+  <path d="M24 8L42 24" stroke="#4ECDC4" stroke-width="1.5"/>
+  <rect x="20" y="28" width="8" height="12" fill="#F7F1E3" stroke="#2C3E50" stroke-width="1.5"/>
+</svg>
+
+<!-- DOSSIER ORIGAMI -->
+<svg id="origami-folder" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M6 12L12 6H36L42 12V42H6V12Z" fill="#FF6B6B" stroke="#2C3E50" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M6 12H42" stroke="#FFE66D" stroke-width="2"/>
+  <path d="M12 6L6 12V42" stroke="#4ECDC4" stroke-width="1.5"/>
+  <path d="M36 6L42 12" stroke="#FFE66D" stroke-width="1.5"/>
+  <line x1="14" y1="22" x2="34" y2="22" stroke="#F7F1E3" stroke-width="2"/>
+  <line x1="14" y1="30" x2="28" y2="30" stroke="#F7F1E3" stroke-width="2"/>
+</svg>
+
+<!-- AVION EN PAPIER -->
+<svg id="origami-plane" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M8 24L40 8L28 24L40 40L8 24Z" fill="#4ECDC4" stroke="#2C3E50" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M8 24L40 8" stroke="#FFE66D" stroke-width="1.5"/>
+  <path d="M40 8L28 24" stroke="#FF6B6B" stroke-width="1.5"/>
+  <path d="M28 24L40 40" stroke="#FFE66D" stroke-width="1.5"/>
+  <path d="M8 24L28 24" stroke="#F7F1E3" stroke-width="1" stroke-dasharray="2 2"/>
+</svg>
+
+<!-- COCOTTE ORIGAMI -->
+<svg id="origami-cocotte" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M24 6L42 18V36L24 42L6 36V18L24 6Z" fill="#FFE66D" stroke="#2C3E50" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M24 6L42 18" stroke="#FF6B6B" stroke-width="1.5"/>
+  <path d="M24 6L6 18" stroke="#4ECDC4" stroke-width="1.5"/>
+  <path d="M24 6V42" stroke="#2C3E50" stroke-width="1" stroke-dasharray="4 2"/>
+  <path d="M6 18L24 24L42 18" stroke="#FF6B6B" stroke-width="1.5"/>
+  <circle cx="24" cy="24" r="4" fill="#F7F1E3" stroke="#2C3E50" stroke-width="1"/>
+</svg>
+
+<!-- BATEAU ORIGAMI -->
+<svg id="origami-boat" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M24 8V24M24 8L32 16L24 24L16 16L24 8Z" fill="#FFE66D" stroke="#2C3E50" stroke-width="2"/>
+  <path d="M8 32L16 24H32L40 32H8Z" fill="#4ECDC4" stroke="#2C3E50" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M16 24L24 32L32 24" stroke="#FF6B6B" stroke-width="1.5"/>
+  <path d="M8 32L40 32" stroke="#2C3E50" stroke-width="2"/>
+</svg>
+
+<!-- ETOILE ORIGAMI -->
+<svg id="origami-star" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M24 4L28 18H44L32 28L36 44L24 34L12 44L16 28L4 18H20L24 4Z" fill="#FF6B6B" stroke="#2C3E50" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M24 4L28 18" stroke="#FFE66D" stroke-width="1.5"/>
+  <path d="M24 4L20 18" stroke="#4ECDC4" stroke-width="1.5"/>
+  <path d="M24 34L36 44" stroke="#FFE66D" stroke-width="1.5"/>
+  <path d="M24 34L12 44" stroke="#4ECDC4" stroke-width="1.5"/>
+</svg>
+
+<!-- CLOCHE ORIGAMI (alerte) -->
+<svg id="origami-bell" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M24 4L36 16V32H12V16L24 4Z" fill="#FFE66D" stroke="#2C3E50" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M24 4L36 16" stroke="#FF6B6B" stroke-width="1.5"/>
+  <path d="M24 4L12 16" stroke="#4ECDC4" stroke-width="1.5"/>
+  <rect x="12" y="32" width="24" height="6" rx="2" fill="#FF6B6B" stroke="#2C3E50" stroke-width="2"/>
+  <circle cx="24" cy="42" r="3" fill="#4ECDC4" stroke="#2C3E50" stroke-width="1"/>
+</svg>
+
+<!-- ENGRENAGE ORIGAMI (équipement) -->
+<svg id="origami-gear" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M24 8L28 4H32L36 8L40 6L44 12L40 16L42 20V28L40 32L44 36L40 42L36 40L32 44H28L24 40L20 44H16L12 40L8 42L4 36L8 32L6 28V20L8 16L4 12L8 6L12 8L16 4H20L24 8Z" fill="#4ECDC4" stroke="#2C3E50" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="24" cy="24" r="8" fill="#FFE66D" stroke="#2C3E50" stroke-width="2"/>
+  <path d="M24 8L28 4" stroke="#FF6B6B" stroke-width="1.5"/>
+  <path d="M24 8L20 4" stroke="#FFE66D" stroke-width="1.5"/>
+</svg>
+
+<!-- CHAUFFAGE ORIGAMI -->
+<svg id="origami-fire" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M24 4C24 4 32 14 32 24C32 30 28 36 24 36C20 36 16 30 16 24C16 14 24 4 24 4Z" fill="#FF6B6B" stroke="#2C3E50" stroke-width="2"/>
+  <path d="M24 4C24 4 32 14 32 24" stroke="#FFE66D" stroke-width="1.5"/>
+  <path d="M24 4C24 4 16 14 16 24" stroke="#4ECDC4" stroke-width="1.5"/>
+  <path d="M20 28C20 28 22 32 24 32C26 32 28 28 28 28" fill="#FFE66D" stroke="#2C3E50" stroke-width="1.5"/>
+  <path d="M12 36C12 36 18 44 24 44C30 44 36 36 36 36" stroke="#2C3E50" stroke-width="2" stroke-linecap="round"/>
+</svg>
+
+<!-- VMC ORIGAMI (vent) -->
+<svg id="origami-wind" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M4 16H24C24 16 32 16 32 22C32 28 24 28 24 28" stroke="#4ECDC4" stroke-width="3" stroke-linecap="round"/>
+  <path d="M4 24H32C32 24 40 24 40 30C40 36 32 36 32 36" stroke="#FFE66D" stroke-width="3" stroke-linecap="round"/>
+  <path d="M4 32H20C20 32 26 32 26 36C26 40 20 40 20 40" stroke="#FF6B6B" stroke-width="3" stroke-linecap="round"/>
+  <path d="M32 22L36 18" stroke="#2C3E50" stroke-width="1.5"/>
+  <path d="M40 30L44 26" stroke="#2C3E50" stroke-width="1.5"/>
+  <path d="M26 36L30 32" stroke="#2C3E50" stroke-width="1.5"/>
+</svg>
+
+<!-- CHECK ORIGAMI -->
+<svg id="origami-check" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M24 4L44 16V36L24 44L4 36V16L24 4Z" fill="#4ECDC4" stroke="#2C3E50" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M14 24L20 32L34 18" stroke="#FFE66D" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M24 4L44 16" stroke="#FF6B6B" stroke-width="1.5"/>
+  <path d="M24 4L4 16" stroke="#FFE66D" stroke-width="1.5"/>
+</svg>
+
+<!-- UPLOAD ORIGAMI -->
+<svg id="origami-upload" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M24 4L36 16H40V42H8V16H12L24 4Z" fill="#F7F1E3" stroke="#2C3E50" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M24 4L36 16" stroke="#FF6B6B" stroke-width="1.5"/>
+  <path d="M24 4L12 16" stroke="#4ECDC4" stroke-width="1.5"/>
+  <path d="M24 28V18" stroke="#FFE66D" stroke-width="3" stroke-linecap="round"/>
+  <path d="M18 24L24 18L30 24" stroke="#FF6B6B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

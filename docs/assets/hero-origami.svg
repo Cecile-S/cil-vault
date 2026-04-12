@@ -1,0 +1,93 @@
+<!-- HERO ILLUSTRATION - CILIA ORIGAMI -->
+<!-- Personnages transmettant le CIL avec avions en papier -->
+
+<svg viewBox="0 0 800 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background elements - avions en papier qui volent -->
+  <g opacity="0.3">
+    <!-- Avion 1 -->
+    <path d="M100 80L120 70L115 80L120 90L100 80Z" fill="#FFE66D" stroke="#2C3E50" stroke-width="1"/>
+    <!-- Avion 2 -->
+    <path d="M700 100L720 90L715 100L720 110L700 100Z" fill="#4ECDC4" stroke="#2C3E50" stroke-width="1"/>
+    <!-- Avion 3 -->
+    <path d="M150 400L170 390L165 400L170 410L150 400Z" fill="#FF6B6B" stroke="#2C3E50" stroke-width="1"/>
+    <!-- Cocotte 1 -->
+    <path d="M650 380L660 370L665 380L660 390L650 380Z" fill="#FFE66D" stroke="#2C3E50" stroke-width="1"/>
+  </g>
+
+  <!-- PERSONNAGE A - Vendeur (gauche) -->
+  <g transform="translate(150, 150)">
+    <!-- Corps -->
+    <path d="M50 80L40 150L80 150L70 80L50 80Z" fill="#4ECDC4" stroke="#2C3E50" stroke-width="2"/>
+    <!-- Tête -->
+    <circle cx="60" cy="50" r="30" fill="#FFE66D" stroke="#2C3E50" stroke-width="2"/>
+    <!-- Visage joyeux -->
+    <circle cx="50" cy="45" r="3" fill="#2C3E50"/>
+    <circle cx="70" cy="45" r="3" fill="#2C3E50"/>
+    <path d="M50 60Q60 70 70 60" stroke="#2C3E50" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <!-- Bras tendu avec dossier -->
+    <path d="M80 100L140 90" stroke="#2C3E50" stroke-width="3"/>
+    <!-- Dossier CIL (origami) -->
+    <g transform="translate(120, 60)">
+      <path d="M0 20L20 0L60 20L60 60L20 80L0 60L0 20Z" fill="#FFE66D" stroke="#2C3E50" stroke-width="2"/>
+      <path d="M0 20L20 40L60 20" stroke="#FF6B6B" stroke-width="1.5"/>
+      <path d="M20 40L20 80" stroke="#4ECDC4" stroke-width="1.5"/>
+      <path d="M20 0L20 40" stroke="#2C3E50" stroke-width="1"/>
+      <text x="15" y="55" font-family="Bricolage Grotesque" font-size="12" fill="#2C3E50">CIL</text>
+    </g>
+    <!-- Main -->
+    <circle cx="145" cy="88" r="8" fill="#FFE66D" stroke="#2C3E50" stroke-width="2"/>
+    <!-- Jambes -->
+    <path d="M45 150L40 200" stroke="#2C3E50" stroke-width="3"/>
+    <path d="M55 150L50 200" stroke="#2C3E50" stroke-width="3"/>
+  </g>
+
+  <!-- PERSONNAGE B - Acheteur (droite) -->
+  <g transform="translate(480, 150)">
+    <!-- Corps -->
+    <path d="M50 80L40 150L80 150L70 80L50 80Z" fill="#FF6B6B" stroke="#2C3E50" stroke-width="2"/>
+    <!-- Tête -->
+    <circle cx="60" cy="50" r="30" fill="#FFE66D" stroke="#2C3E50" stroke-width="2"/>
+    <!-- Visage joyeux - yeux fermés de bonheur -->
+    <path d="M45 45L55 45" stroke="#2C3E50" stroke-width="2" stroke-linecap="round"/>
+    <path d="M65 45L75 45" stroke="#2C3E50" stroke-width="2" stroke-linecap="round"/>
+    <path d="M50 60Q60 75 70 60" stroke="#2C3E50" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <!-- Bras tendu pour recevoir -->
+    <path d="M40 100L-20 90" stroke="#2C3E50" stroke-width="3"/>
+    <!-- Main ouverte -->
+    <circle cx="-25" cy="88" r="8" fill="#FFE66D" stroke="#2C3E50" stroke-width="2"/>
+    <!-- Jambes -->
+    <path d="M45 150L40 200" stroke="#2C3E50" stroke-width="3"/>
+    <path d="M55 150L50 200" stroke="#2C3E50" stroke-width="3"/>
+  </g>
+
+  <!-- Éléments décoratifs - cocottes et étoiles -->
+  <!-- Cocotte en bas -->
+  <g transform="translate(300, 380)">
+    <path d="M40 0L80 20L80 60L40 80L0 60L0 20L40 0Z" fill="#FFE66D" stroke="#2C3E50" stroke-width="2"/>
+    <path d="M0 20L40 40L80 20" stroke="#FF6B6B" stroke-width="1.5"/>
+    <path d="M40 0L40 40" stroke="#4ECDC4" stroke-width="1.5"/>
+  </g>
+
+  <!-- Étoiles -->
+  <g transform="translate(200, 100)">
+    <path d="M20 0L24 12L40 12L28 20L32 32L20 24L8 32L12 20L0 12L16 12L20 0Z" fill="#FF6B6B" stroke="#2C3E50" stroke-width="1"/>
+  </g>
+  <g transform="translate(600, 50)">
+    <path d="M15 0L18 9L30 9L22 15L25 24L15 18L5 24L8 15L0 9L12 9L15 0Z" fill="#4ECDC4" stroke="#2C3E50" stroke-width="1"/>
+  </g>
+
+  <!-- Bateau en papier -->
+  <g transform="translate(550, 350)">
+    <path d="M0 30L20 10L40 30L0 30Z" fill="#4ECDC4" stroke="#2C3E50" stroke-width="1.5"/>
+    <path d="M20 10L20 0" stroke="#FFE66D" stroke-width="2"/>
+    <path d="M20 0L35 5" stroke="#FF6B6B" stroke-width="1.5"/>
+  </g>
+
+  <!-- Ligne de flottaison / sol stylisé -->
+  <path d="M0 400Q200 380 400 400Q600 420 800 400" stroke="#2C3E50" stroke-width="2" fill="none" opacity="0.3"/>
+
+  <!-- Texte décoratif -->
+  <text x="400" y="450" font-family="Bricolage Grotesque" font-size="14" fill="#FF6B6B" text-anchor="middle" opacity="0.6">
+    Vos documents, pliés comme du papier
+  </text>
+</svg>
