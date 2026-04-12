@@ -1,187 +1,280 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CILIA - Carnet d'Information Logement obligatoire 2023 | Gratuit</title>
-    <meta name="description" content="Gérez gratuitement votre Carnet d'Information Logement (CIL) obligatoire depuis 2023. PWA installable, alertes automatiques, export PDF. Pour propriétaires, locataires et mandataires immobiliers.">
-    <meta name="keywords" content="CIL, carnet information logement, DPE, diagnostic immobilier, obligatoire 2023, propriétaire, mandataire immobilier, entretien chaudière, alerte diagnostic">
-    <meta name="author" content="CILIA">
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://cecile-s.github.io/cil-vault/">
-    
-    <!-- Open Graph -->
-    <meta property="og:title" content="CILIA - Carnet d'Information Logement obligatoire">
-    <meta property="og:description" content="Gérez votre CIL gratuitement. Alertes automatiques, export PDF, PWA installable.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://cecile-s.github.io/cil-vault/">
-    <meta property="og:locale" content="fr_FR">
-    
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="CILIA - Carnet d'Information Logement">
-    <meta name="twitter:description" content="Gérez votre CIL obligatoire gratuitement depuis 2023.">
-    
-    <link rel="manifest" href="manifest.json">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config={theme:{extend:{colors:{'cil-blue':'#1e40af','cil-gold':'#d4af37'}}}}</script>
-    <style>
-        @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-        .float{animation:float 3s ease-in-out infinite}
-        .gradient{background:linear-gradient(135deg,#1e40af 0%,#3b82f6 100%)}
-    </style>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CILIA - Le carnet de santé de votre logement | Obligatoire 2023</title>
+<meta name="description" content="Le Carnet d'Information Logement est un dossier qui reprend tous les documents de votre bien : DPE, diagnostics, factures, manuels équipements. Obligatoire depuis 2023. Gratuit.">
+<meta name="keywords" content="carnet information logement, CIL, dossier logement, DPE, diagnostic immobilier, vente immobilier, location, documents logement, obligatoire 2023">
+<meta name="author" content="CILIA">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://cecile-s.github.io/cil-vault/">
+<!-- Open Graph -->
+<meta property="og:title" content="CILIA - Le carnet de santé de votre logement">
+<meta property="og:description" content="Centralisez tous vos documents logement en un seul endroit. DPE, diagnostics, factures... Obligatoire depuis 2023.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://cecile-s.github.io/cil-vault/">
+<meta property="og:locale" content="fr_FR">
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="CILIA - Le carnet de santé de votre logement">
+<meta name="twitter:description" content="Tous vos documents logement en un clic. Obligatoire depuis 2023.">
+<link rel="manifest" href="manifest.json">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={theme:{extend:{colors:{'cil-blue':'#1e40af','cil-gold':'#d4af37'}}}}</script>
+<style>
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.float{animation:float 3s ease-in-out infinite}
+.gradient{background:linear-gradient(135deg,#1e40af 0%,#3b82f6 100%)}
+</style>
 </head>
 <body class="bg-slate-50">
-    <!-- HERO -->
-    <section class="gradient text-white py-16 px-4">
-        <div class="max-w-4xl mx-auto text-center">
-            <h1 class="text-4xl md:text-5xl font-bold mb-4">🏠 Votre CIL en 2 minutes</h1>
-            <p class="text-xl opacity-90 mb-6">Le Carnet d'Information Logement est <strong>obligatoire</strong> depuis 2023.<br>Ne risquez plus d'amende.</p>
-            <div class="flex flex-col sm:flex-row gap-3 justify-center">
-                <a href="app.html" class="bg-white text-cil-blue px-8 py-4 rounded-xl font-bold text-lg hover:bg-slate-100 transition">Commencer gratuitement</a>
-                <a href="#pricing" class="border-2 border-white px-8 py-4 rounded-xl font-medium hover:bg-white/10 transition">Voir les prix</a>
-            </div>
-            <p class="mt-4 text-sm opacity-70">✓ Gratuit ✓ Sans inscription ✓ Hébergement France</p>
-        </div>
-    </section>
+<!-- HERO -->
+<section class="gradient text-white py-16 px-4">
+<div class="max-w-4xl mx-auto text-center">
+<h1 class="text-4xl md:text-5xl font-bold mb-4">🏠 Le carnet de santé de votre logement</h1>
+<p class="text-xl opacity-90 mb-6">Tous vos documents en un seul endroit : DPE, diagnostics, factures, manuels...<br><strong>Obligatoire depuis 2023</strong> pour toute vente ou location.</p>
+<div class="flex flex-col sm:flex-row gap-3 justify-center">
+<a href="app.html" class="bg-white text-cil-blue px-8 py-4 rounded-xl font-bold text-lg hover:bg-slate-100 transition">Créer mon carnet gratuitement</a>
+<a href="#qu-est-ce-que-c-est" class="border-2 border-white px-8 py-4 rounded-xl font-medium hover:bg-white/10 transition">C'est quoi ?</a>
+</div>
+<p class="mt-4 text-sm opacity-70">✓ Gratuit ✓ Sans inscription ✓ Données sur votre téléphone</p>
+</div>
+</section>
 
-    <!-- PROBLEM -->
-    <section class="py-16 px-4 bg-white">
-        <div class="max-w-4xl mx-auto">
-            <h2 class="text-3xl font-bold text-center mb-12 text-slate-800">⚠️ Le CIL, c'est obligatoire</h2>
-            <div class="grid md:grid-cols-3 gap-8">
-                <div class="text-center p-6">
-                    <div class="text-5xl mb-4">📋</div>
-                    <h3 class="font-bold text-xl mb-2">Depuis janvier 2023</h3>
-                    <p class="text-slate-600">Tout logement en France doit avoir un CIL à jour, même en location.</p>
-                </div>
-                <div class="text-center p-6">
-                    <div class="text-5xl mb-4">💰</div>
-                    <h3 class="font-bold text-xl mb-2">Amende jusqu'à 3750€</h3>
-                    <p class="text-slate-600">Sans CIL lors d'une vente ou location, vous encourez une amende.</p>
-                </div>
-                <div class="text-center p-6">
-                    <div class="text-5xl mb-4">📅</div>
-                    <h3 class="font-bold text-xl mb-2">Documents à jour</h3>
-                    <p class="text-slate-600">DPE, électricité, gaz, plomb... Vous connaissez leurs dates d'expiration ?</p>
-                </div>
-            </div>
-        </div>
-    </section>
+<!-- QU'EST-CE QUE C'EST -->
+<section id="qu-est-ce-que-c-est" class="py-16 px-4 bg-white">
+<div class="max-w-4xl mx-auto">
+<h2 class="text-3xl font-bold text-center mb-8 text-slate-800">📋 C'est quoi le Carnet d'Information Logement ?</h2>
+<div class="bg-slate-50 rounded-2xl p-8 mb-8">
+<p class="text-lg text-slate-700 mb-4">
+Le <strong>Carnet d'Information Logement</strong> est un dossier qui centralise tous les documents de votre bien immobilier. C'est le "carnet de santé" de votre logement.
+</p>
+<p class="text-lg text-slate-700 mb-4">
+Il contient :
+</p>
+<ul class="text-lg text-slate-700 space-y-2 mb-4">
+<li>🔹 <strong>DPE</strong> (Diagnostic Performance Énergétique) - votre facture énergétique</li>
+<li>🔹 <strong>Diagnostics</strong> - électricité, gaz, plomb, amiante...</li>
+<li>🔹 <strong>Factures</strong> - EDF, gaz, eau, entretien chaudière...</li>
+<li>🔹 <strong>Manuels</strong> - notices de vos équipements (chauffage, VMC...)</li>
+<li>🔹 <strong>Garanties</strong> - de vos travaux et équipements</li>
+</ul>
+<p class="text-lg text-slate-700">
+<strong>Pourquoi c'est obligatoire ?</strong> Depuis janvier 2023, vous devez remettre ce carnet à l'acheteur lors d'une vente. Sans lui, vous risquez une amende jusqu'à 3750€.
+</p>
+</div>
+</div>
+</section>
 
-    <!-- SOLUTION -->
-    <section class="py-16 px-4">
-        <div class="max-w-4xl mx-auto">
-            <h2 class="text-3xl font-bold text-center mb-12 text-slate-800">✨ CILIA vous simplifie la vie</h2>
-            <div class="grid md:grid-cols-2 gap-8">
-                <div class="bg-white rounded-2xl shadow-lg p-6">
-                    <h3 class="font-bold text-xl mb-3 flex items-center gap-2">📱 Installable</h3>
-                    <p class="text-slate-600">Ajoutez CILIA sur votre écran d'accueil. Fonctionne offline, comme une vraie app.</p>
-                </div>
-                <div class="bg-white rounded-2xl shadow-lg p-6">
-                    <h3 class="font-bold text-xl mb-3 flex items-center gap-2">🔔 Alertes automatiques</h3>
-                    <p class="text-slate-600">Recevez un rappel avant l'expiration de vos diagnostics et l'entretien de vos équipements.</p>
-                </div>
-                <div class="bg-white rounded-2xl shadow-lg p-6">
-                    <h3 class="font-bold text-xl mb-3 flex items-center gap-2">📤 Export PDF</h3>
-                    <p class="text-slate-600">Générez votre CIL complet pour une vente ou location en 1 clic.</p>
-                </div>
-                <div class="bg-white rounded-2xl shadow-lg p-6">
-                    <h3 class="font-bold text-xl mb-3 flex items-center gap-2">🔒 Données privées</h3>
-                    <p class="text-slate-600">Vos documents restent sur votre téléphone. Pas de cloud, pas de fuite.</p>
-                </div>
-            </div>
-        </div>
-    </section>
+<!-- PROBLEM -->
+<section class="py-16 px-4">
+<div class="max-w-4xl mx-auto">
+<h2 class="text-3xl font-bold text-center mb-12 text-slate-800">⚠️ Le problème : vous avez des documents partout</h2>
+<div class="grid md:grid-cols-3 gap-8">
+<div class="text-center p-6 bg-white rounded-2xl shadow">
+<div class="text-5xl mb-4">🗂️</div>
+<h3 class="font-bold text-xl mb-2">Dossier éparpillé</h3>
+<p class="text-slate-600">DPE dans un tiroir, facture EDF dans un mail, notice chaudière perdue...</p>
+</div>
+<div class="text-center p-6 bg-white rounded-2xl shadow">
+<div class="text-5xl mb-4">🤔</div>
+<h3 class="font-bold text-xl mb-2">Dates oubliées</h3>
+<p class="text-slate-600">Quand expire votre DPE ? Votre entretien chaudière est-il à jour ?</p>
+</div>
+<div class="text-center p-6 bg-white rounded-2xl shadow">
+<div class="text-5xl mb-4">😰</div>
+<h3 class="font-bold text-xl mb-2">Stress vente</h3>
+<p class="text-slate-600">Pour vendre, vous devez tout retrouver en 2 semaines. Mission impossible.</p>
+</div>
+</div>
+</div>
+</section>
 
-    <!-- PRICING -->
-    <section id="pricing" class="py-16 px-4 bg-white">
-        <div class="max-w-4xl mx-auto">
-            <h2 class="text-3xl font-bold text-center mb-12 text-slate-800">💰 Tarifs simples</h2>
-            <div class="grid md:grid-cols-3 gap-6">
-                <!-- Gratuit -->
-                <div class="border-2 border-slate-200 rounded-2xl p-6 text-center">
-                    <h3 class="font-bold text-xl mb-2">Gratuit</h3>
-                    <div class="text-4xl font-bold mb-4">0€</div>
-                    <ul class="text-left text-slate-600 space-y-2 mb-6">
-                        <li>✓ 1 bien</li>
-                        <li>✓ 10 documents</li>
-                        <li>✓ Alertes basiques</li>
-                        <li>✓ Export texte</li>
-                    </ul>
-                    <a href="app.html" class="block w-full bg-slate-100 text-slate-700 py-3 rounded-lg font-medium">Commencer</a>
-                </div>
-                <!-- Pro -->
-                <div class="border-2 border-cil-blue rounded-2xl p-6 text-center relative">
-                    <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-cil-blue text-white px-4 py-1 rounded-full text-sm font-medium">Populaire</div>
-                    <h3 class="font-bold text-xl mb-2">Pro</h3>
-                    <div class="text-4xl font-bold mb-4">9€<span class="text-lg font-normal text-slate-500">/mois</span></div>
-                    <ul class="text-left text-slate-600 space-y-2 mb-6">
-                        <li>✓ Biens illimités</li>
-                        <li>✓ Documents illimités</li>
-                        <li>✓ Alertes email</li>
-                        <li>✓ Export PDF</li>
-                        <li>✓ Géocodage</li>
-                    </ul>
-                    <button class="w-full bg-cil-blue text-white py-3 rounded-lg font-medium" onclick="alert('Inscription bientôt disponible')">S'inscrire</button>
-                </div>
-                <!-- Agency -->
-                <div class="border-2 border-cil-gold rounded-2xl p-6 text-center">
-                    <h3 class="font-bold text-xl mb-2">Agency</h3>
-                    <div class="text-4xl font-bold mb-4">29€<span class="text-lg font-normal text-slate-500">/mois</span></div>
-                    <ul class="text-left text-slate-600 space-y-2 mb-6">
-                        <li>✓ Tout Pro +</li>
-                        <li>✓ Multi-utilisateurs</li>
-                        <li>✓ Partage clients</li>
-                        <li>✓ API</li>
-                        <li>✓ Support prioritaire</li>
-                    </ul>
-                    <button class="w-full bg-cil-gold text-white py-3 rounded-lg font-medium" onclick="alert('Inscription bientôt disponible')">Nous contacter</button>
-                </div>
-            </div>
-        </div>
-    </section>
+<!-- SOLUTION -->
+<section class="py-16 px-4 bg-white">
+<div class="max-w-4xl mx-auto">
+<h2 class="text-3xl font-bold text-center mb-12 text-slate-800">✨ La solution : un seul carnet numérique</h2>
+<div class="grid md:grid-cols-2 gap-8">
+<div class="bg-slate-50 rounded-2xl p-6">
+<h3 class="font-bold text-xl mb-3 flex items-center gap-2">📱 Sur votre téléphone</h3>
+<p class="text-slate-600">Installez CILIA comme une app. Vos documents sont toujours avec vous, même sans internet.</p>
+</div>
+<div class="bg-slate-50 rounded-2xl p-6">
+<h3 class="font-bold text-xl mb-3 flex items-center gap-2">🔔 Alertes automatiques</h3>
+<p class="text-slate-600">On vous rappelle avant l'expiration de vos diagnostics et l'entretien de vos équipements.</p>
+</div>
+<div class="bg-slate-50 rounded-2xl p-6">
+<h3 class="font-bold text-xl mb-3 flex items-center gap-2">📤 Export en 1 clic</h3>
+<p class="text-slate-600">Pour une vente ou location, exportez votre carnet complet en PDF pour le notaire ou l'agence.</p>
+</div>
+<div class="bg-slate-50 rounded-2xl p-6">
+<h3 class="font-bold text-xl mb-3 flex items-center gap-2">🔒 100% privé</h3>
+<p class="text-slate-600">Vos documents restent sur votre téléphone. Rien sur nos serveurs, pas de fuite possible.</p>
+</div>
+</div>
+</div>
+</section>
 
-    <!-- CTA -->
-    <section class="gradient text-white py-16 px-4">
-        <div class="max-w-2xl mx-auto text-center">
-            <h2 class="text-3xl font-bold mb-4">Prêt à gérer votre CIL ?</h2>
-            <p class="text-xl opacity-90 mb-6">Rejoignez les premiers utilisateurs satisfaits.</p>
-            <a href="app.html" class="inline-block bg-white text-cil-blue px-10 py-4 rounded-xl font-bold text-lg hover:bg-slate-100 transition">Commencer gratuitement</a>
-        </div>
-    </section>
+<!-- EXEMPLE -->
+<section class="py-16 px-4">
+<div class="max-w-4xl mx-auto">
+<h2 class="text-3xl font-bold text-center mb-12 text-slate-800">📂 Exemple de carnet</h2>
+<div class="bg-white rounded-2xl shadow-lg p-6">
+<h3 class="font-bold text-xl mb-4">Appartement Paris 17e</h3>
+<div class="grid md:grid-cols-2 gap-4">
+<div>
+<h4 class="font-medium mb-2 text-slate-700">📋 Diagnostics</h4>
+<ul class="text-sm text-slate-600 space-y-1">
+<li>• DPE valide jusqu'au 12/2031</li>
+<li>• Électricité valide jusqu'au 05/2027</li>
+<li>• Plomb négatif (permanent)</li>
+<li>• MES Carrez : 67m²</li>
+</ul>
+</div>
+<div>
+<h4 class="font-medium mb-2 text-slate-700">🔧 Équipements</h4>
+<ul class="text-sm text-slate-600 space-y-1">
+<li>• Chaudière (entretien 09/2026 ✓)</li>
+<li>• Chauffe-eau (garantie jusqu'au 2028)</li>
+<li>• VMC Hygro (notice dispo)</li>
+</ul>
+</div>
+<div>
+<h4 class="font-medium mb-2 text-slate-700">📄 Documents</h4>
+<ul class="text-sm text-slate-600 space-y-1">
+<li>• Facture EDF 2024</li>
+<li>• Contrat entretien chaudière</li>
+<li>• Attestation assurance</li>
+<li>• Taxe foncière 2025</li>
+</ul>
+</div>
+<div>
+<h4 class="font-medium mb-2 text-slate-700">🔔 Alertes</h4>
+<ul class="text-sm text-slate-600 space-y-1">
+<li>⚠️ Entretien chaudière dans 6 mois</li>
+<li>✅ DPE encore valide 5 ans</li>
+<li>✅ Électricité encore valide 2 ans</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</section>
 
-    <!-- FOOTER -->
-    <footer class="bg-slate-900 text-white py-8 px-4">
-        <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="font-bold text-xl">🏠 CILIA</div>
-            <div class="flex gap-6 text-sm opacity-70">
-                <a href="#" class="hover:opacity-100">Mentions légales</a>
-                <a href="#" class="hover:opacity-100">CGU</a>
-                <a href="#" class="hover:opacity-100">Contact</a>
-            </div>
-            <div class="text-sm opacity-70">© 2026 CILIA - France</div>
-        </div>
-    </footer>
+<!-- PRICING -->
+<section id="pricing" class="py-16 px-4 bg-white">
+<div class="max-w-4xl mx-auto">
+<h2 class="text-3xl font-bold text-center mb-12 text-slate-800">💰 Tarifs simples</h2>
+<div class="grid md:grid-cols-3 gap-6">
+<!-- Gratuit -->
+<div class="border-2 border-slate-200 rounded-2xl p-6 text-center">
+<h3 class="font-bold text-xl mb-2">Gratuit</h3>
+<div class="text-4xl font-bold mb-4">0€</div>
+<ul class="text-left text-slate-600 space-y-2 mb-6">
+<li>✓ 1 bien</li>
+<li>✓ 25 documents</li>
+<li>✓ Alertes basiques</li>
+<li>✓ Export texte</li>
+</ul>
+<a href="app.html" class="block w-full bg-slate-100 text-slate-700 py-3 rounded-lg font-medium">Commencer</a>
+</div>
+<!-- Pro -->
+<div class="border-2 border-cil-blue rounded-2xl p-6 text-center relative">
+<div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-cil-blue text-white px-4 py-1 rounded-full text-sm font-medium">Populaire</div>
+<h3 class="font-bold text-xl mb-2">Pro</h3>
+<div class="text-4xl font-bold mb-4">19€<span class="text-lg font-normal text-slate-500">/an</span></div>
+<ul class="text-left text-slate-600 space-y-2 mb-6">
+<li>✓ Biens illimités</li>
+<li>✓ Documents illimités</li>
+<li>✓ Alertes email</li>
+<li>✓ Export PDF</li>
+<li>✓ Partage notaire/agence</li>
+</ul>
+<button class="w-full bg-cil-blue text-white py-3 rounded-lg font-medium" onclick="alert('Inscription bientôt disponible')">S'inscrire</button>
+</div>
+<!-- Agency -->
+<div class="border-2 border-cil-gold rounded-2xl p-6 text-center">
+<h3 class="font-bold text-xl mb-2">Agency</h3>
+<div class="text-4xl font-bold mb-4">99€<span class="text-lg font-normal text-slate-500">/an</span></div>
+<ul class="text-left text-slate-600 space-y-2 mb-6">
+<li>✓ Tout Pro +</li>
+<li>✓ Multi-utilisateurs</li>
+<li>✓ Marque blanche</li>
+<li>✓ API</li>
+<li>✓ Support prioritaire</li>
+</ul>
+<button class="w-full bg-cil-gold text-white py-3 rounded-lg font-medium" onclick="alert('Contactez-nous')">Nous contacter</button>
+</div>
+</div>
+</div>
+</section>
 
-    <!-- SCHEMA.ORG for SEO -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "CILIA",
-        "applicationCategory": "FinanceApplication",
-        "operatingSystem": "iOS, Android, Web",
-        "offers": {
-            "@type": "Offer",
-            "price": "0",
-            "priceCurrency": "EUR"
-        },
-        "description": "Carnet d'Information Logement (CIL) obligatoire France 2023. Gérez vos diagnostics, équipements et alertes."
-    }
-    </script>
+<!-- FAQ -->
+<section class="py-16 px-4">
+<div class="max-w-4xl mx-auto">
+<h2 class="text-3xl font-bold text-center mb-12 text-slate-800">❓ Questions fréquentes</h2>
+<div class="space-y-6">
+<details class="bg-white rounded-xl p-6 shadow">
+<summary class="font-bold text-lg cursor-pointer">C'est obligatoire pour qui ?</summary>
+<p class="mt-4 text-slate-600">Pour tous les propriétaires en France. Depuis janvier 2023, vous devez fournir ce carnet lors d'une vente. Pour les locations, c'est recommandé mais pas encore obligatoire.</p>
+</details>
+<details class="bg-white rounded-xl p-6 shadow">
+<summary class="font-bold text-lg cursor-pointer">Quels documents mettre dedans ?</summary>
+<p class="mt-4 text-slate-600">DPE, diagnostics (électricité, gaz, plomb, amiante), factures d'énergie, manuels de vos équipements (chaudière, VMC, chauffe-eau), contrats d'entretien, garanties de travaux...</p>
+</details>
+<details class="bg-white rounded-xl p-6 shadow">
+<summary class="font-bold text-lg cursor-pointer">Mes données sont-elles sécurisées ?</summary>
+<p class="mt-4 text-slate-600">Oui ! Vos documents restent sur votre téléphone. Rien n'est envoyé sur nos serveurs. C'est 100% privé, comme un dossier papier mais en mieux organisé.</p>
+</details>
+<details class="bg-white rounded-xl p-6 shadow">
+<summary class="font-bold text-lg cursor-pointer">Combien de temps pour créer mon carnet ?</summary>
+<p class="mt-4 text-slate-600">2 minutes pour créer le carnet. 15-30 minutes pour scanner vos documents principaux (DPE, diagnostics). Ensuite, ajoutez les équipements au fur et à mesure.</p>
+</details>
+</div>
+</div>
+</section>
+
+<!-- CTA -->
+<section class="gradient text-white py-16 px-4">
+<div class="max-w-2xl mx-auto text-center">
+<h2 class="text-3xl font-bold mb-4">Prêt à organiser vos documents ?</h2>
+<p class="text-xl opacity-90 mb-6">Créez votre carnet en 2 minutes. Gratuit, sans inscription.</p>
+<a href="app.html" class="inline-block bg-white text-cil-blue px-10 py-4 rounded-xl font-bold text-lg hover:bg-slate-100 transition">Créer mon carnet gratuitement</a>
+</div>
+</section>
+
+<!-- FOOTER -->
+<footer class="bg-slate-900 text-white py-8 px-4">
+<div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+<div class="font-bold text-xl">🏠 CILIA</div>
+<div class="flex gap-6 text-sm opacity-70">
+<a href="#" class="hover:opacity-100">Mentions légales</a>
+<a href="#" class="hover:opacity-100">CGU</a>
+<a href="mailto:contact@cilia.app" class="hover:opacity-100">Contact</a>
+</div>
+<div class="text-sm opacity-70">© 2026 CILIA - France</div>
+</div>
+</footer>
+
+<!-- SCHEMA.ORG for SEO -->
+<script type="application/ld+json">
+{
+"@context": "https://schema.org",
+"@type": "SoftwareApplication",
+"name": "CILIA",
+"applicationCategory": "FinanceApplication",
+"operatingSystem": "iOS, Android, Web",
+"offers": {
+"@type": "Offer",
+"price": "0",
+"priceCurrency": "EUR"
+},
+"description": "Carnet d'Information Logement - Le carnet de santé de votre logement. Centralisez DPE, diagnostics, factures et manuels. Obligatoire depuis 2023."
+}
+</script>
 </body>
 </html>
