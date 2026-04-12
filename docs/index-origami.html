@@ -34,8 +34,17 @@ tailwind.config = {
 <style>
 .hero-bg {
   background: 
-    repeating-linear-gradient(90deg, transparent, transparent 100px, rgba(255,107,107,0.03) 100px, rgba(255,107,107,0.03) 101px),
-    linear-gradient(to bottom, #FEF7ED 0%, #FFFFFF 50%, #FEF7ED 100%);
+    linear-gradient(135deg, rgba(255,107,107,0.08) 0%, transparent 50%),
+    linear-gradient(225deg, rgba(78,205,196,0.08) 0%, transparent 50%),
+    linear-gradient(315deg, rgba(255,230,109,0.1) 0%, transparent 50%),
+    #FEF7ED;
+}
+.accent-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  pointer-events: none;
 }
 .stagger > * { animation: fadeUp 0.5s ease-out backwards; }
 .stagger > *:nth-child(1) { animation-delay: 0.1s; }
@@ -50,104 +59,128 @@ tailwind.config = {
 <body class="font-plex text-marine bg-cream">
 
 <!-- NAV -->
-<nav class="fixed top-0 w-full bg-cream/90 backdrop-blur-sm z-50 border-b border-corail/10">
+<nav class="fixed top-0 w-full bg-cream/95 backdrop-blur-sm z-50 border-b border-corail/20">
   <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-    <a href="/" class="font-bricolage font-bold text-xl text-marine">CILIA</a>
+    <a href="/" class="font-bricolage font-bold text-2xl text-marine">
+      <span class="text-corail">C</span><span class="text-menthe">I</span><span class="text-soleil">L</span><span class="text-marine">IA</span>
+    </a>
     <div class="flex gap-6 items-center">
       <a href="#comment" class="text-sm hover:text-corail transition hidden sm:block">Comment ça marche</a>
-      <a href="#tarifs" class="text-sm hover:text-corail transition hidden sm:block">Tarifs</a>
-      <a href="app.html" class="bg-corail text-white px-5 py-2.5 rounded-lg font-medium text-sm hover:bg-corail/90 transition">Créer mon carnet</a>
+      <a href="comparaison.html" class="text-sm hover:text-menthe transition hidden sm:block">Comparaison</a>
+      <a href="#tarifs" class="text-sm hover:text-soleil transition hidden sm:block">Tarifs</a>
+      <a href="app.html" class="bg-corail text-white px-5 py-2.5 rounded-lg font-medium text-sm hover:bg-corail/90 transition shadow-lg shadow-corail/30">Créer mon carnet</a>
     </div>
   </div>
 </nav>
 
 <!-- HERO -->
-<section class="hero-bg min-h-screen pt-24 pb-16 px-6">
-  <div class="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+<section class="hero-bg min-h-screen pt-24 pb-16 px-6 relative overflow-hidden">
+  <!-- Blobs décoratifs -->
+  <div class="accent-blob w-96 h-96 bg-corail top-20 -left-48"></div>
+  <div class="accent-blob w-80 h-80 bg-menthe top-40 right-0"></div>
+  <div class="accent-blob w-64 h-64 bg-soleil bottom-20 left-1/4"></div>
+  
+  <div class="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 items-center relative z-10">
     <div class="stagger">
-      <p class="text-corail font-medium mb-4 tracking-wide uppercase text-sm">Obligatoire depuis 2023</p>
+      <div class="inline-flex items-center gap-2 bg-corail/10 text-corail px-4 py-2 rounded-full mb-6 font-medium text-sm">
+        <span class="w-2 h-2 bg-corail rounded-full animate-pulse"></span>
+        Obligatoire depuis 2023
+      </div>
       <h1 class="font-bricolage font-bold text-4xl md:text-5xl lg:text-6xl leading-tight mb-6">
-        Le carnet de santé<br>de votre logement
+        Le carnet de santé<br>
+        <span class="text-corail">de votre</span> <span class="text-menthe">logement</span>
       </h1>
       <p class="text-lg md:text-xl text-marine/70 mb-8 max-w-lg">
-        Tous vos documents en un seul endroit. DPE, diagnostics, factures, manuels...
+        Tous vos documents en un seul endroit. <strong class="text-corail">DPE</strong>, <strong class="text-menthe">diagnostics</strong>, factures, manuels...
         Prêt en 2 minutes pour votre vente ou location.
       </p>
       <div class="flex flex-col sm:flex-row gap-4">
-        <a href="app.html" class="bg-corail text-white px-8 py-4 rounded-xl font-bricolage font-semibold text-lg hover:bg-corail/90 transition text-center">
+        <a href="app.html" class="bg-corail text-white px-8 py-4 rounded-xl font-bricolage font-semibold text-lg hover:bg-corail/90 transition text-center shadow-xl shadow-corail/30">
           Créer gratuitement
         </a>
-        <a href="#comment" class="border-2 border-marine/20 text-marine px-8 py-4 rounded-xl font-medium hover:border-marine/40 transition text-center">
-          Comment ça marche
+        <a href="comparaison.html" class="border-2 border-menthe text-menthe px-8 py-4 rounded-xl font-medium hover:bg-menthe hover:text-white transition text-center">
+          Voir la comparaison
         </a>
       </div>
-      <p class="mt-6 text-sm text-marine/50 flex flex-wrap gap-x-4 gap-y-2">
-        <span class="inline-flex items-center gap-2"><i data-lucide="check" class="w-4 h-4"></i> Gratuit</span>
-        <span class="inline-flex items-center gap-2"><i data-lucide="check" class="w-4 h-4"></i> Sans inscription</span>
-        <span class="inline-flex items-center gap-2"><i data-lucide="shield-check" class="w-4 h-4"></i> Données sur votre téléphone</span>
-      </p>
+      <div class="mt-8 flex flex-wrap gap-4">
+        <div class="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
+          <i data-lucide="check-circle" class="w-5 h-5 text-menthe"></i>
+          <span class="text-sm font-medium">Gratuit</span>
+        </div>
+        <div class="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
+          <i data-lucide="check-circle" class="w-5 h-5 text-menthe"></i>
+          <span class="text-sm font-medium">Sans inscription</span>
+        </div>
+        <div class="flex items-center gap-2 bg-white px-4 py-2 rounded-lg shadow-sm">
+          <i data-lucide="shield-check" class="w-5 h-5 text-menthe"></i>
+          <span class="text-sm font-medium">Données locales</span>
+        </div>
+      </div>
     </div>
     <div class="relative flex justify-center">
-      <img src="assets/hero-illustration.svg" alt="Illustration CILIA" class="w-full max-w-lg">
+      <div class="absolute inset-0 bg-gradient-to-br from-corail/20 via-menthe/20 to-soleil/20 rounded-3xl transform rotate-3"></div>
+      <img src="assets/hero-illustration.svg" alt="Illustration CILIA" class="w-full max-w-lg relative z-10">
     </div>
   </div>
 </section>
 
-<!-- C'EST QUOI -->
-<section id="comment" class="py-20 px-6 bg-white">
-  <div class="max-w-4xl mx-auto">
+<!-- FEATURES COLORÉES -->
+<section class="py-20 px-6 bg-white relative overflow-hidden">
+  <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-corail via-menthe to-soleil"></div>
+  
+  <div class="max-w-6xl mx-auto">
     <div class="text-center mb-16">
-      <p class="text-corail font-medium mb-2 text-sm uppercase tracking-wide">Simple et rapide</p>
-      <h2 class="font-bricolage font-bold text-3xl md:text-4xl">C'est quoi le Carnet d'Information Logement ?</h2>
+      <span class="inline-block bg-menthe/10 text-menthe px-4 py-2 rounded-full font-medium text-sm mb-4">Simple et rapide</span>
+      <h2 class="font-bricolage font-bold text-3xl md:text-4xl">C'est quoi le CIL ?</h2>
     </div>
     
-    <div class="bg-cream rounded-2xl p-8 mb-12">
-      <p class="text-lg text-marine/80 mb-6">
-        Le <strong>Carnet d'Information Logement</strong> est un dossier qui centralise tous les documents de votre bien. 
-        C'est le "carnet de santé" de votre logement, obligatoire lors d'une vente depuis 2023.
-      </p>
-      <div class="grid sm:grid-cols-2 gap-6">
-        <div>
-          <h3 class="font-bricolage font-semibold mb-3">Ce qu'il contient :</h3>
-          <ul class="space-y-2 text-marine/70">
-            <li class="flex items-start gap-2"><i data-lucide="file-text" class="w-5 h-5 text-corail mt-0.5"></i>DPE et diagnostics obligatoires</li>
-            <li class="flex items-start gap-2"><i data-lucide="receipt" class="w-5 h-5 text-corail mt-0.5"></i>Factures d'énergie (EDF, gaz...)</li>
-            <li class="flex items-start gap-2"><i data-lucide="book-open" class="w-5 h-5 text-corail mt-0.5"></i>Manuels de vos équipements</li>
-            <li class="flex items-start gap-2"><i data-lucide="shield-check" class="w-5 h-5 text-corail mt-0.5"></i>Garanties et contrats</li>
-          </ul>
+    <div class="grid md:grid-cols-3 gap-8 mb-16">
+      <div class="bg-corail/5 border-2 border-corail/20 rounded-2xl p-8 hover:border-corail/50 transition">
+        <div class="w-14 h-14 bg-corail text-white rounded-xl flex items-center justify-center mb-6">
+          <i data-lucide="file-text" class="w-7 h-7"></i>
         </div>
-        <div>
-          <h3 class="font-bricolage font-semibold mb-3">Pourquoi c'est utile :</h3>
-          <ul class="space-y-2 text-marine/70">
-            <li class="flex items-start gap-2"><i data-lucide="alert-triangle" class="w-5 h-5 text-corail mt-0.5"></i>Éviter l'amende (jusqu'à 3750€)</li>
-            <li class="flex items-start gap-2"><i data-lucide="clock" class="w-5 h-5 text-menthe mt-0.5"></i>Gagner du temps en vente</li>
-            <li class="flex items-start gap-2"><i data-lucide="bell" class="w-5 h-5 text-menthe mt-0.5"></i>Rappels d'entretien automatiques</li>
-            <li class="flex items-start gap-2"><i data-lucide="trending-up" class="w-5 h-5 text-menthe mt-0.5"></i>Valoriser votre bien</li>
-          </ul>
+        <h3 class="font-bricolage font-semibold text-xl mb-3">Documents</h3>
+        <p class="text-marine/70">DPE, diagnostics, factures... Tout au même endroit, classé automatiquement.</p>
+      </div>
+      
+      <div class="bg-menthe/5 border-2 border-menthe/20 rounded-2xl p-8 hover:border-menthe/50 transition">
+        <div class="w-14 h-14 bg-menthe text-white rounded-xl flex items-center justify-center mb-6">
+          <i data-lucide="bell" class="w-7 h-7"></i>
         </div>
+        <h3 class="font-bricolage font-semibold text-xl mb-3">Alertes</h3>
+        <p class="text-marine/70">Rappels automatiques : entretien chaudière, expiration DPE, garanties...</p>
+      </div>
+      
+      <div class="bg-soleil/5 border-2 border-soleil/30 rounded-2xl p-8 hover:border-soleil/60 transition">
+        <div class="w-14 h-14 bg-soleil text-marine rounded-xl flex items-center justify-center mb-6">
+          <i data-lucide="share-2" class="w-7 h-7"></i>
+        </div>
+        <h3 class="font-bricolage font-semibold text-xl mb-3">Export</h3>
+        <p class="text-marine/70">Partagez votre CIL avec notaire, agence ou futur acquéreur en 1 clic.</p>
       </div>
     </div>
 
+    <!-- Étapes avec couleurs -->
     <div class="space-y-6">
-      <div class="flex gap-6 items-start p-6 bg-cream/50 rounded-xl border border-corail/10">
+      <div class="flex gap-6 items-start p-6 bg-corail/5 rounded-2xl border-l-4 border-corail">
         <div class="w-12 h-12 bg-corail text-white rounded-xl flex items-center justify-center font-bricolage font-bold text-xl shrink-0">1</div>
         <div>
           <h3 class="font-bricolage font-semibold text-lg mb-1">Créez votre carnet</h3>
-          <p class="text-marine/70">Ajoutez votre adresse et quelques infos de base. 2 minutes chrono.</p>
+          <p class="text-marine/70">Ajoutez votre adresse. 2 minutes chrono.</p>
         </div>
       </div>
-      <div class="flex gap-6 items-start p-6 bg-cream/50 rounded-xl border border-corail/10">
-        <div class="w-12 h-12 bg-corail text-white rounded-xl flex items-center justify-center font-bricolage font-bold text-xl shrink-0">2</div>
+      <div class="flex gap-6 items-start p-6 bg-menthe/5 rounded-2xl border-l-4 border-menthe">
+        <div class="w-12 h-12 bg-menthe text-white rounded-xl flex items-center justify-center font-bricolage font-bold text-xl shrink-0">2</div>
         <div>
           <h3 class="font-bricolage font-semibold text-lg mb-1">Scannez vos documents</h3>
-          <p class="text-marine/70">DPE, factures, manuels... Prenez-les en photo, on les range pour vous.</p>
+          <p class="text-marine/70">Prenez-les en photo, on les range pour vous.</p>
         </div>
       </div>
-      <div class="flex gap-6 items-start p-6 bg-cream/50 rounded-xl border border-corail/10">
-        <div class="w-12 h-12 bg-corail text-white rounded-xl flex items-center justify-center font-bricolage font-bold text-xl shrink-0">3</div>
+      <div class="flex gap-6 items-start p-6 bg-soleil/10 rounded-2xl border-l-4 border-soleil">
+        <div class="w-12 h-12 bg-soleil text-marine rounded-xl flex items-center justify-center font-bricolage font-bold text-xl shrink-0">3</div>
         <div>
           <h3 class="font-bricolage font-semibold text-lg mb-1">Recevez des alertes</h3>
-          <p class="text-marine/70">On vous rappelle les échéances : entretien chaudière, expiration DPE...</p>
+          <p class="text-marine/70">On vous rappelle les échéances importantes.</p>
         </div>
       </div>
     </div>
@@ -155,71 +188,75 @@ tailwind.config = {
 </section>
 
 <!-- TARIFS -->
-<section id="tarifs" class="py-20 px-6 bg-cream">
+<section id="tarifs" class="py-20 px-6 bg-gradient-to-b from-cream to-white">
   <div class="max-w-5xl mx-auto">
     <div class="text-center mb-12">
-      <p class="text-corail font-medium mb-2 text-sm uppercase tracking-wide">Tarifs simples</p>
+      <span class="inline-block bg-soleil/20 text-marine px-4 py-2 rounded-full font-medium text-sm mb-4">Tarifs simples</span>
       <h2 class="font-bricolage font-bold text-3xl md:text-4xl">Combien ça coûte ?</h2>
     </div>
 
     <div class="grid md:grid-cols-3 gap-6">
-      <div class="bg-white rounded-2xl p-6 border border-marine/10">
+      <div class="bg-white rounded-2xl p-6 border-2 border-marine/10 shadow-lg">
         <h3 class="font-bricolage font-semibold text-xl mb-2">Gratuit</h3>
-        <div class="font-bricolage font-bold text-4xl mb-4">0€</div>
+        <div class="font-bricolage font-bold text-5xl mb-1 text-corail">0€</div>
         <p class="text-marine/60 text-sm mb-6">Pour commencer sans risque</p>
         <ul class="space-y-3 mb-8">
           <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i>1 bien immobilier</li>
-          <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i>15 documents</li>
+          <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i><strong class="text-corail">15 documents</strong> (vs 5 ailleurs)</li>
           <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i>Alertes basiques</li>
           <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i>Export texte</li>
         </ul>
         <a href="app.html" class="block w-full text-center bg-marine/5 text-marine py-3 rounded-lg font-medium hover:bg-marine/10 transition">Commencer</a>
       </div>
 
-      <div class="bg-marine text-white rounded-2xl p-6 relative">
-        <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-corail text-white px-4 py-1 rounded-full text-xs font-medium">Populaire</div>
-        <h3 class="font-bricolage font-semibold text-xl mb-2">Pro</h3>
-        <div class="font-bricolage font-bold text-4xl mb-1">9,99€</div>
-        <p class="text-white/60 text-sm mb-6">par an • 3x moins qu'un café/mois</p>
+      <div class="bg-gradient-to-b from-marine to-marine/95 text-white rounded-2xl p-6 relative shadow-2xl transform md:-translate-y-2">
+        <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-corail to-menthe text-white px-6 py-1.5 rounded-full text-sm font-bold">Populaire</div>
+        <h3 class="font-bricolage font-semibold text-xl mb-2 mt-2">Pro</h3>
+        <div class="font-bricolage font-bold text-5xl mb-1">9,99€</div>
+        <p class="text-white/60 text-sm mb-6">par an • moins d'1€/mois</p>
         <ul class="space-y-3 mb-8">
           <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-corail"></i>Biens illimités</li>
           <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-corail"></i>Documents illimités</li>
-          <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-corail"></i>Alertes email</li>
-          <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-corail"></i>Export PDF</li>
-          <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-corail"></i>Partage notaire/agence</li>
+          <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i>Alertes email</li>
+          <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i>Export PDF</li>
+          <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-soleil"></i>Partage notaire</li>
         </ul>
-        <button class="w-full bg-corail text-white py-3 rounded-lg font-medium hover:bg-corail/90 transition" onclick="alert('Inscription bientôt disponible')">S'inscrire</button>
+        <button class="w-full bg-gradient-to-r from-corail to-menthe text-white py-3 rounded-lg font-medium hover:opacity-90 transition" onclick="alert('Inscription bientôt disponible')">S'inscrire</button>
       </div>
 
-      <div class="bg-white rounded-2xl p-6 border border-marine/10">
+      <div class="bg-white rounded-2xl p-6 border-2 border-menthe/30 shadow-lg">
         <h3 class="font-bricolage font-semibold text-xl mb-2">Agency</h3>
-        <div class="font-bricolage font-bold text-4xl mb-1">49€</div>
+        <div class="font-bricolage font-bold text-5xl mb-1 text-menthe">49€</div>
         <p class="text-marine/60 text-sm mb-6">par an • pour les réseaux</p>
         <ul class="space-y-3 mb-8">
           <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i>Tout Pro inclus</li>
           <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i>Multi-utilisateurs</li>
           <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i>Marque blanche</li>
           <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i>API</li>
-          <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i>Support prioritaire</li>
         </ul>
-        <button class="w-full bg-marine text-white py-3 rounded-lg font-medium hover:bg-marine/90 transition" onclick="alert('Contactez-nous')">Nous contacter</button>
+        <button class="w-full bg-menthe text-white py-3 rounded-lg font-medium hover:bg-menthe/90 transition" onclick="alert('Contactez-nous')">Nous contacter</button>
       </div>
     </div>
 
-    <p class="text-center text-sm text-marine/50 mt-8">
-      <i data-lucide="info" class="w-4 h-4 inline mr-1"></i>
-      15 documents gratuits = 3x plus que nos concurrents
-    </p>
+    <div class="mt-10 text-center">
+      <a href="comparaison.html" class="inline-flex items-center gap-2 bg-soleil/20 text-marine px-6 py-3 rounded-xl font-medium hover:bg-soleil/40 transition">
+        <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
+        Voir la comparaison détaillée avec nos concurrents
+      </a>
+    </div>
   </div>
 </section>
 
 <!-- FAQ -->
 <section class="py-20 px-6 bg-white">
   <div class="max-w-3xl mx-auto">
-    <h2 class="font-bricolage font-bold text-3xl text-center mb-12">Questions fréquentes</h2>
+    <div class="text-center mb-12">
+      <span class="inline-block bg-corail/10 text-corail px-4 py-2 rounded-full font-medium text-sm mb-4">FAQ</span>
+      <h2 class="font-bricolage font-bold text-3xl">Questions fréquentes</h2>
+    </div>
     
     <div class="space-y-4">
-      <details class="bg-cream rounded-xl p-5 group">
+      <details class="bg-cream rounded-xl p-5 group border-l-4 border-corail">
         <summary class="font-bricolage font-semibold cursor-pointer flex justify-between items-center">
           C'est obligatoire pour qui ?
           <i data-lucide="chevron-down" class="w-5 h-5 group-open:rotate-180 transition-transform"></i>
@@ -230,7 +267,7 @@ tailwind.config = {
         </p>
       </details>
       
-      <details class="bg-cream rounded-xl p-5 group">
+      <details class="bg-cream rounded-xl p-5 group border-l-4 border-menthe">
         <summary class="font-bricolage font-semibold cursor-pointer flex justify-between items-center">
           Mes données sont-elles sécurisées ?
           <i data-lucide="chevron-down" class="w-5 h-5 group-open:rotate-180 transition-transform"></i>
@@ -241,7 +278,7 @@ tailwind.config = {
         </p>
       </details>
       
-      <details class="bg-cream rounded-xl p-5 group">
+      <details class="bg-cream rounded-xl p-5 group border-l-4 border-soleil">
         <summary class="font-bricolage font-semibold cursor-pointer flex justify-between items-center">
           Combien de temps pour créer mon carnet ?
           <i data-lucide="chevron-down" class="w-5 h-5 group-open:rotate-180 transition-transform"></i>
@@ -256,25 +293,60 @@ tailwind.config = {
 </section>
 
 <!-- CTA -->
-<section class="py-20 px-6 bg-marine text-white">
-  <div class="max-w-2xl mx-auto text-center">
-    <h2 class="font-bricolage font-bold text-3xl md:text-4xl mb-4">
+<section class="py-24 px-6 bg-gradient-to-br from-corail via-menthe to-soleil relative overflow-hidden">
+  <div class="absolute inset-0 bg-marine/20"></div>
+  <div class="max-w-2xl mx-auto text-center relative z-10">
+    <h2 class="font-bricolage font-bold text-3xl md:text-4xl mb-4 text-white drop-shadow-lg">
       Prêt à organiser vos documents ?
     </h2>
-    <p class="text-white/70 text-lg mb-8">
+    <p class="text-white/90 text-lg mb-8 drop-shadow">
       Créez votre carnet en 2 minutes. Gratuit, sans inscription.
     </p>
-    <a href="app.html" class="inline-block bg-corail text-white px-10 py-4 rounded-xl font-bricolage font-semibold text-lg hover:bg-corail/90 transition">
+    <a href="app.html" class="inline-block bg-white text-marine px-10 py-4 rounded-xl font-bricolage font-semibold text-lg hover:bg-cream transition shadow-2xl">
       Créer mon carnet gratuitement
     </a>
   </div>
 </section>
 
 <!-- FOOTER -->
-<footer class="py-8 px-6 bg-cream border-t border-marine/10">
-  <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-    <p class="font-bricolage font-bold text-marine">CILIA</p>
-    <p class="text-sm text-marine/50">© 2026 CILIA - France</p>
+<footer class="py-12 px-6 bg-marine text-white">
+  <div class="max-w-6xl mx-auto">
+    <div class="grid md:grid-cols-4 gap-8 mb-8">
+      <div>
+        <p class="font-bricolage font-bold text-xl mb-4">
+          <span class="text-corail">C</span><span class="text-menthe">I</span><span class="text-soleil">L</span><span>IA</span>
+        </p>
+        <p class="text-white/60 text-sm">Le carnet de santé de votre logement</p>
+      </div>
+      <div>
+        <p class="font-bricolage font-semibold mb-4">Produit</p>
+        <ul class="space-y-2 text-sm text-white/60">
+          <li><a href="app.html" class="hover:text-white transition">Créer un carnet</a></li>
+          <li><a href="#tarifs" class="hover:text-white transition">Tarifs</a></li>
+          <li><a href="#comment" class="hover:text-white transition">Comment ça marche</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="font-bricolage font-semibold mb-4">Comparaison</p>
+        <ul class="space-y-2 text-sm text-white/60">
+          <li><a href="comparaison.html" class="hover:text-white transition">Vs Mon Suivi Logement</a></li>
+          <li><a href="comparaison.html" class="hover:text-white transition">Vs HOME ID</a></li>
+          <li><a href="comparaison.html" class="hover:text-white transition">Tableau complet</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="font-bricolage font-semibold mb-4">Légal</p>
+        <ul class="space-y-2 text-sm text-white/60">
+          <li><a href="#" class="hover:text-white transition">Mentions légales</a></li>
+          <li><a href="#" class="hover:text-white transition">Confidentialité</a></li>
+          <li><a href="#" class="hover:text-white transition">CGU</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="border-t border-white/10 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+      <p class="text-sm text-white/40">© 2026 CILIA - France</p>
+      <p class="text-sm text-white/40">Fait avec 💙 en France</p>
+    </div>
   </div>
 </footer>
 
