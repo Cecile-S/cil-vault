@@ -344,28 +344,44 @@ function saveProperty(){
     const addr=document.getElementById('prop-address').value.trim();
     if(!addr){alert('Adresse requise');return}
     
-    if(editId){
-        // Mode édition
-        const prop=state.properties.find(p=>p.id===editId);
-        if(prop&&prop.role==='proprietaire'){
-            prop.address=addr;
-            prop.type=document.getElementById('prop-type').value;
-            prop.surface=document.getElementById('prop-surface').value||null;
-            prop.rooms=document.getElementById('prop-rooms').value||null;
-            prop.role=document.getElementById('prop-role').value;
-            prop.updatedAt=new Date().toISOString();
-        }
-    }else{
-        // Mode création
-        const p={id:Date.now().toString(),address:addr,type:document.getElementById('prop-type').value,surface:document.getElementById('prop-surface').value||null,rooms:document.getElementById('prop-rooms').value||null,role:document.getElementById('prop-role').value,createdAt:new Date().toISOString()};
-        state.properties.push(p);
-        state.equipment[p.id]=[];
-        state.documents[p.id]=[];
-        state.currentPropertyId=p.id;
-    }
-    saveState();updateUI();closeModal('modal-property');
-    document.getElementById('prop-edit-id').value='';
-    document.getElementById('prop-address').value='';
+    // Géocodage adresse
+    fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(addr)}&limit=1`)
+        .then(r=>r.json())
+        .then(data=>{
+            const geoData=data.features?.[0];
+            const prop={
+                address:geoData?.properties?.label||addr,
+                addressNormalized:geoData?.properties?.label,
+                lat:geoData?.geometry?.coordinates?.[1]||null,
+                lng:geoData?.geometry?.coordinates?.[0]||null,
+                city:geoData?.properties?.city||'',
+                postcode:geoData?.properties?.postcode||''
+            };
+            
+            if(editId){
+                const p=state.properties.find(p=>p.id===editId);
+                if(p&&p.role==='proprietaire'){Object.assign(p,prop);p.type=document.getElementById('prop-type').value;p.surface=document.getElementById('prop-surface').value||null;p.rooms=document.getElementById('prop-rooms').value||null;p.role=document.getElementById('prop-role').value;p.updatedAt=new Date().toISOString()}
+            }else{
+                const p={id:Date.now().toString(),...prop,type:document.getElementById('prop-type').value,surface:document.getElementById('prop-surface').value||null,rooms:document.getElementById('prop-rooms').value||null,role:document.getElementById('prop-role').value,createdAt:new Date().toISOString()};
+                state.properties.push(p);state.equipment[p.id]=[];state.documents[p.id]=[];state.currentPropertyId=p.id
+            }
+            saveState();updateUI();closeModal('modal-property');
+            document.getElementById('prop-edit-id').value='';
+            document.getElementById('prop-address').value='';
+        })
+        .catch(()=>{
+            // Fallback sans géocodage
+            if(editId){
+                const prop=state.properties.find(p=>p.id===editId);
+                if(prop&&prop.role==='proprietaire'){
+                    prop.address=addr;prop.type=document.getElementById('prop-type').value;prop.surface=document.getElementById('prop-surface').value||null;prop.rooms=document.getElementById('prop-rooms').value||null;prop.role=document.getElementById('prop-role').value;prop.updatedAt=new Date().toISOString()
+                }
+            }else{
+                const p={id:Date.now().toString(),address:addr,type:document.getElementById('prop-type').value,surface:document.getElementById('prop-surface').value||null,rooms:document.getElementById('prop-rooms').value||null,role:document.getElementById('prop-role').value,createdAt:new Date().toISOString()};
+                state.properties.push(p);state.equipment[p.id]=[];state.documents[p.id]=[];state.currentPropertyId=p.id
+            }
+            saveState();updateUI();closeModal('modal-property');
+        });
 }
 function editProperty(id){
     const prop=state.properties.find(p=>p.id===id);
