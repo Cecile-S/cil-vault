@@ -658,7 +658,7 @@ const p=state.properties.find(x=>x.id===state.currentPropertyId);
 if(!p){showToast('Sélectionnez un bien','info');return}
 const shareData={
 title:'CIL - '+p.address,
-text:'Carnet d'Information Logement pour '+p.address,
+text:"Carnet d'Information Logement pour "+p.address,
 url:window.location.href
 };
 if(navigator.share){
