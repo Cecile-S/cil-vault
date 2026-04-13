@@ -1413,3 +1413,133 @@ function updateChecklistLocation() {
 // Mettre à jour les deux checklists
 };
 </script>
+
+<script>
+// ============================================
+// CONTRÔLE DES RÔLES
+// ============================================
+
+// Mettre à jour les options de rôle selon le contexte
+function updateRoleOptions() {
+  const roleSelect = document.getElementById('prop-role');
+  const isTenantMode = localStorage.getItem('cilia-tenant-mode') === 'true';
+  const isMandataireMode = localStorage.getItem('cilia-mandataire-mode') === 'true';
+  
+  if (isTenantMode) {
+    // Locataire ne peut pas créer de bien
+    roleSelect.innerHTML = '<option value="locataire">Locataire (accès partagé)</option>';
+    roleSelect.disabled = true;
+    return;
+  }
+  
+  if (isMandataireMode) {
+    // Mandataire: peut créer un bien pour inviter le propriétaire
+    roleSelect.innerHTML = `
+      <option value="mandataire">Mandataire (inviter le propriétaire)</option>
+    `;
+    return;
+  }
+  
+  // Propriétaire: peut créer un bien
+  roleSelect.innerHTML = `
+    <option value="proprietaire">Propriétaire</option>
+    <option value="mandataire">Mandataire (inviter le propriétaire)</option>
+  `;
+}
+
+// Mode mandataire: créer un bien pour inviter le propriétaire
+function createAsMandataire() {
+  const addr = document.getElementById('prop-address').value.trim();
+  if (!addr) {
+    showToast('Adresse requise', 'warning');
+    return;
+  }
+  
+  // Créer le bien avec code d'invitation propriétaire
+  const inviteCode = 'INV-' + generateSecureCode();
+  const p = {
+    id: Date.now().toString(),
+    address: addr,
+    type: document.getElementById('prop-type').value,
+    role: 'mandataire',
+    inviteCode: inviteCode,
+    inviteCreatedAt: new Date().toISOString(),
+    inviteExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    createdAt: new Date().toISOString()
+  };
+  
+  state.properties.push(p);
+  state.equipment[p.id] = [];
+  state.documents[p.id] = [];
+  state.currentPropertyId = p.id;
+  saveState();
+  
+  closeModal('modal-property');
+  showToast('Bien créé. Invitez le propriétaire avec le code: ' + inviteCode, 'success');
+  
+  // Ouvrir le modal d'invitation
+  setTimeout(() => {
+    document.getElementById('invite-code-display').textContent = inviteCode;
+    openModal('modal-invite-proprietaire');
+  }, 500);
+}
+
+// Propriétaire rejoint via code d'invitation mandataire
+function joinAsProprietaire() {
+  const code = document.getElementById('invite-code-input').value.trim();
+  if (!code || !code.startsWith('INV-')) {
+    showToast('Code invalide', 'warning');
+    return;
+  }
+  
+  const prop = state.properties.find(p => p.inviteCode === code);
+  if (!prop) {
+    showToast('Code non trouvé', 'error');
+    return;
+  }
+  
+  // Transférer la propriété
+  prop.role = 'proprietaire';
+  prop.inviteCode = null;
+  prop.proprietaireSince = new Date().toISOString();
+  saveState();
+  
+  closeModal('modal-invite-proprietaire');
+  showToast('Vous êtes maintenant propriétaire de ce bien', 'success');
+  updateUI();
+}
+</script>
+
+<!-- MODAL: INVITATION PROPRIÉTAIRE -->
+<div id="modal-invite-proprietaire" class="modal">
+<div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+<div class="p-4 border-b flex justify-between items-center">
+<h3 class="font-bold text-lg">📨 Inviter le propriétaire</h3>
+<button onclick="closeModal('modal-invite-proprietaire')" class="text-slate-400">✕</button>
+</div>
+<div class="p-4">
+<p class="text-sm text-slate-600 mb-4">Partagez ce code avec le propriétaire pour qu'il puisse prendre possession de son CIL.</p>
+<div class="bg-slate-100 rounded-xl p-4 text-center mb-4">
+<p class="text-xs text-slate-500 mb-1">Code d'invitation propriétaire</p>
+<p class="text-xl font-mono font-bold text-cil-blue" id="invite-code-display">-</p>
+<button onclick="copyInviteCode()" class="mt-2 text-sm text-cil-blue">📋 Copier le code</button>
+</div>
+<p class="text-xs text-slate-500">Le propriétaire entrera ce code dans "Ajouter un bien" → "Je suis propriétaire".</p>
+</div>
+</div>
+</div>
+
+<!-- MODAL: PROPRIÉTAIRE REJOINT -->
+<div id="modal-proprietaire-join" class="modal">
+<div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+<div class="p-4 border-b flex justify-between items-center">
+<h3 class="font-bold text-lg">🏠 Rejoindre mon bien</h3>
+<button onclick="closeModal('modal-proprietaire-join')" class="text-slate-400">✕</button>
+</div>
+<div class="p-4">
+<p class="text-sm text-slate-600 mb-4">Entrez le code fourni par votre mandataire pour prendre possession de votre CIL.</p>
+<input type="text" id="invite-code-input" class="w-full p-3 border-2 border-cil-blue rounded-xl text-center text-xl font-mono uppercase mb-4" placeholder="INV-XXXXXXXXXXXX" maxlength="16">
+<button onclick="joinAsProprietaire()" class="w-full bg-cil-blue text-white py-3 rounded-lg font-medium">Devenir propriétaire</button>
+</div>
+</div>
+</div>
