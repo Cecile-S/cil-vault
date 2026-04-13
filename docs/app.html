@@ -868,3 +868,147 @@ function filterForTenant(data, type) {
   return data;
 }
 </script>
+
+<!-- SECTION: CHECKLIST VENTE/LOCATION -->
+<div id="checklist-section" class="bg-white rounded-xl shadow p-4 mb-4">
+<div class="flex justify-between items-center mb-3">
+<h3 class="font-semibold text-slate-700">📋 Prêt à vendre</h3>
+<span id="checklist-score" class="text-2xl font-bold text-cil-blue">0%</span>
+</div>
+<div id="checklist-items" class="space-y-2 text-sm"></div>
+<div id="checklist-status" class="mt-3 p-2 rounded-lg text-center text-sm font-medium"></div>
+</div>
+
+<script>
+// ============================================
+// CHECKLIST VENTE/LOCATION
+// ============================================
+
+// Documents obligatoires VENTE
+const DOCS_VENTE = [
+  {id: 'dpe', name: 'DPE', required: true},
+  {id: 'electricite', name: 'Diagnostic électricité', required: true, condition: 'install>15'},
+  {id: 'gaz', name: 'Diagnostic gaz', required: true, condition: 'install>15'},
+  {id: 'erp', name: 'ERP (Risques)', required: true},
+  {id: 'carrez', name: 'Loi Carrez', required: true, condition: 'type=Appartement'},
+  {id: 'plomb', name: 'Diagnostic plomb', required: true, condition: 'avant1949'},
+  {id: 'amiante', name: 'Diagnostic amiante', required: true, condition: 'avant1997'},
+  {id: 'termites', name: 'Diagnostic termites', required: false, condition: 'zone'}
+];
+
+// Documents obligatoires LOCATION
+const DOCS_LOCATION = [
+  {id: 'dpe', name: 'DPE', required: true},
+  {id: 'electricite', name: 'Diagnostic électricité', required: true, condition: 'install>15'},
+  {id: 'gaz', name: 'Diagnostic gaz', required: true, condition: 'install>15'},
+  {id: 'erp', name: 'ERP (Risques)', required: true},
+  {id: 'boutin', name: 'Mesurage loi Boutin', required: true}
+];
+
+// Calculer le score CIL
+function calculateCILScore() {
+  if (!state.currentPropertyId) return 0;
+  
+  const docs = state.documents[state.currentPropertyId] || [];
+  const eq = state.equipment[state.currentPropertyId] || [];
+  const prop = state.properties.find(p => p.id === state.currentPropertyId);
+  if (!prop) return 0;
+  
+  let score = 0;
+  let maxScore = 100;
+  
+  // Documents (40 points)
+  const hasDPE = docs.some(d => d.type === 'diagnostic' && d.diagType === 'dpe');
+  const hasElec = docs.some(d => d.type === 'diagnostic' && d.diagType === 'electricite');
+  const hasGaz = docs.some(d => d.type === 'diagnostic' && d.diagType === 'gaz');
+  const hasERP = docs.some(d => d.type === 'diagnostic' && d.diagType === 'erp');
+  
+  if (hasDPE) score += 15;
+  if (hasElec) score += 10;
+  if (hasGaz) score += 10;
+  if (hasERP) score += 5;
+  
+  // Équipements documentés (30 points)
+  const eqWithDocs = eq.filter(e => {
+    const eqDocs = docs.filter(d => d.equipmentId === e.id);
+    return eqDocs.length > 0;
+  });
+  score += Math.min(30, eqWithDocs.length * 10);
+  
+  // Propriété renseignée (10 points)
+  if (prop.surface) score += 5;
+  if (prop.rooms) score += 5;
+  
+  // Diagnostics à jour (20 points)
+  const now = new Date();
+  const dpeDoc = docs.find(d => d.type === 'diagnostic' && d.diagType === 'dpe');
+  if (dpeDoc && dpeDoc.date) {
+    const dpeDate = new Date(dpeDoc.date);
+    const yearsSince = (now - dpeDate) / (365 * 24 * 60 * 60 * 1000);
+    if (yearsSince < 10) score += 20;
+    else if (yearsSince < 12) score += 10;
+  }
+  
+  return Math.min(100, Math.round(score));
+}
+
+// Mettre à jour la checklist
+function updateChecklist() {
+  const section = document.getElementById('checklist-section');
+  const scoreEl = document.getElementById('checklist-score');
+  const itemsEl = document.getElementById('checklist-items');
+  const statusEl = document.getElementById('checklist-status');
+  
+  if (!state.currentPropertyId) {
+    section.classList.add('hidden');
+    return;
+  }
+  
+  section.classList.remove('hidden');
+  const docs = state.documents[state.currentPropertyId] || [];
+  const prop = state.properties.find(p => p.id === state.currentPropertyId);
+  
+  // Utiliser la checklist VENTE par défaut
+  const checklist = DOCS_VENTE;
+  let completed = 0;
+  let required = 0;
+  
+  const items = checklist.map(item => {
+    const hasDoc = docs.some(d => d.type === 'diagnostic' && d.diagType === item.id);
+    if (item.required) required++;
+    if (hasDoc && item.required) completed++;
+    
+    return `
+      <div class="flex items-center gap-2">
+        <span class="${hasDoc ? 'text-green-500' : 'text-slate-300'}">${hasDoc ? '✅' : '⬜'}</span>
+        <span class="${hasDoc ? 'text-slate-700' : 'text-slate-400'}">${item.name}</span>
+        ${item.required ? '' : '<span class="text-xs text-slate-400">(optionnel)</span>'}
+      </div>
+    `;
+  }).join('');
+  
+  itemsEl.innerHTML = items;
+  
+  const score = Math.round((completed / required) * 100);
+  scoreEl.textContent = score + '%';
+  
+  // Statut
+  if (score >= 100) {
+    statusEl.className = 'mt-3 p-2 rounded-lg text-center text-sm font-medium bg-green-100 text-green-800';
+    statusEl.textContent = '✅ Prêt à vendre !';
+  } else if (score >= 70) {
+    statusEl.className = 'mt-3 p-2 rounded-lg text-center text-sm font-medium bg-amber-100 text-amber-800';
+    statusEl.textContent = '⚠️ Presque prêt, manque ' + (required - completed) + ' document(s)';
+  } else {
+    statusEl.className = 'mt-3 p-2 rounded-lg text-center text-sm font-medium bg-red-100 text-red-800';
+    statusEl.textContent = '❌ Manque ' + (required - completed) + ' document(s) obligatoire(s)';
+  }
+}
+
+// Ajouter l'appel dans updateUI
+const originalUpdateUI = updateUI;
+updateUI = function() {
+  originalUpdateUI();
+  updateChecklist();
+};
+</script>
