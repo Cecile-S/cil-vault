@@ -464,7 +464,7 @@ function deleteProperty(id){if(!confirm('Supprimer ?'))return;state.properties=s
 
 // Equipment
 window.saveEquipment = function(){ if(!state.currentPropertyId){showToast('Sélectionnez un bien','info');return} const editId=document.getElementById('eq-edit-id').value; const name=document.getElementById('eq-name').value.trim(); if(!name){showToast('Nom requis','warning');return} const type=document.getElementById('eq-type').value; const purchaseDate=document.getElementById('eq-purchase-date').value; const defaultWarranty={chaudiere:24,pac:24,poele:24,'chauffe-eau':24,vmc:36,piscine:12}; const warranty=defaultWarranty[type]||24; const warrantyEnd=purchaseDate?new Date(new Date(purchaseDate).setMonth(new Date(purchaseDate).getMonth()+warranty)).toISOString().split('T')[0]:null; const periodMonths=EQ_PERIODS[type]||12; const nextMaintenance=purchaseDate?new Date(new Date(purchaseDate).setMonth(new Date(purchaseDate).getMonth()+periodMonths)).toISOString().split('T')[0]:null; const e={name:name,type:type==='personnalise'?document.getElementById('eq-type-custom').value:type,brand:document.getElementById('eq-brand').value,model:document.getElementById('eq-model').value,purchaseDate:purchaseDate,warrantyMonths:warranty,warrantyEnd:warrantyEnd,responsable:document.getElementById('eq-responsable').value,nextMaintenance:nextMaintenance,periodMonths:periodMonths,notes:document.getElementById('eq-notes').value,icon:EQ_ICONS[type]||'⚙️',updatedAt:new Date().toISOString()}; if(editId){ const eq=state.equipment[state.currentPropertyId].find(x=>x.id===editId); if(eq){Object.assign(eq,e);eq.id=editId} }else{ e.id=Date.now().toString(); e.createdAt=new Date().toISOString(); state.equipment[state.currentPropertyId].push(e); } saveState();updateUI();closeModal('modal-equipment'); document.getElementById('eq-edit-id').value=''; document.getElementById('eq-name').value=''; showToast('Équipement enregistré','success'); }
-function editEquipment(id){ const eq=(state.equipment[state.currentPropertyId]||[]).find(e=>e.id===id); if(!eq)return; document.getElementById('eq-edit-id').value=id; document.getElementById('eq-type').value=eq.type; document.getElementById('eq-type-custom').value=eq.type; document.getElementById('eq-type-custom').classList.toggle('hidden',!['personnalise','autre'].includes(eq.type)); document.getElementById('eq-name').value=eq.name; document.getElementById('eq-brand').value=eq.brand||''; document.getElementById('eq-model').value=eq.model||''; document.getElementById('eq-purchase-date').value=eq.purchaseDate||''; document.getElementById('eq-responsable').value=eq.responsable||'proprietaire'; document.getElementById('eq-notes').value=eq.notes||''; document.getElementById('modal-eq-title').textContent='Modifier l'équipement'; openModal('modal-equipment'); }
+function editEquipment(id){ const eq=(state.equipment[state.currentPropertyId]||[]).find(e=>e.id===id); if(!eq)return; document.getElementById('eq-edit-id').value=id; document.getElementById('eq-type').value=eq.type; document.getElementById('eq-type-custom').value=eq.type; document.getElementById('eq-type-custom').classList.toggle('hidden',!['personnalise','autre'].includes(eq.type)); document.getElementById('eq-name').value=eq.name; document.getElementById('eq-brand').value=eq.brand||''; document.getElementById('eq-model').value=eq.model||''; document.getElementById('eq-purchase-date').value=eq.purchaseDate||''; document.getElementById('eq-responsable').value=eq.responsable||'proprietaire'; document.getElementById('eq-notes').value=eq.notes||''; document.getElementById('modal-eq-title').textContent="Modifier l'équipement"; openModal('modal-equipment'); }
 function deleteEquipment(id){if(!confirm('Supprimer ?'))return;state.equipment[state.currentPropertyId]=state.equipment[state.currentPropertyId].filter(e=>e.id!==id);saveState();updateUI()}
 function filterEquipment(f){currentFilter=f;document.querySelectorAll('[data-efilter]').forEach(b=>{b.className=b.getAttribute('data-efilter')===f?'px-3 py-1 rounded-full bg-cil-blue text-white text-sm':'px-3 py-1 rounded-full bg-slate-200 text-slate-700 text-sm'});updateEquipmentPage()}
 
@@ -1006,13 +1006,7 @@ function updateChecklist() {
   }
 }
 
-// Ajouter l'appel dans updateUI
-const originalUpdateUI = updateUI;
-updateUI = function() {
-  originalUpdateUI();
-  updateChecklist();
-};
-</script>
+
 
 <!-- MODAL: PARTAGE MANDATAIRE -->
 <div id="modal-mandataire" class="modal">
@@ -1417,10 +1411,5 @@ function updateChecklistLocation() {
 
 <script>
 // Mettre à jour les deux checklists
-const originalUpdateUIChecklist = updateUI;
-updateUI = function() {
-  if (typeof originalUpdateUIChecklist === 'function') originalUpdateUIChecklist();
-  updateChecklist();
-  if (typeof updateChecklistLocation === 'function') updateChecklistLocation();
 };
 </script>
