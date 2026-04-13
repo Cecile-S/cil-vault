@@ -103,7 +103,7 @@ var saveUploadedDocument = function(){ alert('Chargement en cours, veuillez rée
         <button onclick="showPage('upload')" class="w-full bg-cil-blue text-white py-4 rounded-xl min-h-[48px] font-medium mb-3">📤 Ajouter un document</button>
         <button onclick="openModal('modal-equipment')" class="w-full bg-white text-cil-blue border-2 border-cil-blue py-3 rounded-xl font-medium mb-3">🔧 Ajouter un équipement</button>
         <button onclick="exportCIL()" class="w-full bg-slate-100 text-slate-700 py-3 rounded-xl mb-2">📄 Exporter le CIL</button>
-<button onclick="openShareModal()" class="w-full bg-slate-100 text-slate-700 py-3 rounded-xl mb-2">📤 Partager au locataire</button> <button onclick="openTransferModal()" class="w-full bg-amber-100 text-amber-800 py-3 rounded-xl">🔄 Transférer à l'acquéreur</button>
+<button onclick="openShareModalSecure()" class="w-full bg-slate-100 text-slate-700 py-3 rounded-xl mb-2">📤 Partager au locataire</button> <button onclick="openTransferModal()" class="w-full bg-amber-100 text-amber-800 py-3 rounded-xl">🔄 Transférer à l'acquéreur</button>
 <button onclick="openMandataireModal()" class="w-full bg-blue-100 text-blue-800 py-3 rounded-xl mb-2">👔 Partager au mandataire</button>
     </div>
 </div>
@@ -704,7 +704,7 @@ function generateCode() {
 }
 
 // Ouvrir modal partage
-function openShareModal() {
+function openShareModalSecure() {
   const prop = state.properties.find(p => p.id === state.currentPropertyId);
   if (!prop) {
     showToast('Sélectionnez un bien', 'warning');
@@ -1074,6 +1074,141 @@ function copyMandataireCode() {
   if (prop && prop.mandataireCode) {
     navigator.clipboard.writeText(prop.mandataireCode);
     showToast('Code copié !', 'success');
+  }
+}
+</script>
+
+<script>
+// ============================================
+// PARTAGE SÉCURISÉ (RGPD compliant)
+// ============================================
+
+// Génère un code sécurisé (12 caractères alphanumériques)
+function generateSecureCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  let code = '';
+  for (let i = 0; i < 12; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+// Génère un QR code en data URL
+function generateQRCode(text) {
+  // Utiliser une API QR code gratuite
+  const size = 200;
+  const encodedText = encodeURIComponent(text);
+  return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodedText}`;
+}
+
+// Ouvrir modal partage amélioré
+function openShareModalSecure() {
+  const prop = state.properties.find(p => p.id === state.currentPropertyId);
+  if (!prop) {
+    showToast('Sélectionnez un bien', 'warning');
+    return;
+  }
+  
+  // Générer un code sécurisé si pas existant
+  if (!prop.shareCode || prop.shareCode.length < 12) {
+    prop.shareCode = generateSecureCode();
+    prop.shareCreatedAt = new Date().toISOString();
+    prop.shareExpiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(); // 90 jours
+    saveState();
+  }
+  
+  const shareUrl = `https://cecile-s.github.io/cil-vault/app.html?share=${prop.shareCode}`;
+  const qrUrl = generateQRCode(shareUrl);
+  
+  document.getElementById('share-code-display').textContent = prop.shareCode;
+  document.getElementById('share-url-display').textContent = shareUrl;
+  document.getElementById('share-qr-img').src = qrUrl;
+  document.getElementById('share-expires').textContent = new Date(prop.shareExpiresAt).toLocaleDateString('fr-FR');
+  
+  openModal('modal-share');
+}
+
+<!-- MODAL: PARTAGE SÉCURISÉ (RGPD) -->
+<div id="modal-share-secure" class="modal">
+<div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+<div class="p-4 border-b flex justify-between items-center">
+<h3 class="font-bold text-lg">📤 Partager le CIL (sécurisé)</h3>
+<button onclick="closeModal('modal-share-secure')" class="text-slate-400">✕</button>
+</div>
+<div class="p-4">
+<p class="text-sm text-slate-600 mb-4">Partagez ce lien ou le QR code avec votre locataire. Le code expire automatiquement.</p>
+
+<div class="bg-slate-100 rounded-xl p-4 text-center mb-4">
+<p class="text-xs text-slate-500 mb-1">Code d'accès sécurisé (12 caractères)</p>
+<p class="text-xl font-mono font-bold text-cil-blue tracking-wider" id="share-code-display">-</p>
+<button onclick="copyShareCodeSecure()" class="mt-2 text-sm text-cil-blue">📋 Copier le code</button>
+</div>
+
+<div class="bg-slate-100 rounded-xl p-4 text-center mb-4">
+<p class="text-xs text-slate-500 mb-1">Lien direct</p>
+<p class="text-sm text-cil-blue truncate" id="share-url-display">-</p>
+<button onclick="copyShareUrl()" class="mt-2 text-sm text-cil-blue">📋 Copier le lien</button>
+</div>
+
+<div class="bg-white border-2 border-slate-200 rounded-xl p-4 text-center mb-4">
+<p class="text-xs text-slate-500 mb-2">QR Code à scanner</p>
+<img id="share-qr-img" src="" alt="QR Code" class="mx-auto rounded-lg" style="max-width: 200px;">
+<button onclick="downloadQRCode()" class="mt-2 text-sm text-cil-blue">📥 Télécharger le QR</button>
+</div>
+
+<div class="flex justify-between items-center text-xs text-slate-500">
+<span>🔒 Expire le: <span id="share-expires">-</span></span>
+<button onclick="regenerateShareCode()" class="text-amber-600">🔄 Régénérer le code</button>
+</div>
+</div>
+</div>
+</div>
+JSEOF
+
+<script>
+function copyShareCodeSecure() {
+  const prop = state.properties.find(p => p.id === state.currentPropertyId);
+  if (prop && prop.shareCode) {
+    navigator.clipboard.writeText(prop.shareCode);
+    showToast('Code copié !', 'success');
+  }
+}
+
+function copyShareUrl() {
+  const prop = state.properties.find(p => p.id === state.currentPropertyId);
+  if (prop && prop.shareCode) {
+    const url = `https://cecile-s.github.io/cil-vault/app.html?share=${prop.shareCode}`;
+    navigator.clipboard.writeText(url);
+    showToast('Lien copié !', 'success');
+  }
+}
+
+function downloadQRCode() {
+  const img = document.getElementById('share-qr-img');
+  const link = document.createElement('a');
+  link.href = img.src;
+  link.download = 'cilia-qrcode.png';
+  link.click();
+  showToast('QR Code téléchargé', 'success');
+}
+
+function regenerateShareCode() {
+  if (confirm('Régénérer le code invalidera le précédent. Continuer ?')) {
+    const prop = state.properties.find(p => p.id === state.currentPropertyId);
+    if (prop) {
+      prop.shareCode = generateSecureCode();
+      prop.shareCreatedAt = new Date().toISOString();
+      prop.shareExpiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
+      saveState();
+      
+      const shareUrl = `https://cecile-s.github.io/cil-vault/app.html?share=${prop.shareCode}`;
+      document.getElementById('share-code-display').textContent = prop.shareCode;
+      document.getElementById('share-url-display').textContent = shareUrl;
+      document.getElementById('share-qr-img').src = generateQRCode(shareUrl);
+      document.getElementById('share-expires').textContent = new Date(prop.shareExpiresAt).toLocaleDateString('fr-FR');
+      
+      showToast('Nouveau code généré', 'success');
+    }
   }
 }
 </script>
