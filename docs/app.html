@@ -1321,3 +1321,106 @@ function filterReadOnlyData(data, type) {
 <div id="tenant-access-status" class="mb-2"></div>
 <button onclick="revokeTenantAccess()" class="w-full bg-red-500 text-white py-2 rounded-lg text-sm">❌ Révoquer l'accès locataire</button>
 </div>
+
+<script>
+// ============================================
+// CHECKLIST LOCATION
+// ============================================
+
+const DOCS_LOCATION = [
+  {id: 'dpe', name: 'DPE (Diagnostic Performance Énergétique)', required: true},
+  {id: 'electricite', name: 'Diagnostic électricité (si installation > 15 ans)', required: true, condition: 'install>15'},
+  {id: 'gaz', name: 'Diagnostic gaz (si installation > 15 ans)', required: true, condition: 'install>15'},
+  {id: 'erp', name: 'ERP (État des Risques et Pollutions)', required: true},
+  {id: 'boutin', name: 'Mesurage loi Boutin (surface habitable)', required: true},
+  {id: 'plomb', name: 'Diagnostic plomb (CREP, si bâtiment avant 1949)', required: true, condition: 'avant1949'},
+  {id: 'reglement', name: 'Règlement de copropriété (extrait)', required: true, condition: 'copro'}
+];
+
+// Calculer le score location
+function calculateLocationScore() {
+  if (!state.currentPropertyId) return 0;
+  
+  const docs = state.documents[state.currentPropertyId] || [];
+  const prop = state.properties.find(p => p.id === state.currentPropertyId);
+  if (!prop) return 0;
+  
+  let completed = 0;
+  let required = 0;
+  
+  DOCS_LOCATION.forEach(item => {
+    if (item.required) required++;
+    const hasDoc = docs.some(d => d.type === 'diagnostic' && d.diagType === item.id);
+    if (hasDoc && item.required) completed++;
+  });
+  
+  return Math.round((completed / required) * 100);
+}
+
+// Mettre à jour la checklist location
+function updateChecklistLocation() {
+  const section = document.getElementById('checklist-location-section');
+  if (!section) return;
+  
+  if (!state.currentPropertyId) {
+    section.classList.add('hidden');
+    return;
+  }
+  
+  section.classList.remove('hidden');
+  const docs = state.documents[state.currentPropertyId] || [];
+  
+  let completed = 0;
+  let required = 0;
+  
+  const items = DOCS_LOCATION.map(item => {
+    const hasDoc = docs.some(d => d.type === 'diagnostic' && d.diagType === item.id);
+    if (item.required) required++;
+    if (hasDoc && item.required) completed++;
+    
+    return `
+      <div class="flex items-center gap-2">
+        <span class="${hasDoc ? 'text-green-500' : 'text-slate-300'}">${hasDoc ? '✅' : '⬜'}</span>
+        <span class="${hasDoc ? 'text-slate-700' : 'text-slate-400'} text-sm">${item.name}</span>
+      </div>
+    `;
+  }).join('');
+  
+  document.getElementById('checklist-location-items').innerHTML = items;
+  
+  const score = Math.round((completed / required) * 100);
+  document.getElementById('checklist-location-score').textContent = score + '%';
+  
+  const statusEl = document.getElementById('checklist-location-status');
+  if (score >= 100) {
+    statusEl.className = 'mt-3 p-2 rounded-lg text-center text-sm font-medium bg-green-100 text-green-800';
+    statusEl.textContent = '✅ Prêt à louer !';
+  } else if (score >= 70) {
+    statusEl.className = 'mt-3 p-2 rounded-lg text-center text-sm font-medium bg-amber-100 text-amber-800';
+    statusEl.textContent = '⚠️ Presque prêt, manque ' + (required - completed) + ' document(s)';
+  } else {
+    statusEl.className = 'mt-3 p-2 rounded-lg text-center text-sm font-medium bg-red-100 text-red-800';
+    statusEl.textContent = '❌ Manque ' + (required - completed) + ' document(s) obligatoire(s)';
+  }
+}
+</script>
+
+<!-- SECTION: CHECKLIST LOCATION -->
+<div id="checklist-location-section" class="bg-white rounded-xl shadow p-4 mb-4">
+<div class="flex justify-between items-center mb-3">
+<h3 class="font-semibold text-slate-700">📋 Prêt à louer</h3>
+<span id="checklist-location-score" class="text-2xl font-bold text-cil-blue">0%</span>
+</div>
+<div id="checklist-location-items" class="space-y-2"></div>
+<div id="checklist-location-status" class="mt-3 p-2 rounded-lg text-center text-sm font-medium"></div>
+</div>
+
+<script>
+// Mettre à jour les deux checklists
+const originalUpdateUIChecklist = updateUI;
+updateUI = function() {
+  if (typeof originalUpdateUIChecklist === 'function') originalUpdateUIChecklist();
+  updateChecklist();
+  if (typeof updateChecklistLocation === 'function') updateChecklistLocation();
+};
+</script>
