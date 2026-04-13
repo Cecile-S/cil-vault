@@ -1212,3 +1212,112 @@ function regenerateShareCode() {
   }
 }
 </script>
+
+<script>
+// ============================================
+// GESTION ACCÈS LOCATAIRE
+// ============================================
+
+// Révoquer l'accès locataire
+function revokeTenantAccess() {
+  const prop = state.properties.find(p => p.id === state.currentPropertyId);
+  if (!prop) return;
+  
+  if (confirm('Révoquer l\'accès du locataire ? Il ne pourra plus consulter ce CIL.')) {
+    prop.shareRevokedAt = new Date().toISOString();
+    prop.shareCode = null;
+    saveState();
+    showToast('Accès locataire révoqué', 'success');
+    updateUI();
+  }
+}
+
+// Vérifier l'accès locataire
+function checkTenantAccess(code) {
+  const prop = state.properties.find(p => p.shareCode === code);
+  if (!prop) return { valid: false, reason: 'CODE_INTRUVABLE' };
+  if (prop.shareRevokedAt) return { valid: false, reason: 'REVOQUE' };
+  if (new Date(prop.shareExpiresAt) < new Date()) return { valid: false, reason: 'EXPIRE' };
+  return { valid: true, property: prop };
+}
+
+// Mode lecture seule
+function isReadOnlyMode() {
+  return localStorage.getItem('cilia-tenant-mode') === 'true';
+}
+
+// Activer le mode locataire
+function activateTenantMode(propId) {
+  localStorage.setItem('cilia-tenant-mode', 'true');
+  localStorage.setItem('cilia-tenant-property', propId);
+  state.currentPropertyId = propId;
+}
+
+// Désactiver le mode locataire
+function deactivateTenantMode() {
+  localStorage.removeItem('cilia-tenant-mode');
+  localStorage.removeItem('cilia-tenant-property');
+}
+
+// Joindre en tant que locataire (version sécurisée)
+function joinAsTenantSecure() {
+  const code = document.getElementById('tenant-code-input').value.trim();
+  if (!code || code.length < 12) {
+    showToast('Code invalide (12 caractères requis)', 'warning');
+    return;
+  }
+  
+  const access = checkTenantAccess(code);
+  
+  if (!access.valid) {
+    switch(access.reason) {
+      case 'CODE_INTRUVABLE':
+        showToast('Code non trouvé', 'error');
+        break;
+      case 'REVOQUE':
+        showToast('Accès révoqué par le propriétaire', 'error');
+        break;
+      case 'EXPIRE':
+        showToast('Code expiré', 'error');
+        break;
+    }
+    return;
+  }
+  
+  // Stocker le code en localStorage pour accès futur
+  localStorage.setItem('cilia-tenant-code', code);
+  activateTenantMode(access.property.id);
+  
+  closeModal('modal-share');
+  showToast('Accès au logement activé', 'success');
+  showPage('home');
+  updateUI();
+}
+
+// Filtrer pour mode lecture seule
+function filterReadOnlyData(data, type) {
+  if (!isReadOnlyMode()) return data;
+  
+  if (type === 'documents') {
+    return data.filter(d => {
+      if (d.type === 'diagnostic') {
+        return ['dpe', 'electricite', 'gaz', 'erp'].includes(d.diagType);
+      }
+      return d.type === 'notice';
+    });
+  }
+  
+  if (type === 'equipment') {
+    return data.filter(e => e.responsable === 'locataire');
+  }
+  
+  return data;
+}
+</script>
+
+<!-- BOUTON RÉVOCATION LOCATAIRE -->
+<div id="revoke-section" class="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+<h4 class="font-semibold text-red-800 mb-2">🔐 Gestion des accès</h4>
+<div id="tenant-access-status" class="mb-2"></div>
+<button onclick="revokeTenantAccess()" class="w-full bg-red-500 text-white py-2 rounded-lg text-sm">❌ Révoquer l'accès locataire</button>
+</div>
