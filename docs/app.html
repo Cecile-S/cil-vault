@@ -103,7 +103,7 @@ var saveUploadedDocument = function(){ alert('Chargement en cours, veuillez rée
         <button onclick="showPage('upload')" class="w-full bg-cil-blue text-white py-4 rounded-xl min-h-[48px] font-medium mb-3">📤 Ajouter un document</button>
         <button onclick="openModal('modal-equipment')" class="w-full bg-white text-cil-blue border-2 border-cil-blue py-3 rounded-xl font-medium mb-3">🔧 Ajouter un équipement</button>
         <button onclick="exportCIL()" class="w-full bg-slate-100 text-slate-700 py-3 rounded-xl mb-2">📄 Exporter le CIL</button>
-<button onclick="shareCIL()" class="w-full bg-slate-100 text-slate-700 py-3 rounded-xl">🔗 Partager le CIL</button>
+<button onclick="openShareModal()" class="w-full bg-slate-100 text-slate-700 py-3 rounded-xl mb-2">📤 Partager au locataire</button> <button onclick="openTransferModal()" class="w-full bg-amber-100 text-amber-800 py-3 rounded-xl">🔄 Transférer à l'acquéreur</button>
     </div>
 </div>
 
@@ -424,7 +424,7 @@ window.saveProperty = function(){
                 const p=state.properties.find(p=>p.id===editId);
                 if(p&&p.role==='proprietaire'){Object.assign(p,prop);p.type=document.getElementById('prop-type').value;p.surface=document.getElementById('prop-surface').value||null;p.rooms=document.getElementById('prop-rooms').value||null;p.role=document.getElementById('prop-role').value;p.updatedAt=new Date().toISOString()}
             }else{
-                const p={id:Date.now().toString(),...prop,type:document.getElementById('prop-type').value,surface:document.getElementById('prop-surface').value||null,rooms:document.getElementById('prop-rooms').value||null,role:document.getElementById('prop-role').value,createdAt:new Date().toISOString()};
+                const role=document.getElementById('prop-role').value;const p={id:Date.now().toString(),...prop,type:document.getElementById('prop-type').value,surface:document.getElementById('prop-surface').value||null,rooms:document.getElementById('prop-rooms').value||null,role:role,shareCode:role==='proprietaire'?generateCode():null,createdAt:new Date().toISOString()};
                 state.properties.push(p);state.equipment[p.id]=[];state.documents[p.id]=[];state.currentPropertyId=p.id
             }
             saveState();updateUI();closeModal('modal-property');
@@ -639,3 +639,232 @@ function showToast(message, type='info', duration=3000){
 </script>
 </body>
 </html>
+<!-- MODAL: PARTAGE LOCATAIRE -->
+<div id="modal-share" class="modal">
+<div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+<div class="p-4 border-b flex justify-between items-center">
+<h3 class="font-bold text-lg">📤 Partager le CIL</h3>
+<button onclick="closeModal('modal-share')" class="text-slate-400">✕</button>
+</div>
+<div class="p-4">
+<div id="share-prop-section">
+<p class="text-sm text-slate-600 mb-4">Partagez ce code avec votre locataire pour lui donner accès aux informations du logement.</p>
+<div class="bg-slate-100 rounded-xl p-4 text-center mb-4">
+<p class="text-xs text-slate-500 mb-1">Code d'accès locataire</p>
+<p class="text-2xl font-mono font-bold text-cil-blue" id="share-code-display">-</p>
+<button onclick="copyShareCode()" class="mt-2 text-sm text-cil-blue">📋 Copier le code</button>
+</div>
+<p class="text-xs text-slate-500">Le locataire pourra voir: DPE, diagnostics, équipements dont il est responsable, notices.</p>
+</div>
+<div id="share-tenant-section" class="hidden">
+<p class="text-sm text-slate-600 mb-4">Entrez le code fourni par votre propriétaire pour accéder aux informations du logement.</p>
+<input type="text" id="tenant-code-input" class="w-full p-3 border-2 border-cil-blue rounded-xl text-center text-xl font-mono uppercase mb-4" placeholder="ABC123" maxlength="6">
+<button onclick="joinAsTenant()" class="w-full bg-cil-blue text-white py-3 rounded-lg font-medium">Accéder au logement</button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- MODAL: TRANSFERT ACQUÉREUR -->
+<div id="modal-transfer" class="modal">
+<div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+<div class="p-4 border-b flex justify-between items-center">
+<h3 class="font-bold text-lg">🔄 Transférer le CIL</h3>
+<button onclick="closeModal('modal-transfer')" class="text-slate-400">✕</button>
+</div>
+<div class="p-4">
+<div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+<p class="text-sm text-amber-800"><strong>⚠️ Attention:</strong> Ce transfert est définitif. Vous perdrez tous vos droits sur ce CIL.</p>
+</div>
+<div class="bg-slate-100 rounded-xl p-4 text-center mb-4">
+<p class="text-xs text-slate-500 mb-1">Code de transfert</p>
+<p class="text-2xl font-mono font-bold text-cil-blue" id="transfer-code-display">-</p>
+<button onclick="copyTransferCode()" class="mt-2 text-sm text-cil-blue">📋 Copier le code</button>
+</div>
+<p class="text-xs text-slate-500">L'acquéreur entrera ce code pour devenir le nouveau propriétaire du CIL.</p>
+<button onclick="generateTransferCode()" class="w-full bg-amber-500 text-white py-3 rounded-lg font-medium mt-4">Générer un nouveau code</button>
+</div>
+</div>
+</div>
+
+<script>
+// ============================================
+// PARTAGE ET TRANSFERT CIL
+// ============================================
+
+// Génère un code aléatoire de 6 caractères
+function generateCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+// Ouvrir modal partage
+function openShareModal() {
+  const prop = state.properties.find(p => p.id === state.currentPropertyId);
+  if (!prop) {
+    showToast('Sélectionnez un bien', 'warning');
+    return;
+  }
+  
+  // Propriétaire: génère un shareCode si pas existant
+  if (prop.role === 'proprietaire') {
+    if (!prop.shareCode) {
+      prop.shareCode = generateCode();
+      saveState();
+    }
+    document.getElementById('share-code-display').textContent = prop.shareCode;
+    document.getElementById('share-prop-section').classList.remove('hidden');
+    document.getElementById('share-tenant-section').classList.add('hidden');
+  } else {
+    document.getElementById('share-prop-section').classList.add('hidden');
+    document.getElementById('share-tenant-section').classList.remove('hidden');
+  }
+  
+  openModal('modal-share');
+}
+
+// Copier le code de partage
+function copyShareCode() {
+  const prop = state.properties.find(p => p.id === state.currentPropertyId);
+  if (prop && prop.shareCode) {
+    navigator.clipboard.writeText(prop.shareCode);
+    showToast('Code copié !', 'success');
+  }
+}
+
+// Locataire rejoint un bien
+function joinAsTenant() {
+  const code = document.getElementById('tenant-code-input').value.trim().toUpperCase();
+  if (!code || code.length !== 6) {
+    showToast('Code invalide (6 caractères)', 'warning');
+    return;
+  }
+  
+  // Chercher le bien avec ce shareCode
+  const prop = state.properties.find(p => p.shareCode === code);
+  if (!prop) {
+    showToast('Code non trouvé', 'error');
+    return;
+  }
+  
+  // Ajouter le bien en tant que locataire
+  prop.tenantAccess = true;
+  prop.role = 'locataire';
+  state.currentPropertyId = prop.id;
+  saveState();
+  updateUI();
+  closeModal('modal-share');
+  showToast('Accès au logement activé', 'success');
+  showPage('home');
+}
+
+// Ouvrir modal transfert
+function openTransferModal() {
+  const prop = state.properties.find(p => p.id === state.currentPropertyId);
+  if (!prop) {
+    showToast('Sélectionnez un bien', 'warning');
+    return;
+  }
+  if (prop.role !== 'proprietaire') {
+    showToast('Seul le propriétaire peut transférer', 'warning');
+    return;
+  }
+  openModal('modal-transfer');
+}
+
+// Générer code de transfert
+function generateTransferCode() {
+  const prop = state.properties.find(p => p.id === state.currentPropertyId);
+  if (!prop) return;
+  
+  prop.transferCode = 'TRF-' + generateCode();
+  prop.transferExpiry = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  saveState();
+  
+  document.getElementById('transfer-code-display').textContent = prop.transferCode;
+  showToast('Code généré (valable 30 jours)', 'success');
+}
+
+// Copier le code de transfert
+function copyTransferCode() {
+  const prop = state.properties.find(p => p.id === state.currentPropertyId);
+  if (prop && prop.transferCode) {
+    navigator.clipboard.writeText(prop.transferCode);
+    showToast('Code copié !', 'success');
+  }
+}
+
+// Acquéreur rejoint un CIL
+function joinAsBuyer() {
+  const code = prompt('Entrez le code de transfert (TRF-XXXXX):');
+  if (!code) return;
+  
+  code = code.trim().toUpperCase();
+  if (!code.startsWith('TRF-')) {
+    showToast('Code invalide', 'error');
+    return;
+  }
+  
+  // Pour l'instant en mode démo: on stocke le code dans le localStorage
+  // En production, ça sera vérifié côté serveur
+  const storedProps = JSON.parse(localStorage.getItem('cilia-transferable') || '[]');
+  const propData = storedProps.find(p => p.transferCode === code);
+  
+  if (!propData) {
+    showToast('Code non trouvé ou expiré', 'error');
+    return;
+  }
+  
+  // Transférer la propriété
+  propData.ownerTransferred = true;
+  propData.transferDate = new Date().toISOString();
+  
+  // Ajouter aux properties du nouvel utilisateur
+  const newProp = {
+    ...propData,
+    role: 'proprietaire',
+    transferCode: null,
+    transferExpiry: null
+  };
+  delete newProp.transferCode;
+  
+  state.properties.push(newProp);
+  state.currentPropertyId = newProp.id;
+  saveState();
+  updateUI();
+  
+  showToast('CIL transféré avec succès !', 'success');
+  showPage('home');
+}
+
+// Filtrer les données pour le locataire
+function filterForTenant(data, type) {
+  // Documents visibles par le locataire
+  const TENANT_DOCS = ['diagnostic', 'notice'];
+  // Diagnostics partagés automatiquement
+  const TENANT_DIAGS = ['dpe', 'electricite', 'gaz', 'erp'];
+  
+  if (type === 'documents') {
+    return data.filter(d => {
+      // Diagnostics: seulement DPE, élec, gaz, ERP
+      if (d.type === 'diagnostic') {
+        return TENANT_DIAGS.includes(d.diagType);
+      }
+      // Notices d'équipement: OK
+      if (d.type === 'notice') return true;
+      // Autres: non visible
+      return false;
+    });
+  }
+  
+  if (type === 'equipment') {
+    return data.filter(e => e.responsable === 'locataire');
+  }
+  
+  return data;
+}
+</script>
