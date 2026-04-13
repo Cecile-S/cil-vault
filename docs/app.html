@@ -1543,3 +1543,145 @@ function joinAsProprietaire() {
 </div>
 </div>
 </div>
+
+<script>
+// ============================================
+// ALERTES ASSEMBLÉES GÉNÉRALES ET CHARGES
+// ============================================
+
+// Vérifier les documents obsolètes
+function checkObsoleteDocuments() {
+  if (!state.currentPropertyId) return [];
+  
+  const docs = state.documents[state.currentPropertyId] || [];
+  const prop = state.properties.find(p => p.id === state.currentPropertyId);
+  if (!prop) return [];
+  
+  const alerts = [];
+  const now = new Date();
+  
+  // Vérifier PV Assemblée Générale
+  const pvAG = docs.filter(d => d.type === 'pv' || d.name?.toLowerCase().includes('assemblée'));
+  if (pvAG.length > 0) {
+    const lastPV = pvAG.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt))[0];
+    const pvDate = new Date(lastPV.date || lastPV.createdAt);
+    const yearsSincePV = (now - pvDate) / (365 * 24 * 60 * 60 * 1000);
+    
+    // Les AG ont généralement lieu entre mars et juin
+    const lastAGYear = pvDate.getFullYear();
+    const currentYear = now.getFullYear();
+    const expectedAGMonth = 4; // Mai = index 4
+    
+    // Si on est après l'AG annuelle et qu'on n'a pas le PV de cette année
+    if (now.getMonth() >= expectedAGMonth && lastAGYear < currentYear) {
+      alerts.push({
+        type: 'warning',
+        category: 'ag',
+        title: 'PV Assemblée Générale potentiellement obsolète',
+        message: `Dernier PV: ${pvDate.toLocaleDateString('fr-FR')}. L'AG ${currentYear} a probablement eu lieu. Vérifiez si un nouveau PV est disponible.`,
+        docId: lastPV.id,
+        priority: 'medium'
+      });
+    }
+  } else {
+    // Pas de PV du tout
+    alerts.push({
+      type: 'error',
+      category: 'ag',
+      title: 'Aucun PV d\'Assemblée Générale',
+      message: 'Les PV d\'AG sont essentiels pour suivre les décisions de copropriété.',
+      priority: 'high'
+    });
+  }
+  
+  // Vérifier Appels de Charges
+  const appelsCharges = docs.filter(d => 
+    d.type === 'facture' || 
+    d.name?.toLowerCase().includes('appel') ||
+    d.name?.toLowerCase().includes('charges')
+  );
+  
+  if (appelsCharges.length > 0) {
+    const lastAppel = appelsCharges.sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt))[0];
+    const appelDate = new Date(lastAppel.date || lastAppel.createdAt);
+    const monthsSince = (now - appelDate) / (30 * 24 * 60 * 60 * 1000);
+    
+    // Les appels de charges sont généralement trimestriels
+    if (monthsSince > 4) {
+      alerts.push({
+        type: 'warning',
+        category: 'charges',
+        title: 'Appel de charges potentiellement obsolète',
+        message: `Dernier appel: ${appelDate.toLocaleDateString('fr-FR')} (il y a ${Math.floor(monthsSince)} mois). Un nouvel appel a peut-être été émis.`,
+        docId: lastAppel.id,
+        priority: 'medium'
+      });
+    }
+  } else if (prop.type === 'Appartement') {
+    // Appartement en copropriété sans appel de charges
+    alerts.push({
+      type: 'warning',
+      category: 'charges',
+      title: 'Aucun appel de charges',
+      message: 'En copropriété, les appels de charges sont trimestriels. Vérifiez votre extranet syndic.',
+      priority: 'medium'
+    });
+  }
+  
+  // Vérifier DPE
+  const dpeDocs = docs.filter(d => d.type === 'diagnostic' && d.diagType === 'dpe');
+  if (dpeDocs.length > 0) {
+    const lastDPE = dpeDocs[0];
+    const dpeDate = new Date(lastDPE.date || lastDPE.createdAt);
+    const yearsSinceDPE = (now - dpeDate) / (365 * 24 * 60 * 60 * 1000);
+    
+    if (yearsSinceDPE > 8) {
+      alerts.push({
+        type: 'warning',
+        category: 'diagnostic',
+        title: 'DPE arrive à expiration',
+        message: `DPE daté de ${dpeDate.toLocaleDateString('fr-FR')} (${Math.floor(yearsSinceDPE)} ans). Validité: 10 ans. Pensez à le renouveler.`,
+        docId: lastDPE.id,
+        priority: 'medium'
+      });
+    } else if (yearsSinceDPE > 10) {
+      alerts.push({
+        type: 'error',
+        category: 'diagnostic',
+        title: 'DPE expiré',
+        message: `DPE expiré depuis ${Math.floor(yearsSinceDPE - 10)} ans. Obligatoire pour vendre ou louer.`,
+        docId: lastDPE.id,
+        priority: 'high'
+      });
+    }
+  }
+  
+  return alerts;
+}
+
+// Ajouter ces alertes au système existant
+function updateObsoleteAlerts() {
+  const obsoleteAlerts = checkObsoleteDocuments();
+  
+  // Ajouter aux alertes existantes
+  obsoleteAlerts.forEach(alert => {
+    const existingAlert = state.alerts[state.currentPropertyId]?.find(a => 
+      a.category === alert.category && a.type === alert.type
+    );
+    
+    if (!existingAlert) {
+      if (!state.alerts[state.currentPropertyId]) {
+        state.alerts[state.currentPropertyId] = [];
+      }
+      state.alerts[state.currentPropertyId].push({
+        ...alert,
+        id: Date.now().toString() + Math.random(),
+        createdAt: new Date().toISOString(),
+        read: false
+      });
+    }
+  });
+  
+  saveState();
+}
+</script>
