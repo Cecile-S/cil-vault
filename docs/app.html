@@ -28,9 +28,6 @@ function closeModal(id){document.getElementById(id).classList.remove('active')}
 function showUpgradeModal(){document.getElementById('modal-upgrade').classList.add('active')}
 function showToast(msg,type='info'){const t=document.getElementById('toast');if(t){t.textContent=msg;t.className='fixed bottom-20 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg text-sm font-medium z-50 '+(type==='error'?'bg-red-500 text-white':type==='warning'?'bg-amber-500 text-white':type==='success'?'bg-green-500 text-white':'bg-slate-700 text-white');t.classList.remove('hidden');setTimeout(()=>t.classList.add('hidden'),3000)}}
 // Placeholders - overridden by full script when DOM ready
-var saveProperty = function(){ alert('Chargement en cours, veuillez réessayer...'); };
-var saveEquipment = function(){ alert('Chargement en cours, veuillez réessayer...'); };
-var saveUploadedDocument = function(){ alert('Chargement en cours, veuillez réessayer...'); };
 </script>
 
     <style>
