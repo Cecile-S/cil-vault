@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { Upload, FileText, Trash2, Tag, Calendar } from 'lucide-react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
+import { useDropzone } from 'react-dropzone'
 
 const DOCUMENT_TYPES = [
   { id: 'dpe', label: 'DPE', icon: '📊' },
@@ -25,6 +26,39 @@ export default function Documents() {
   })
   const fileInputRef = useRef(null)
 
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop: async (acceptedFiles) => {
+      if (acceptedFiles.length > 0) {
+        const file = acceptedFiles[0]
+        // Process file upload and classification
+        await handleFileUpload(file)
+      }
+    }
+  })
+
+  const handleFileUpload = async (file) => {
+    setUploading(true)
+    try {
+      // For demo, just use file name
+      const fileName = file.name
+      setFormData({
+        ...formData,
+        name: fileName.replace(/\.[^/.]+$/, ''),
+      })
+
+      // If it's a text file, try to classify
+      if (file.type === 'text/plain') {
+        const text = await file.text()
+        const type = await classifyDocument(text)
+        setFormData(prev => ({ ...prev, type, content: text }))
+      }
+    } catch (error) {
+      console.error('Upload error:', error)
+    } finally {
+      setUploading(false)
+    }
+  }
+
   const classifyDocument = async (text) => {
     setClassifying(true)
     try {
@@ -48,32 +82,6 @@ export default function Documents() {
       return 'other'
     } finally {
       setClassifying(false)
-    }
-  }
-
-  const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setUploading(true)
-    try {
-      // For demo, just use file name
-      const fileName = file.name
-      setFormData({
-        ...formData,
-        name: fileName.replace(/\.[^/.]+$/, ''),
-      })
-
-      // If it's a text file, try to classify
-      if (file.type === 'text/plain') {
-        const text = await file.text()
-        const type = await classifyDocument(text)
-        setFormData(prev => ({ ...prev, type, content: text }))
-      }
-    } catch (error) {
-      console.error('Upload error:', error)
-    } finally {
-      setUploading(false)
     }
   }
 
@@ -120,6 +128,21 @@ export default function Documents() {
           <Upload className="w-4 h-4" />
           Ajouter
         </button>
+      </div>
+
+      {/* Dropzone Area */}
+      <div 
+        {...getRootProps()} 
+        className={`card border-2 border-dashed text-center cursor-pointer p-8 ${
+          isDragActive ? 'border-cil-blue bg-blue-50' : 'border-slate-300'
+        }`}
+      >
+        <input {...getInputProps()} />
+        <Upload className="w-12 h-12 mx-auto text-slate-400" />
+        <p className="mt-2 text-slate-500">
+          {isDragActive ? 'Déposez le fichier ici' : 'Glissez un fichier ici ou cliquez pour sélectionner'}
+        </p>
+        <p className="text-sm text-slate-400 mt-1">Formats supportés: PDF, JPG, PNG, TXT</p>
       </div>
 
       {showForm && (
@@ -264,4 +287,5 @@ export default function Documents() {
       )}
     </div>
   )
+}
 }
