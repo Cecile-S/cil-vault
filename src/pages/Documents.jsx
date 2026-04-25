@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { Upload, FileText, Trash2, Tag, Calendar } from 'lucide-react'
-import { useLocalStorage } from '../hooks/useLocalStorage'
+import { useIndexedDB } from '../hooks/useIndexedDB'
 
 const DOCUMENT_TYPES = [
   { id: 'dpe', label: 'DPE', icon: '📊' },
@@ -12,7 +12,7 @@ const DOCUMENT_TYPES = [
 ]
 
 export default function Documents() {
-  const [documents, setDocuments] = useLocalStorage('cil-documents', [])
+  const { documents, loading, error, addDocument, deleteDocument } = useIndexedDB()
   const [showForm, setShowForm] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [classifying, setClassifying] = useState(false)
@@ -87,12 +87,11 @@ export default function Documents() {
     e.preventDefault()
     const type = DOCUMENT_TYPES.find(t => t.id === formData.type)
     const newDoc = {
-      id: Date.now(),
       ...formData,
       icon: type?.icon || '📎',
       createdAt: new Date().toISOString(),
     }
-    setDocuments([...documents, newDoc])
+    addDocument(newDoc)
     setFormData({
       name: '',
       type: 'invoice',
@@ -105,8 +104,25 @@ export default function Documents() {
 
   const handleDelete = (id) => {
     if (confirm('Supprimer ce document ?')) {
-      setDocuments(documents.filter(doc => doc.id !== id))
+      deleteDocument(id)
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-slate-500">Chargement des documents...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-500">Erreur lors du chargement des documents</p>
+        <p className="text-slate-400">{error.message}</p>
+      </div>
+    )
   }
 
   return (
