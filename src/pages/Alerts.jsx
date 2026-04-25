@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Bell, Check, AlertTriangle, Info, X } from 'lucide-react'
-import { useLocalStorage } from '../hooks/useLocalStorage'
+import { useIndexedDBAlerts } from '../hooks/useIndexedDBAlerts'
+import { useIndexedDBEquipment } from '../hooks/useIndexedDBEquipment'
 
 // Generate alerts based on equipment
 function generateAlerts(equipment) {
@@ -38,21 +39,59 @@ function generateAlerts(equipment) {
 }
 
 export default function Alerts() {
-  const [equipment] = useLocalStorage('cil-equipment', [])
-  const [dismissedAlerts, setDismissedAlerts] = useLocalStorage('cil-dismissed-alerts', [])
-  const [systemAlerts] = useLocalStorage('cil-system-alerts', [])
+  const { alerts: systemAlerts, loading: alertsLoading, error: alertsError, addAlert, dismissAlert, clearDismissed } = useIndexedDBAlerts()
+  const { equipment: equipmentList, loading: equipmentLoading, error: equipmentError } = useIndexedDBEquipment()
+  
+  const [dismissedAlerts, setDismissedAlerts] = useState([])
+  const [showAddAlertModal, setShowAddAlertModal] = useState(false)
+  const [newAlert, setNewAlert] = useState({
+    type: 'info',
+    title: '',
+    message: '',
+  })
 
-  // Generate maintenance alerts
-  const maintenanceAlerts = generateAlerts(equipment)
-  const allAlerts = [...maintenanceAlerts, ...systemAlerts]
-  const activeAlerts = allAlerts.filter(a => !dismissedAlerts.includes(a.id))
+  // Generate maintenance alerts from equipment
+  const maintenanceAlerts = generateAlerts(equipmentList)
+  const allSystemAlerts = [...systemAlerts]
+  const allAlerts = [...maintenanceAlerts, ...allSystemAlerts]
+  
+  // Combine dismissed alerts from hook and local state (for equipment-based alerts)
+  const allDismissed = [...dismissedAlerts]
+
+  const activeAlerts = allAlerts.filter(a => !allDismissed.includes(a.id))
 
   const handleDismiss = (alertId) => {
+    // If it's a maintenance alert, we don't store it in IndexedDB (it's computed)
+    // If it's a system alert, we store the dismissal in IndexedDB
+    const isMaintenanceAlert = alertId.startsWith('maintenance-')
+    if (!isMaintenanceAlert) {
+      dismissAlert(alertId)
+    }
     setDismissedAlerts([...dismissedAlerts, alertId])
   }
 
   const handleDismissAll = () => {
-    setDismissedAlerts(allAlerts.map(a => a.id))
+    // Dismiss all maintenance alerts (just update local state)
+    const maintenanceIds = maintenanceAlerts.map(a => a.id)
+    setDismissedAlerts([...dismissedAlerts, ...maintenanceIds])
+    // Dismiss all system alerts via the hook
+    clearDismissed()
+  }
+
+  const handleAddAlert = () => {
+    if (!newAlert.title || !newAlert.message) return
+    const alertToAdd = {
+      ...newAlert,
+      id: Date.now(),
+      createdAt: new Date().toISOString(),
+    }
+    addAlert(alertToAdd)
+    setNewAlert({
+      type: 'info',
+      title: '',
+      message: '',
+    })
+    setShowAddAlertModal(false)
   }
 
   const getAlertStyle = (type) => {
@@ -81,19 +120,47 @@ export default function Alerts() {
     }
   }
 
+  if (alertsLoading || equipmentLoading) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-slate-500">Chargement des alertes...</p>
+      </div>
+    )
+  }
+
+  if (alertsError || equipmentError) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-500">Erreur lors du chargement des alertes</p>
+        <p className="text-slate-400">
+          {(alertsError || equipmentError).message}
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold">Alertes</h2>
-        {activeAlerts.length > 0 && (
+        <div className="flex items-center gap-2">
+          {activeAlerts.length > 0 && (
+            <button
+              onClick={handleDismissAll}
+              className="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1"
+            >
+              <Check className="w-4 h-4" />
+              Tout marquer lu
+            </button>
+          )}
           <button
-            onClick={handleDismissAll}
-            className="text-sm text-slate-500 hover:text-slate-700 flex items-center gap-1"
+            onClick={() => setShowAddAlertModal(true)}
+            className="btn btn-secondary flex items-center gap-2"
           >
-            <Check className="w-4 h-4" />
-            Tout marquer lu
+            <Bell className="w-4 h-4" />
+            Ajouter une alerte
           </button>
-        )}
+        </div>
       </div>
 
       {activeAlerts.length === 0 ? (
@@ -108,6 +175,7 @@ export default function Alerts() {
         <div className="space-y-3">
           {activeAlerts.map(alert => {
             const style = getAlertStyle(alert.type)
+            const isMaintenanceAlert = alert.id.startsWith('maintenance-')
             return (
               <div
                 key={alert.id}
@@ -152,6 +220,65 @@ export default function Alerts() {
           <li>• Chauffe-eau : contrôle tous les 2 ans</li>
         </ul>
       </div>
+
+      {/* Add Alert Modal */}
+      {showAddAlertModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Ajouter une alerte système</h2>
+            <form onSubmit={(e) => { e.preventDefault(); handleAddAlert(); }} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Type d'alerte</label>
+                <select
+                  value={newAlert.type}
+                  onChange={(e) => setNewAlert({ ...newAlert, type: e.target.value })}
+                  className="input w-full"
+                >
+                  <option value="info">Info</option>
+                  <option value="warning">Warning</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Titre</label>
+                <input
+                  value={newAlert.title}
+                  onChange={(e) => setNewAlert({ ...newAlert, title: e.target.value })}
+                  className="input w-full"
+                  placeholder="Ex: Vérification contrat assurance"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Message</label>
+                <textarea
+                  value={newAlert.message}
+                  onChange={(e) => setNewAlert({ ...newAlert, message: e.target.value })}
+                  className="input w-full"
+                  rows={3}
+                  placeholder="Détails de l'alerte..."
+                  required
+                />
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAddAlertModal(false)}
+                  className="btn btn-secondary"
+                >
+                  Annuler
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Ajouter l'alerte
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
