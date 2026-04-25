@@ -1,64 +1,136 @@
 // OCR Service - Extract text from PDFs and images
-// Uses PDF.js for text extraction, Tesseract.js for OCR
+// Uses pdfjs-dist for PDF text rendering and tesseract.js for OCR
 
 const CIL_OCR = {
-  // Extract text from PDF using PDF.js
-  async extractPDFText(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          // Simple text extraction without pdf.js dependency
-          // For production, use pdf.js library
-          const text = await this._extractTextSimple(e.target.result);
-          resolve(text);
-        } catch (error) {
-          reject(error);
-        }
-      };
-      reader.onerror = reject;
-      reader.readAsArrayBuffer(file);
-    });
-  },
+  // Initialize Tesseract worker (lazy)
+  _tesseractWorker: null,
   
-  // Simple binary text extraction (works for text-based PDFs)
-  async _extractTextSimple(arrayBuffer) {
-    const uint8Array = new Uint8Array(arrayBuffer);
-    let text = '';
-    
-    // Look for text streams in PDF
-    let inTextObject = false;
-    let textBuffer = '';
-    
-    for (let i = 0; i < uint8Array.length - 6; i++) {
-      const chunk = String.fromCharCode(...uint8Array.slice(i, i + 6));
-      
-      if (chunk === 'BT\n') {
-        inTextObject = true;
-        textBuffer = '';
-      } else if (chunk === 'ET\n' && inTextObject) {
-        inTextObject = false;
-        text += this._parsePDFTextCommands(textBuffer);
-      } else if (inTextObject) {
-        textBuffer += String.fromCharCode(uint8Array[i]);
-      }
+  async _getTesseractWorker() {
+    if (!this._tesseractWorker) {
+      const Tesseract = await import('tesseract.js');
+      this._tesseractWorker = Tesseract.createWorker({
+        langPath: 'https://unpkg.com/tesseract.js@3.0.2/lang-data',
+        corePath: 'https://unpkg.com/tesseract.js@3.0.2/core.js',
+      });
+      await this._tesseractWorker.load();
+      await this._tesseractWorker.loadLanguage('fra+eng');
+      await this._tesseractWorker.initialize('fra+eng');
     }
-    
-    return text.trim() || 'PDF binaire - OCR nécessaire';
+    return this._tesseractWorker;
   },
-  
-  // Parse PDF text commands (Tj, TJ, etc.)
-  _parsePDFTextCommands(buffer) {
-    // Simplified parser - in production use pdf.js
-    const matches = buffer.match(/\(([^)]+)\)/g);
-    if (!matches) return '';
-    
-    return matches
-      .map(m => m.slice(1, -1))
-      .join(' ')
-      .replace(/\\n/g, '\n');
+
+  // Extract text from a file (text, image, PDF)
+  async extractText(file) {
+    // For text files, read directly
+    if (file.type.startsWith('text/') || file.type === 'application/json' || file.type === 'application/xml') {
+      return await file.text();
+    }
+
+    // For PDFs, try to extract text using pdfjs-dist, fallback to OCR
+    if (file.type === 'application/pdf') {
+      // First, try to extract text with pdfjs-dist
+      const pdfText = await this._extractTextWithPdfJs(file);
+      if (pdfText && pdfText.trim().length > 50) {
+        // Good enough text extracted
+        return pdfText;
+      }
+      // Otherwise, fall back to OCR (render first page to image)
+      return await this._ocrPdfViaTesseract(file);
+    }
+
+    // For images, use OCR directly
+    if (file.type.startsWith('image/')) {
+      return await this._ocrImageViaTesseract(file);
+    }
+
+    // For other file types, try to read as text (may fail)
+    try {
+      return await file.text();
+    } catch (e) {
+      // If not readable, return empty string
+      return '';
+    }
   },
-  
+
+  // Extract text from PDF using pdfjs-dist (text layer)
+  async _extractTextWithPdfJs(file) {
+    try {
+      const { default: pdfjsLib } = await import('pdfjs-dist/legacy/build/pdf');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.js`;
+
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      
+      // Extract text from first page only (for performance)
+      if (pdf.numPages < 1) return '';
+      const page = await pdf.getPage(1);
+      const textContent = await page.getTextContent();
+      const text = textContent.items.map(item => item.str).join(' ');
+      return text;
+    } catch (error) {
+      console.warn('PDF.js text extraction failed:', error);
+      return '';
+    }
+  },
+
+  // OCR on PDF via Tesseract.js (render first page to image)
+  async _ocrPdfViaTesseract(file) {
+    try {
+      const { default: pdfjsLib } = await import('pdfjs-dist/legacy/build/pdf');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.js`;
+
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      
+      if (pdf.numPages < 1) return '';
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({ scale: 2.0 }); // Increase scale for better OCR
+      
+      // Create canvas
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      
+      // Render PDF page to canvas
+      await page.render({
+        canvasContext: context,
+        viewport: viewport
+      }).promise;
+      
+      // Get image data
+      const imageData = canvas.toDataURL('image/png');
+      
+      // Run Tesseract OCR
+      const worker = await this._getTesseractWorker();
+      const { data: { text } } = await worker.recognize(imageData);
+      return text;
+    } catch (error) {
+      console.error('OCR on PDF failed:', error);
+      return '';
+    }
+  },
+
+  // OCR on image via Tesseract.js
+  async _ocrImageViaTesseract(file) {
+    try {
+      // Convert file to data URL
+      const imageData = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      
+      const worker = await this._getTesseractWorker();
+      const { data: { text } } = await worker.recognize(imageData);
+      return text;
+    } catch (error) {
+      console.error('OCR on image failed:', error);
+      return '';
+    }
+  },
+
   // Parse DPE specific format
   parseDPE(text) {
     const patterns = {

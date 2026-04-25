@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { Upload, FileText, Trash2, Tag, Calendar, Image, Clipboard, AlertTriangle, Loader2 } from 'lucide-react'
 import { useIndexedDB } from '../hooks/useIndexedDB'
+import { CIL_OCR } from '../services/ocr-service'
 
 const DOCUMENT_TYPES = [
   { id: 'dpe', label: 'DPE', icon: '📊' },
@@ -16,6 +17,7 @@ export default function Documents() {
   const [showForm, setShowForm] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [classifying, setClassifying] = useState(false)
+  const [ocrLoading, setOcrLoading] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const [preview, setPreview] = useState(null) // {url, type, name}
   const [fileToUpload, setFileToUpload] = useState(null)
@@ -54,6 +56,58 @@ export default function Documents() {
     }
   }
 
+  const handleFile = async (file) => {
+    if (!file) return
+    setUploading(true)
+    setOcrLoading(true)
+    try {
+      const fileName = file.name
+      // Extract text using OCR service
+      const extractedText = await CIL_OCR.extractText(file)
+      
+      // Auto-parse to get suggested type and structured data
+      const { type: suggestedType, data: parsedData } = await CIL_OCR.autoParse(extractedText)
+      
+      // Determine preview
+      let previewUrl = null
+      let previewType = suggestedType
+      if (file.type.startsWith('image/')) {
+        previewUrl = URL.createObjectURL(file)
+      } else if (file.type === 'application/pdf') {
+        previewUrl = URL.createObjectURL(file)
+        previewType = 'dpe' // Assume PDF could be DPE, but user can change
+      } else {
+        // For text files, no preview image
+        previewType = 'other'
+      }
+      
+      setFormData({
+        name: fileName.replace(/\.[^/.]+$/, ''),
+        type: suggestedType || 'invoice', // fallback to invoice if undefined
+        date: '',
+        notes: '',
+        content: extractedText,
+      })
+      setFileToUpload(file)
+      setPreview({ url: previewUrl, type: previewType, name: fileName })
+    } catch (error) {
+      console.error('File processing error:', error)
+      // Fallback to basic handling
+      const fileName = file.name
+      setFormData(prev => ({
+        ...prev,
+        name: fileName.replace(/\.[^/.]+$/, ''),
+        type: 'other',
+        content: '', // We'll let user fill or use manual classify
+      }))
+      setFileToUpload(file)
+      setPreview(null)
+    } finally {
+      setUploading(false)
+      setOcrLoading(false)
+    }
+  }
+
   const handleDragOver = (e) => {
     e.preventDefault()
     e.stopPropagation()
@@ -81,71 +135,6 @@ export default function Documents() {
     if (file) {
       await handleFile(file)
     }
-  }
-
-  const handleFile = async (file) => {
-    setUploading(true)
-    try {
-      const fileName = file.name
-      const fileType = file.type
-      let content = ''
-      let previewUrl = null
-      let previewType = 'other'
-
-      // For text files, read content
-      if (fileType.startsWith('text/') || fileType === 'application/json' || fileType === 'application/xml') {
-        const text = await file.text()
-        content = text
-        // Try to classify
-        const classifiedType = await classifyDocument(text)
-        setFormData(prev => ({ ...prev, type: classifiedType, content: text }))
-        previewType = classifiedType
-      } else if (fileType.startsWith('image/')) {
-        // For images, create preview URL
-        previewUrl = URL.createObjectURL(file)
-        previewType = 'other' // we will show image preview
-        // Store as base64 for persistence
-        const base64 = await fileToBase64(file)
-        content = base64 // store base64
-      } else if (fileType === 'application/pdf') {
-        // For PDF, we can't extract text easily without library, store as base64
-        previewUrl = URL.createObjectURL(file)
-        previewType = 'dpe' // assume PDF could be DPE, but user can change type
-        const base64 = await fileToBase64(file)
-        content = base64
-      } else {
-        // For other file types, store as base64
-        const base64 = await fileToBase64(file)
-        content = base64
-        previewType = 'other'
-      }
-
-      setFormData(prev => ({
-        ...prev,
-        name: fileName.replace(/\.[^/.]+$/, ''),
-        // keep existing type if already set by classification, otherwise default
-        ...(content && !formData.type ? { type: 'other' } : {}),
-      }))
-
-      setFileToUpload(file)
-      setPreview({ url: previewUrl, type: previewType, name: fileName })
-    } catch (error) {
-      console.error('File handling error:', error)
-    } finally {
-      setUploading(false)
-    }
-  }
-
-  const fileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        const base64 = reader.result.split(',')[1] // remove data:image/jpeg;base64,
-        resolve(base64)
-      }
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })
   }
 
   const handleTextClassify = async () => {
@@ -271,20 +260,23 @@ export default function Documents() {
             </label>
             <textarea
               className="input"
-              rows={3}
-              placeholder="Collez le contenu du document pour classification automatique..."
+              rows={6}
+              placeholder="Contenu extrait du fichier (modifiable)..."
               value={formData.content}
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
             />
             {formData.content && (
-              <button
-                type="button"
-                onClick={handleTextClassify}
-                disabled={classifying}
-                className="mt-2 text-sm text-cil-blue hover:underline disabled:opacity-50"
-              >
-                {classifying ? 'Classification en cours...' : '🤖 Classifier avec l\'IA'}
-              </button>
+              <div className="mt-2 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleTextClassify}
+                  disabled={classifying}
+                  className="mt-2 text-sm text-cil-blue hover:underline disabled:opacity-50"
+                >
+                  {classifying ? 'Classification en cours...' : '🤖 Classifier avec l\'IA'}
+                </button>
+                <span className="text-xs text-slate-500">({formData.content.length} caractères)</span>
+              </div>
             )}
           </div>
 
@@ -299,25 +291,10 @@ export default function Documents() {
             />
           </div>
 
-          {preview && (
+          {ocrLoading && (
             <div className="mt-4">
-              <h3 className="text-lg font-medium mb-2">Aperçu</h3>
-              <div className="space-y-2">
-                {preview.type.startsWith('image') && preview.url && (
-                  <Image src={preview.url} alt={preview.name} className="w-32 h-32 object-cover rounded border" />
-                )}
-                {!preview.type.startsWith('image') && preview.url && (
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded">
-                    <div className="text-2xl">
-                      {preview.type === 'dpe' ? <AlertTriangle className="text-orange-500" /> : preview.type === 'invoice' ? <FileText className="text-green-500" /> : preview.type === 'contract' ? <Clipboard className="text-blue-500" /> : <Trash2 className="text-slate-500" />}
-                    </div>
-                    <div>
-                      <p className="font-semibold">{preview.name}</p>
-                      <p className="text-sm text-slate-500">{preview.type}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <Loader2 className="w-5 h-5 mr-2" />
+              <span className="text-sm">Traitement du fichier en cours...</span>
             </div>
           )}
 
