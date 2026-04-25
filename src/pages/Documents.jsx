@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { Upload, FileText, Trash2, Tag, Calendar } from 'lucide-react'
+import { Upload, FileText, Trash2, Tag, Calendar, Image, Clipboard, AlertTriangle, Loader2 } from 'lucide-react'
 import { useIndexedDB } from '../hooks/useIndexedDB'
 
 const DOCUMENT_TYPES = [
@@ -16,6 +16,9 @@ export default function Documents() {
   const [showForm, setShowForm] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [classifying, setClassifying] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
+  const [preview, setPreview] = useState(null) // {url, type, name}
+  const [fileToUpload, setFileToUpload] = useState(null)
   const [formData, setFormData] = useState({
     name: '',
     type: 'invoice',
@@ -51,30 +54,98 @@ export default function Documents() {
     }
   }
 
+  const handleDragOver = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragOver(true)
+  }
+
+  const handleDragLeave = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragOver(false)
+  }
+
+  const handleDrop = async (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragOver(false)
+    const file = e.dataTransfer.files[0]
+    if (file) {
+      await handleFile(file)
+    }
+  }
+
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0]
-    if (!file) return
+    if (file) {
+      await handleFile(file)
+    }
+  }
 
+  const handleFile = async (file) => {
     setUploading(true)
     try {
-      // For demo, just use file name
       const fileName = file.name
-      setFormData({
-        ...formData,
-        name: fileName.replace(/\.[^/.]+$/, ''),
-      })
+      const fileType = file.type
+      let content = ''
+      let previewUrl = null
+      let previewType = 'other'
 
-      // If it's a text file, try to classify
-      if (file.type === 'text/plain') {
+      // For text files, read content
+      if (fileType.startsWith('text/') || fileType === 'application/json' || fileType === 'application/xml') {
         const text = await file.text()
-        const type = await classifyDocument(text)
-        setFormData(prev => ({ ...prev, type, content: text }))
+        content = text
+        // Try to classify
+        const classifiedType = await classifyDocument(text)
+        setFormData(prev => ({ ...prev, type: classifiedType, content: text }))
+        previewType = classifiedType
+      } else if (fileType.startsWith('image/')) {
+        // For images, create preview URL
+        previewUrl = URL.createObjectURL(file)
+        previewType = 'other' // we will show image preview
+        // Store as base64 for persistence
+        const base64 = await fileToBase64(file)
+        content = base64 // store base64
+      } else if (fileType === 'application/pdf') {
+        // For PDF, we can't extract text easily without library, store as base64
+        previewUrl = URL.createObjectURL(file)
+        previewType = 'dpe' // assume PDF could be DPE, but user can change type
+        const base64 = await fileToBase64(file)
+        content = base64
+      } else {
+        // For other file types, store as base64
+        const base64 = await fileToBase64(file)
+        content = base64
+        previewType = 'other'
       }
+
+      setFormData(prev => ({
+        ...prev,
+        name: fileName.replace(/\.[^/.]+$/, ''),
+        // keep existing type if already set by classification, otherwise default
+        ...(content && !formData.type ? { type: 'other' } : {}),
+      }))
+
+      setFileToUpload(file)
+      setPreview({ url: previewUrl, type: previewType, name: fileName })
     } catch (error) {
-      console.error('Upload error:', error)
+      console.error('File handling error:', error)
     } finally {
       setUploading(false)
     }
+  }
+
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64 = reader.result.split(',')[1] // remove data:image/jpeg;base64,
+        resolve(base64)
+      }
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
   }
 
   const handleTextClassify = async () => {
@@ -92,6 +163,7 @@ export default function Documents() {
       createdAt: new Date().toISOString(),
     }
     addDocument(newDoc)
+    // Reset form
     setFormData({
       name: '',
       type: 'invoice',
@@ -100,6 +172,12 @@ export default function Documents() {
       content: '',
     })
     setShowForm(false)
+    setPreview(null)
+    setFileToUpload(null)
+    // Revoke object URL if any
+    if (preview?.url) {
+      URL.revokeObjectURL(preview.url)
+    }
   }
 
   const handleDelete = (id) => {
@@ -129,13 +207,23 @@ export default function Documents() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold">Documents</h2>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="btn btn-primary flex items-center gap-2"
-        >
-          <Upload className="w-4 h-4" />
-          Ajouter
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="btn btn-primary flex items-center gap-2"
+          >
+            <Upload className="w-4 h-4" />
+            Ajouter
+          </button>
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`border-2 border-dashed rounded p-4 text-center ${dragOver ? 'border-cil-blue bg-blue-50' : 'border-slate-300 bg-slate-50'}`}
+          >
+            <p className="text-sm text-slate-500">Ou déposez un fichier ici</p>
+          </div>
+        </div>
       </div>
 
       {showForm && (
@@ -211,13 +299,49 @@ export default function Documents() {
             />
           </div>
 
+          {preview && (
+            <div className="mt-4">
+              <h3 className="text-lg font-medium mb-2">Aperçu</h3>
+              <div className="space-y-2">
+                {preview.type.startsWith('image') && preview.url && (
+                  <Image src={preview.url} alt={preview.name} className="w-32 h-32 object-cover rounded border" />
+                )}
+                {!preview.type.startsWith('image') && preview.url && (
+                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded">
+                    <div className="text-2xl">
+                      {preview.type === 'dpe' ? <AlertTriangle className="text-orange-500" /> : preview.type === 'invoice' ? <FileText className="text-green-500" /> : preview.type === 'contract' ? <Clipboard className="text-blue-500" /> : <Trash2 className="text-slate-500" />}
+                    </div>
+                    <div>
+                      <p className="font-semibold">{preview.name}</p>
+                      <p className="text-sm text-slate-500">{preview.type}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-2">
             <button type="submit" className="btn btn-primary flex-1">
               Enregistrer
             </button>
             <button
               type="button"
-              onClick={() => setShowForm(false)}
+              onClick={() => {
+                setShowForm(false)
+                setFormData({
+                  name: '',
+                  type: 'invoice',
+                  date: '',
+                  notes: '',
+                  content: '',
+                })
+                setPreview(null)
+                setFileToUpload(null)
+                if (preview?.url) {
+                  URL.revokeObjectURL(preview.url)
+                }
+              }}
               className="btn btn-secondary"
             >
               Annuler
