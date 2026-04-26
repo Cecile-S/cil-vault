@@ -64,6 +64,9 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: true
+    sourcemap: true,
+    rollupOptions: {
+      external: ['tesseract.js', 'pdfjs-dist/legacy/build/pdf']
+    }
   }
 })

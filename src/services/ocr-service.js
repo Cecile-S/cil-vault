@@ -229,3 +229,6 @@ const CIL_OCR = {
 if (typeof window !== 'undefined') {
   window.CIL_OCR = CIL_OCR;
 }
+
+// Export for modules
+export { CIL_OCR };
