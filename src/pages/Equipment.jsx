@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { Plus, Trash2, Calendar, Settings } from 'lucide-react'
-import { useLocalStorage } from '../hooks/useLocalStorage'
+import { useIndexedDBEquipment } from '../hooks/useIndexedDBEquipment'
 
 const EQUIPMENT_TYPES = [
-  { id: 'boiler', label: 'Chaudière', icon: '🔥', maintenanceInterval: 12 },
+  { id: 'boiler', label: 'Chaudière', icon: '🔥', maintenanceInterval: 12 }, // months
   { id: 'vmc', label: 'VMC', icon: '💨', maintenanceInterval: 36 },
   { id: 'heatpump', label: 'PAC', icon: '🌡️', maintenanceInterval: 12 },
   { id: 'waterheater', label: 'Chauffe-eau', icon: '🚿', maintenanceInterval: 24 },
@@ -11,7 +11,7 @@ const EQUIPMENT_TYPES = [
 ]
 
 export default function Equipment() {
-  const [equipment, setEquipment] = useLocalStorage('cil-equipment', [])
+  const { equipment, loading, error, addEquipment, deleteEquipment } = useIndexedDBEquipment()
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
     type: 'boiler',
@@ -25,13 +25,27 @@ export default function Equipment() {
   const handleSubmit = (e) => {
     e.preventDefault()
     const type = EQUIPMENT_TYPES.find(t => t.id === formData.type)
+    const intervalMonths = type?.maintenanceInterval || 12
+
+    // Compute nextMaintenance if not provided
+    let nextMaintenance = formData.nextMaintenance
+    if (!nextMaintenance) {
+      const baseDate = formData.lastMaintenance || formData.installDate
+      if (baseDate) {
+        const date = new Date(baseDate)
+        date.setMonth(date.getMonth() + intervalMonths)
+        nextMaintenance = date.toISOString().split('T')[0] // YYYY-MM-DD
+      }
+    }
+
     const newEquipment = {
       id: Date.now(),
       ...formData,
-      maintenanceInterval: type?.maintenanceInterval || 12,
+      maintenanceInterval: intervalMonths,
+      nextMaintenance: nextMaintenance || '',
       createdAt: new Date().toISOString(),
     }
-    setEquipment([...equipment, newEquipment])
+    addEquipment(newEquipment)
     setFormData({
       type: 'boiler',
       name: '',
@@ -45,7 +59,7 @@ export default function Equipment() {
 
   const handleDelete = (id) => {
     if (confirm('Supprimer cet équipement ?')) {
-      setEquipment(equipment.filter(eq => eq.id !== id))
+      deleteEquipment(id)
     }
   }
 
@@ -62,6 +76,23 @@ export default function Equipment() {
     if (days < 0) return { label: 'En retard', color: 'badge-red' }
     if (days <= 30) return { label: 'À planifier', color: 'badge-orange' }
     return { label: 'OK', color: 'badge-green' }
+  }
+
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-slate-500">Chargement des équipements...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-500">Erreur lors du chargement des équipements</p>
+        <p className="text-slate-400">{error.message}</p>
+      </div>
+    )
   }
 
   return (
@@ -127,7 +158,7 @@ export default function Equipment() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Prochain entretien</label>
+            <label className="block text-sm font-medium mb-1">Prochain entretien (calculé automatiquement)</label>
             <input
               type="date"
               className="input"
