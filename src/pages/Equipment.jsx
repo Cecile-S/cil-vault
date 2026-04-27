@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Plus, Trash2, Calendar, Settings } from 'lucide-react'
-import { useLocalStorage } from '../hooks/useLocalStorage'
+import { Plus, Trash2, Calendar, Settings, Image, Camera } from 'lucide-react'
+import { useIndexedDBEquipment } from '../hooks/useIndexedDBEquipment'
 
 const EQUIPMENT_TYPES = [
   { id: 'boiler', label: 'Chaudière', icon: '🔥', maintenanceInterval: 12 },
@@ -11,8 +11,9 @@ const EQUIPMENT_TYPES = [
 ]
 
 export default function Equipment() {
-  const [equipment, setEquipment] = useLocalStorage('cil-equipment', [])
+  const { equipment, loading, error, addEquipment, updateEquipment, deleteEquipment } = useIndexedDBEquipment()
   const [showForm, setShowForm] = useState(false)
+  const [editId, setEditId] = useState(null) // for editing existing equipment
   const [formData, setFormData] = useState({
     type: 'boiler',
     name: '',
@@ -20,18 +21,42 @@ export default function Equipment() {
     lastMaintenance: '',
     nextMaintenance: '',
     notes: '',
+    photo: null, // base64 string or null
   })
+  const [photoPreview, setPhotoPreview] = useState(null) // URL for preview
+  const photoInputRef = useRef(null)
 
   const handleSubmit = (e) => {
     e.preventDefault()
     const type = EQUIPMENT_TYPES.find(t => t.id === formData.type)
-    const newEquipment = {
-      id: Date.now(),
-      ...formData,
-      maintenanceInterval: type?.maintenanceInterval || 12,
-      createdAt: new Date().toISOString(),
+    const intervalMonths = type?.maintenanceInterval || 12
+
+    // Compute nextMaintenance if not provided
+    let nextMaintenance = formData.nextMaintenance
+    if (!nextMaintenance) {
+      const baseDate = formData.lastMaintenance || formData.installDate
+      if (baseDate) {
+        const date = new Date(baseDate)
+        date.setMonth(date.getMonth() + intervalMonths)
+        nextMaintenance = date.toISOString().split('T')[0] // YYYY-MM-DD
+      }
     }
-    setEquipment([...equipment, newEquipment])
+
+    const equipmentData = {
+      ...formData,
+      maintenanceInterval: intervalMonths,
+      nextMaintenance: nextMaintenance || '',
+      createdAt: editId ? undefined : new Date().toISOString(), // only set on create
+    }
+
+    if (editId) {
+      updateEquipment(editId, equipmentData)
+      setEditId(null)
+    } else {
+      addEquipment(equipmentData)
+    }
+
+    // Reset form
     setFormData({
       type: 'boiler',
       name: '',
@@ -39,14 +64,47 @@ export default function Equipment() {
       lastMaintenance: '',
       nextMaintenance: '',
       notes: '',
+      photo: null,
     })
+    setPhotoPreview(null)
+    if (photoInputRef.current) {
+      photoInputRef.current.value = ''
+    }
     setShowForm(false)
   }
 
   const handleDelete = (id) => {
     if (confirm('Supprimer cet équipement ?')) {
-      setEquipment(equipment.filter(eq => eq.id !== id))
+      deleteEquipment(id)
     }
+  }
+
+  const handlePhotoChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    // Convert to base64
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      const base64 = reader.result.split(',')[1] // remove metadata
+      setFormData(prev => ({ ...prev, photo: base64 }))
+      setPhotoPreview(reader.result) // full data URL for preview
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleEditClick = (equip) => {
+    setEditId(equip.id)
+    setFormData({
+      type: equip.type,
+      name: equip.name || '',
+      installDate: equip.installDate || '',
+      lastMaintenance: equip.lastMaintenance || '',
+      nextMaintenance: equip.nextMaintenance || '',
+      notes: equip.notes || '',
+      photo: equip.photo || null,
+    })
+    setPhotoPreview(equip.photo ? `data:image/jpeg;base64,${equip.photo}` : null)
+    setShowForm(true)
   }
 
   const getDaysUntilMaintenance = (nextDate) => {
@@ -64,12 +122,45 @@ export default function Equipment() {
     return { label: 'OK', color: 'badge-green' }
   }
 
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-slate-500">Chargement des équipements...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-500">Erreur lors du chargement des équipements</p>
+        <p className="text-slate-400">{error.message}</p>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold">Équipements</h2>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => {
+            setShowForm(true)
+            setEditId(null)
+            setFormData({
+              type: 'boiler',
+              name: '',
+              installDate: '',
+              lastMaintenance: '',
+              nextMaintenance: '',
+              notes: '',
+              photo: null,
+            })
+            setPhotoPreview(null)
+            if (photoInputRef.current) {
+              photoInputRef.current.value = ''
+            }
+          }}
           className="btn btn-primary flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
@@ -107,6 +198,24 @@ export default function Equipment() {
           </div>
 
           <div>
+            <label className="block text-sm font-medium mb-1">Photo de l'équipement (optionnelle)</label>
+            <div className="flex flex-col items-start gap-2">
+              <input
+                ref={photoInputRef}
+                type="file"
+                accept="image/*"
+                className="input"
+                onChange={handlePhotoChange}
+              />
+              {photoPreview && (
+                <div className="mt-2">
+                  <Image src={photoPreview} alt="Prévisualisation" className="w-24 h-24 object-cover rounded border" />
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div>
             <label className="block text-sm font-medium mb-1">Date d'installation</label>
             <input
               type="date"
@@ -127,7 +236,7 @@ export default function Equipment() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Prochain entretien</label>
+            <label className="block text-sm font-medium mb-1">Prochain entretien (calculé automatiquement)</label>
             <input
               type="date"
               className="input"
@@ -149,11 +258,27 @@ export default function Equipment() {
 
           <div className="flex gap-2">
             <button type="submit" className="btn btn-primary flex-1">
-              Enregistrer
+              {editId ? 'Mettre à jour' : 'Enregistrer'}
             </button>
             <button
               type="button"
-              onClick={() => setShowForm(false)}
+              onClick={() => {
+                setShowForm(false)
+                setEditId(null)
+                setFormData({
+                  type: 'boiler',
+                  name: '',
+                  installDate: '',
+                  lastMaintenance: '',
+                  nextMaintenance: '',
+                  notes: '',
+                  photo: null,
+                })
+                setPhotoPreview(null)
+                if (photoInputRef.current) {
+                  photoInputRef.current.value = ''
+                }
+              }}
               className="btn btn-secondary"
             >
               Annuler
@@ -180,19 +305,35 @@ export default function Equipment() {
             return (
               <div key={eq.id} className="card">
                 <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3">
-                    <span className="text-2xl">{type?.icon || '⚙️'}</span>
+                  <div className="flex items-start gap-4">
+                    {eq.photo ? (
+                      <Image
+                        src={`data:image/jpeg;base64,${eq.photo}`}
+                        alt="Photo équipement"
+                        className="w-16 h-16 object-cover rounded border"
+                      />
+                    ) : (
+                      <span className="text-2xl">{type?.icon || '⚙️'}</span>
+                    )}
                     <div>
                       <h3 className="font-semibold">{eq.name || type?.label}</h3>
                       <p className="text-sm text-slate-500">{type?.label}</p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleDelete(eq.id)}
-                    className="p-2 text-slate-400 hover:text-red-500"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-start gap-2">
+                    <button
+                      onClick={() => handleEditClick(eq)}
+                      className="p-2 text-slate-400 hover:text-blue-500"
+                    >
+                      <Camera className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(eq.id)}
+                      className="p-2 text-slate-400 hover:text-red-500"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
                 {eq.nextMaintenance && (
