@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { Upload, FileText, Trash2, Tag, Calendar, Image, Clipboard, AlertTriangle, Loader2 } from 'lucide-react'
 import { useIndexedDB } from '../hooks/useIndexedDB'
-import { CIL_OCR } from '../services/ocr-service'
+// import { CIL_OCR } from '../services/ocr-service'
 
 const DOCUMENT_TYPES = [
   { id: 'dpe', label: 'DPE', icon: '📊' },
@@ -16,8 +16,6 @@ export default function Documents() {
   const { documents, loading, error, addDocument, deleteDocument } = useIndexedDB()
   const [showForm, setShowForm] = useState(false)
   const [uploading, setUploading] = useState(false)
-  const [classifying, setClassifying] = useState(false)
-  const [ocrLoading, setOcrLoading] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const [preview, setPreview] = useState(null) // {url, type, name}
   const [fileToUpload, setFileToUpload] = useState(null)
@@ -30,63 +28,38 @@ export default function Documents() {
   })
   const fileInputRef = useRef(null)
 
-  const classifyDocument = async (text) => {
-    setClassifying(true)
-    try {
-      const response = await fetch('http://84.247.161.15:8001/ai/classify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: text }),
-      })
-      const data = await response.json()
-      // Map AI classification to our types
-      const typeMap = {
-        'notice': 'invoice',
-        'contract': 'contract',
-        'dpe': 'dpe',
-        'warranty': 'warranty',
-        'maintenance': 'maintenance',
-      }
-      return typeMap[data.type] || 'other'
-    } catch (error) {
-      console.error('Classification error:', error)
-      return 'other'
-    } finally {
-      setClassifying(false)
-    }
-  }
-
   const handleFile = async (file) => {
     if (!file) return
     setUploading(true)
-    setOcrLoading(true)
     try {
       const fileName = file.name
-      // Extract text using OCR service
-      const extractedText = await CIL_OCR.extractText(file)
-      
-      // Auto-parse to get suggested type and structured data
-      const { type: suggestedType, data: parsedData } = await CIL_OCR.autoParse(extractedText)
+      // For now, just read as text for preview
+      let content = ''
+      if (file.type.startsWith('text/') || file.type === 'application/json' || file.type === 'application/xml') {
+        content = await file.text()
+      } else {
+        // For non-text files, we won't read content yet
+        content = `[Fichier ${file.type}]`
+      }
       
       // Determine preview
       let previewUrl = null
-      let previewType = suggestedType
+      let previewType = 'other'
       if (file.type.startsWith('image/')) {
         previewUrl = URL.createObjectURL(file)
+        previewType = 'image'
       } else if (file.type === 'application/pdf') {
         previewUrl = URL.createObjectURL(file)
-        previewType = 'dpe' // Assume PDF could be DPE, but user can change
-      } else {
-        // For text files, no preview image
-        previewType = 'other'
+        previewType = 'pdf'
       }
       
+      // Set form data
       setFormData({
         name: fileName.replace(/\.[^/.]+$/, ''),
-        type: suggestedType || 'invoice', // fallback to invoice if undefined
+        type: 'other',
         date: '',
         notes: '',
-        content: extractedText,
+        content: content,
       })
       setFileToUpload(file)
       setPreview({ url: previewUrl, type: previewType, name: fileName })
@@ -98,13 +71,12 @@ export default function Documents() {
         ...prev,
         name: fileName.replace(/\.[^/.]+$/, ''),
         type: 'other',
-        content: '', // We'll let user fill or use manual classify
+        content: '',
       }))
       setFileToUpload(file)
       setPreview(null)
     } finally {
       setUploading(false)
-      setOcrLoading(false)
     }
   }
 
@@ -135,12 +107,6 @@ export default function Documents() {
     if (file) {
       await handleFile(file)
     }
-  }
-
-  const handleTextClassify = async () => {
-    if (!formData.content) return
-    const type = await classifyDocument(formData.content)
-    setFormData(prev => ({ ...prev, type }))
   }
 
   const handleSubmit = (e) => {
@@ -256,28 +222,15 @@ export default function Documents() {
 
           <div>
             <label className="block text-sm font-medium mb-1">
-              Contenu (pour classification IA)
+              Contenu
             </label>
             <textarea
               className="input"
               rows={6}
-              placeholder="Contenu extrait du fichier (modifiable)..."
+              placeholder="Contenu du fichier..."
               value={formData.content}
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
             />
-            {formData.content && (
-              <div className="mt-2 flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleTextClassify}
-                  disabled={classifying}
-                  className="mt-2 text-sm text-cil-blue hover:underline disabled:opacity-50"
-                >
-                  {classifying ? 'Classification en cours...' : '🤖 Classifier avec l\'IA'}
-                </button>
-                <span className="text-xs text-slate-500">({formData.content.length} caractères)</span>
-              </div>
-            )}
           </div>
 
           <div>
@@ -290,13 +243,6 @@ export default function Documents() {
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
             />
           </div>
-
-          {ocrLoading && (
-            <div className="mt-4">
-              <Loader2 className="w-5 h-5 mr-2" />
-              <span className="text-sm">Traitement du fichier en cours...</span>
-            </div>
-          )}
 
           <div className="flex gap-2">
             <button type="submit" className="btn btn-primary flex-1">
