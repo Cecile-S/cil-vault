@@ -10,11 +10,18 @@ import {
   AlertTriangle,
   Loader2,
   Download,
+  Link,
 } from "lucide-react";
 import { useIndexedDB } from "../hooks/useIndexedDB";
+import { useLocalStorage } from "../hooks/useLocalStorage";
 
 const DOCUMENT_TYPES = [
   { id: "dpe", label: "DPE", icon: "📊" },
+  { id: "electricity", label: "Diagnostique Électricité", icon: "⚡" },
+  { id: "gas", label: "Diagnostic Gaz", icon: "🔥" },
+  { id: "lead", label: "Diagnostic Plomb", icon: "🔶" },
+  { id: "asbestos", label: "Diagnostic Amiante", icon: "🧱" },
+  { id: "erp", label: "ERP", icon: "🌍" },
   { id: "invoice", label: "Facture", icon: "🧾" },
   { id: "contract", label: "Contrat", icon: "📄" },
   { id: "warranty", label: "Garantie", icon: "🛡️" },
@@ -25,6 +32,7 @@ const DOCUMENT_TYPES = [
 export default function Documents() {
   const { documents, loading, error, addDocument, deleteDocument } =
     useIndexedDB();
+  const [equipment] = useLocalStorage("cil-equipment", []);
   const [showForm, setShowForm] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -38,6 +46,7 @@ export default function Documents() {
     content: "",
     mimeType: "",
     fileExtension: "",
+    equipmentId: "",
   });
   const fileInputRef = useRef(null);
 
@@ -85,6 +94,7 @@ export default function Documents() {
         content: content, // base64 data URL
         mimeType: file.type,
         fileExtension: fileExtension,
+        equipmentId: formData.equipmentId,
       });
 
       setFileToUpload(file);
@@ -138,9 +148,12 @@ export default function Documents() {
   const handleSubmit = (e) => {
     e.preventDefault();
     const type = DOCUMENT_TYPES.find((t) => t.id === formData.type);
+    const selectedEquipment = equipment.find(eq => eq.id === parseInt(formData.equipmentId));
+    
     const newDoc = {
       ...formData,
       icon: type?.icon || "📎",
+      equipmentName: selectedEquipment ? selectedEquipment.name : null,
       createdAt: new Date().toISOString(),
     };
     addDocument(newDoc);
@@ -154,6 +167,7 @@ export default function Documents() {
       content: "",
       mimeType: "",
       fileExtension: "",
+      equipmentId: "",
     });
     setShowForm(false);
     setPreview(null);
@@ -169,6 +183,11 @@ export default function Documents() {
     if (confirm("Supprimer ce document ?")) {
       deleteDocument(id);
     }
+  };
+
+  const getEquipmentName = (equipmentId) => {
+    const eq = equipment.find(e => e.id === parseInt(equipmentId));
+    return eq ? eq.name : null;
   };
 
   if (loading) {
@@ -235,36 +254,67 @@ export default function Documents() {
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Type</label>
-            <select
-              className="input"
-              value={formData.type}
-              onChange={(e) =>
-                setFormData({ ...formData, type: e.target.value })
-              }
-            >
-              {DOCUMENT_TYPES.map((type) => (
-                <option key={type.id} value={type.id}>
-                  {type.icon} {type.label}
-                </option>
-              ))}
-            </select>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Type</label>
+              <select
+                className="input"
+                value={formData.type}
+                onChange={(e) =>
+                  setFormData({ ...formData, type: e.target.value })
+                }
+              >
+                {DOCUMENT_TYPES.map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.icon} {type.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Date du document
+              </label>
+              <input
+                type="date"
+                className="input"
+                value={formData.date}
+                onChange={(e) =>
+                  setFormData({ ...formData, date: e.target.value })
+                }
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Date du document
-            </label>
-            <input
-              type="date"
-              className="input"
-              value={formData.date}
-              onChange={(e) =>
-                setFormData({ ...formData, date: e.target.value })
-              }
-            />
-          </div>
+          {/* Equipment association for invoices/warranty/maintenance */}
+          {["invoice", "warranty", "maintenance"].includes(formData.type) && (
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                <Link className="w-4 h-4 inline mr-1" />
+                Associer à un équipement (optionnel)
+              </label>
+              <select
+                className="input"
+                value={formData.equipmentId}
+                onChange={(e) =>
+                  setFormData({ ...formData, equipmentId: e.target.value })
+                }
+              >
+                <option value="">Aucun équipement</option>
+                {equipment.map((eq) => (
+                  <option key={eq.id} value={eq.id}>
+                    {eq.name || eq.typeLabel || eq.type}
+                  </option>
+                ))}
+              </select>
+              {equipment.length === 0 && (
+                <p className="text-xs text-slate-500 mt-1">
+                  Ajoutez d'abord des équipements pour les lier aux factures
+                </p>
+              )}
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium mb-1">Notes</label>
@@ -295,6 +345,7 @@ export default function Documents() {
                   content: "",
                   mimeType: "",
                   fileExtension: "",
+                  equipmentId: "",
                 });
                 setPreview(null);
                 setFileToUpload(null);
@@ -322,6 +373,9 @@ export default function Documents() {
         <div className="space-y-3">
           {documents.map((doc) => {
             const type = DOCUMENT_TYPES.find((t) => t.id === doc.type);
+            const linkedEquipmentName = doc.equipmentId 
+              ? getEquipmentName(doc.equipmentId) 
+              : doc.equipmentName;
             return (
               <div key={doc.id} className="card">
                 <div className="flex items-start justify-between">
@@ -362,6 +416,13 @@ export default function Documents() {
                     <span>
                       {new Date(doc.date).toLocaleDateString("fr-FR")}
                     </span>
+                  </div>
+                )}
+
+                {linkedEquipmentName && (
+                  <div className="mt-2 flex items-center gap-2 text-sm text-blue-600 bg-blue-50 rounded-lg p-2">
+                    <Link className="w-4 h-4" />
+                    <span>Lie: {linkedEquipmentName}</span>
                   </div>
                 )}
 
