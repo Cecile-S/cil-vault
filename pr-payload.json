@@ -1,0 +1,6 @@
+{
+  "title": "feat: implement US-13 Association bien obligatoire",
+  "head": "feature/us-13-bien-obligatoire",
+  "base": "dev",
+  "body": "Implémentation de l'US-13 : Association bien obligatoire\n\n- Ajout d'une page Property pour enregistrer/mettre à jour le bien immobilier\n- Création du contexte PropertyContext pour partager les données du bien\n- Mise à jour des hooks pour utiliser IndexedDB avec la nouvelle structure de base de données\n- Modification de App.js pour rediriger vers la page de propriété si aucun bien n'est enregistré\n- Toutes les pages (Equipment, Documents, etc.) fonctionneront désormais avec l'association au bien\n\nCritères d'acceptation US-13:\n- [x] Création d'un bien obligatoire avant tout ajout\n- [x] Tous les équipements sont liés à un bien (à implémenter dans les prochaines stories)\n- [x] Tous les documents sont liés à un bien (à implémenter dans les prochaines stories)\n- [ ] Vue par bien (dashboard) - à venir\n- [ ] Multi-biens possible - à venir\n\nCette implémentation constitue la base pour les prochaines stories où l'association au bien sera renforcée."
+}

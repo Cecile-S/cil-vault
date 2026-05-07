@@ -1,195 +1,212 @@
-import { useState, useRef } from 'react'
-import { Upload, FileText, Trash2, Tag, Calendar, Image, Clipboard, AlertTriangle, Loader2 } from 'lucide-react'
-import { useIndexedDB } from '../hooks/useIndexedDB'
-import { CIL_OCR } from '../services/ocr-service'
+import { useState, useRef } from "react";
+import {
+  Upload,
+  FileText,
+  Trash2,
+  Tag,
+  Calendar,
+  Image,
+  Clipboard,
+  AlertTriangle,
+  Loader2,
+  Download,
+  Link,
+} from "lucide-react";
+import { useIndexedDB } from "../hooks/useIndexedDB";
+import { useLocalStorage } from "../hooks/useLocalStorage";
 
 const DOCUMENT_TYPES = [
-  { id: 'dpe', label: 'DPE', icon: '📊' },
-  { id: 'invoice', label: 'Facture', icon: '🧾' },
-  { id: 'contract', label: 'Contrat', icon: '📄' },
-  { id: 'warranty', label: 'Garantie', icon: '🛡️' },
-  { id: 'maintenance', label: 'Entretien', icon: '🔧' },
-  { id: 'other', label: 'Autre', icon: '📎' },
-]
+  { id: "dpe", label: "DPE", icon: "📊" },
+  { id: "electricity", label: "Diagnostique Électricité", icon: "⚡" },
+  { id: "gas", label: "Diagnostic Gaz", icon: "🔥" },
+  { id: "lead", label: "Diagnostic Plomb", icon: "🔶" },
+  { id: "asbestos", label: "Diagnostic Amiante", icon: "🧱" },
+  { id: "erp", label: "ERP", icon: "🌍" },
+  { id: "invoice", label: "Facture", icon: "🧾" },
+  { id: "contract", label: "Contrat", icon: "📄" },
+  { id: "warranty", label: "Garantie", icon: "🛡️" },
+  { id: "maintenance", label: "Entretien", icon: "🔧" },
+  { id: "other", label: "Autre", icon: "📎" },
+];
 
 export default function Documents() {
-  const { documents, loading, error, addDocument, deleteDocument } = useIndexedDB()
-  const [showForm, setShowForm] = useState(false)
-  const [uploading, setUploading] = useState(false)
-  const [classifying, setClassifying] = useState(false)
-  const [ocrLoading, setOcrLoading] = useState(false)
-  const [dragOver, setDragOver] = useState(false)
-  const [preview, setPreview] = useState(null) // {url, type, name}
-  const [fileToUpload, setFileToUpload] = useState(null)
+  const { documents, loading, error, addDocument, deleteDocument } =
+    useIndexedDB();
+  const [equipment] = useLocalStorage("cil-equipment", []);
+  const [showForm, setShowForm] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [fileToUpload, setFileToUpload] = useState(null);
   const [formData, setFormData] = useState({
-    name: '',
-    type: 'invoice',
-    date: '',
-    notes: '',
-    content: '',
-  })
-  const fileInputRef = useRef(null)
+    name: "",
+    type: "invoice",
+    date: "",
+    notes: "",
+    content: "",
+    mimeType: "",
+    fileExtension: "",
+    equipmentId: "",
+  });
+  const fileInputRef = useRef(null);
 
-  const classifyDocument = async (text) => {
-    setClassifying(true)
-    try {
-      const response = await fetch('http://84.247.161.15:8001/ai/classify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: text }),
-      })
-      const data = await response.json()
-      // Map AI classification to our types
-      const typeMap = {
-        'notice': 'invoice',
-        'contract': 'contract',
-        'dpe': 'dpe',
-        'warranty': 'warranty',
-        'maintenance': 'maintenance',
-      }
-      return typeMap[data.type] || 'other'
-    } catch (error) {
-      console.error('Classification error:', error)
-      return 'other'
-    } finally {
-      setClassifying(false)
-    }
-  }
+  // Helper to download a file from base64 data URL
+  const downloadFile = (dataUrl, filename) => {
+    const link = document.createElement("a");
+    link.href = dataUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const handleFile = async (file) => {
-    if (!file) return
-    setUploading(true)
-    setOcrLoading(true)
+    if (!file) return;
+    setUploading(true);
     try {
-      const fileName = file.name
-      // Extract text using OCR service
-      const extractedText = await CIL_OCR.extractText(file)
-      
-      // Auto-parse to get suggested type and structured data
-      const { type: suggestedType, data: parsedData } = await CIL_OCR.autoParse(extractedText)
-      
+      const fileName = file.name;
+      // Read file as base64 for storage and download
+      const reader = new FileReader();
+      const content = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
       // Determine preview
-      let previewUrl = null
-      let previewType = suggestedType
-      if (file.type.startsWith('image/')) {
-        previewUrl = URL.createObjectURL(file)
-      } else if (file.type === 'application/pdf') {
-        previewUrl = URL.createObjectURL(file)
-        previewType = 'dpe' // Assume PDF could be DPE, but user can change
-      } else {
-        // For text files, no preview image
-        previewType = 'other'
+      let previewUrl = null;
+      let previewType = "other";
+      if (file.type.startsWith("image/")) {
+        previewUrl = URL.createObjectURL(file);
+        previewType = "image";
+      } else if (file.type === "application/pdf") {
+        previewUrl = URL.createObjectURL(file);
+        previewType = "pdf";
       }
-      
+
+      // Set form data with file content stored as base64
+      const fileExtension = fileName.split(".").pop();
       setFormData({
-        name: fileName.replace(/\.[^/.]+$/, ''),
-        type: suggestedType || 'invoice', // fallback to invoice if undefined
-        date: '',
-        notes: '',
-        content: extractedText,
-      })
-      setFileToUpload(file)
-      setPreview({ url: previewUrl, type: previewType, name: fileName })
+        name: fileName.replace(/\.[^/.]+$/, ""),
+        type: "other",
+        date: "",
+        notes: "",
+        content: content, // base64 data URL
+        mimeType: file.type,
+        fileExtension: fileExtension,
+        equipmentId: formData.equipmentId,
+      });
+
+      setFileToUpload(file);
+      setPreview({ url: previewUrl, type: previewType, name: fileName });
     } catch (error) {
-      console.error('File processing error:', error)
+      console.error("File processing error:", error);
       // Fallback to basic handling
-      const fileName = file.name
-      setFormData(prev => ({
+      const fileName = file.name;
+      setFormData((prev) => ({
         ...prev,
-        name: fileName.replace(/\.[^/.]+$/, ''),
-        type: 'other',
-        content: '', // We'll let user fill or use manual classify
-      }))
-      setFileToUpload(file)
-      setPreview(null)
+        name: fileName.replace(/\.[^/.]+$/, ""),
+        type: "other",
+        content: "",
+      }));
+      setFileToUpload(file);
+      setPreview(null);
     } finally {
-      setUploading(false)
-      setOcrLoading(false)
+      setUploading(false);
     }
-  }
+  };
 
   const handleDragOver = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragOver(true)
-  }
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(true);
+  };
 
   const handleDragLeave = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragOver(false)
-  }
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+  };
 
   const handleDrop = async (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragOver(false)
-    const file = e.dataTransfer.files[0]
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+    const file = e.dataTransfer.files[0];
     if (file) {
-      await handleFile(file)
+      await handleFile(file);
     }
-  }
+  };
 
   const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0]
+    const file = e.target.files?.[0];
     if (file) {
-      await handleFile(file)
+      await handleFile(file);
     }
-  }
-
-  const handleTextClassify = async () => {
-    if (!formData.content) return
-    const type = await classifyDocument(formData.content)
-    setFormData(prev => ({ ...prev, type }))
-  }
+  };
 
   const handleSubmit = (e) => {
-    e.preventDefault()
-    const type = DOCUMENT_TYPES.find(t => t.id === formData.type)
+    e.preventDefault();
+    const type = DOCUMENT_TYPES.find((t) => t.id === formData.type);
+    const selectedEquipment = equipment.find(eq => eq.id === parseInt(formData.equipmentId));
+    
     const newDoc = {
       ...formData,
-      icon: type?.icon || '📎',
+      icon: type?.icon || "📎",
+      equipmentName: selectedEquipment ? selectedEquipment.name : null,
       createdAt: new Date().toISOString(),
-    }
-    addDocument(newDoc)
+    };
+    addDocument(newDoc);
+
     // Reset form
     setFormData({
-      name: '',
-      type: 'invoice',
-      date: '',
-      notes: '',
-      content: '',
-    })
-    setShowForm(false)
-    setPreview(null)
-    setFileToUpload(null)
+      name: "",
+      type: "invoice",
+      date: "",
+      notes: "",
+      content: "",
+      mimeType: "",
+      fileExtension: "",
+      equipmentId: "",
+    });
+    setShowForm(false);
+    setPreview(null);
+    setFileToUpload(null);
+
     // Revoke object URL if any
     if (preview?.url) {
-      URL.revokeObjectURL(preview.url)
+      URL.revokeObjectURL(preview.url);
     }
-  }
+  };
 
   const handleDelete = (id) => {
-    if (confirm('Supprimer ce document ?')) {
-      deleteDocument(id)
+    if (confirm("Supprimer ce document ?")) {
+      deleteDocument(id);
     }
-  }
+  };
+
+  const getEquipmentName = (equipmentId) => {
+    const eq = equipment.find(e => e.id === parseInt(equipmentId));
+    return eq ? eq.name : null;
+  };
 
   if (loading) {
     return (
       <div className="text-center py-12">
         <p className="text-slate-500">Chargement des documents...</p>
       </div>
-    )
+    );
   }
 
   if (error) {
     return (
       <div className="text-center py-12">
-        <p className="text-red-500">Erreur lors du chargement des documents</p>
+        <p className="text-red-500">
+          Erreur lors du chargement des documents
+        </p>
         <p className="text-slate-400">{error.message}</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -208,7 +225,11 @@ export default function Documents() {
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded p-4 text-center ${dragOver ? 'border-cil-blue bg-blue-50' : 'border-slate-300 bg-slate-50'}`}
+            className={`border-2 border-dashed rounded p-4 text-center ${
+              dragOver
+                ? "border-blue-500 bg-blue-50"
+                : "border-slate-300 bg-slate-50"
+            }`}
           >
             <p className="text-sm text-slate-500">Ou déposez un fichier ici</p>
           </div>
@@ -218,67 +239,82 @@ export default function Documents() {
       {showForm && (
         <form onSubmit={handleSubmit} className="card space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Nom du document</label>
+            <label className="block text-sm font-medium mb-1">
+              Nom du document
+            </label>
             <input
               type="text"
               className="input"
               placeholder="Ex: Facture EDF Janvier 2026"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
               required
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Type</label>
-            <select
-              className="input"
-              value={formData.type}
-              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-            >
-              {DOCUMENT_TYPES.map(type => (
-                <option key={type.id} value={type.id}>
-                  {type.icon} {type.label}
-                </option>
-              ))}
-            </select>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Type</label>
+              <select
+                className="input"
+                value={formData.type}
+                onChange={(e) =>
+                  setFormData({ ...formData, type: e.target.value })
+                }
+              >
+                {DOCUMENT_TYPES.map((type) => (
+                  <option key={type.id} value={type.id}>
+                    {type.icon} {type.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Date du document
+              </label>
+              <input
+                type="date"
+                className="input"
+                value={formData.date}
+                onChange={(e) =>
+                  setFormData({ ...formData, date: e.target.value })
+                }
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Date du document</label>
-            <input
-              type="date"
-              className="input"
-              value={formData.date}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Contenu (pour classification IA)
-            </label>
-            <textarea
-              className="input"
-              rows={6}
-              placeholder="Contenu extrait du fichier (modifiable)..."
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-            />
-            {formData.content && (
-              <div className="mt-2 flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleTextClassify}
-                  disabled={classifying}
-                  className="mt-2 text-sm text-cil-blue hover:underline disabled:opacity-50"
-                >
-                  {classifying ? 'Classification en cours...' : '🤖 Classifier avec l\'IA'}
-                </button>
-                <span className="text-xs text-slate-500">({formData.content.length} caractères)</span>
-              </div>
-            )}
-          </div>
+          {/* Equipment association for invoices/warranty/maintenance */}
+          {["invoice", "warranty", "maintenance"].includes(formData.type) && (
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                <Link className="w-4 h-4 inline mr-1" />
+                Associer à un équipement (optionnel)
+              </label>
+              <select
+                className="input"
+                value={formData.equipmentId}
+                onChange={(e) =>
+                  setFormData({ ...formData, equipmentId: e.target.value })
+                }
+              >
+                <option value="">Aucun équipement</option>
+                {equipment.map((eq) => (
+                  <option key={eq.id} value={eq.id}>
+                    {eq.name || eq.typeLabel || eq.type}
+                  </option>
+                ))}
+              </select>
+              {equipment.length === 0 && (
+                <p className="text-xs text-slate-500 mt-1">
+                  Ajoutez d'abord des équipements pour les lier aux factures
+                </p>
+              )}
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium mb-1">Notes</label>
@@ -287,16 +323,11 @@ export default function Documents() {
               rows={2}
               placeholder="Remarques, montant, référence..."
               value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, notes: e.target.value })
+              }
             />
           </div>
-
-          {ocrLoading && (
-            <div className="mt-4">
-              <Loader2 className="w-5 h-5 mr-2" />
-              <span className="text-sm">Traitement du fichier en cours...</span>
-            </div>
-          )}
 
           <div className="flex gap-2">
             <button type="submit" className="btn btn-primary flex-1">
@@ -305,18 +336,21 @@ export default function Documents() {
             <button
               type="button"
               onClick={() => {
-                setShowForm(false)
+                setShowForm(false);
                 setFormData({
-                  name: '',
-                  type: 'invoice',
-                  date: '',
-                  notes: '',
-                  content: '',
-                })
-                setPreview(null)
-                setFileToUpload(null)
+                  name: "",
+                  type: "invoice",
+                  date: "",
+                  notes: "",
+                  content: "",
+                  mimeType: "",
+                  fileExtension: "",
+                  equipmentId: "",
+                });
+                setPreview(null);
+                setFileToUpload(null);
                 if (preview?.url) {
-                  URL.revokeObjectURL(preview.url)
+                  URL.revokeObjectURL(preview.url);
                 }
               }}
               className="btn btn-secondary"
@@ -337,8 +371,11 @@ export default function Documents() {
         </div>
       ) : (
         <div className="space-y-3">
-          {documents.map(doc => {
-            const type = DOCUMENT_TYPES.find(t => t.id === doc.type)
+          {documents.map((doc) => {
+            const type = DOCUMENT_TYPES.find((t) => t.id === doc.type);
+            const linkedEquipmentName = doc.equipmentId 
+              ? getEquipmentName(doc.equipmentId) 
+              : doc.equipmentName;
             return (
               <div key={doc.id} className="card">
                 <div className="flex items-start justify-between">
@@ -349,18 +386,43 @@ export default function Documents() {
                       <p className="text-sm text-slate-500">{type?.label}</p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleDelete(doc.id)}
-                    className="p-2 text-slate-400 hover:text-red-500"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    {doc.content && doc.mimeType && (
+                      <button
+                        onClick={() =>
+                          downloadFile(
+                            doc.content,
+                            `${doc.name}.${doc.fileExtension || "pdf"}`
+                          )
+                        }
+                        className="p-2 text-slate-400 hover:text-blue-500"
+                        title="Télécharger"
+                      >
+                        <Download className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleDelete(doc.id)}
+                      className="p-2 text-slate-400 hover:text-red-500"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
                 {doc.date && (
                   <div className="mt-3 flex items-center gap-2 text-sm text-slate-600">
                     <Calendar className="w-4 h-4" />
-                    <span>{new Date(doc.date).toLocaleDateString('fr-FR')}</span>
+                    <span>
+                      {new Date(doc.date).toLocaleDateString("fr-FR")}
+                    </span>
+                  </div>
+                )}
+
+                {linkedEquipmentName && (
+                  <div className="mt-2 flex items-center gap-2 text-sm text-blue-600 bg-blue-50 rounded-lg p-2">
+                    <Link className="w-4 h-4" />
+                    <span>Lie: {linkedEquipmentName}</span>
                   </div>
                 )}
 
@@ -375,10 +437,10 @@ export default function Documents() {
                   <span className="badge badge-blue">{type?.label}</span>
                 </div>
               </div>
-            )
+            );
           })}
         </div>
       )}
     </div>
-  )
+  );
 }
