@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import Home from './pages/Home'
 import Equipment from './pages/Equipment'
@@ -15,20 +15,9 @@ function App() {
     return (
       <Layout>
         <div className="min-h-screen flex flex-col items-center justify-center py-12">
-          <p className="text-slate-500">Chargement de l'application...</p>
+          <div className="w-12 h-12 border-4 border-marine border-t-transparent rounded-full animate-spin" />
+          <p className="text-slate-500 mt-4">Chargement de CILIA...</p>
         </div>
-      </Layout>
-    )
-  }
-
-  // If no property exists, redirect to property creation page
-  if (!hasProperty) {
-    return (
-      <Layout>
-        <Routes>
-          <Route path="/" element={<Property />} />
-          <Route path="/property" element={<Property />} />
-        </Routes>
       </Layout>
     )
   }
@@ -37,10 +26,14 @@ function App() {
     <Layout>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/equipment" element={<Equipment />} />
-        <Route path="/documents" element={<Documents />} />
-        <Route path="/alerts" element={<Alerts />} />
         <Route path="/property" element={<Property />} />
+        {hasProperty && (
+          <>
+            <Route path="/equipment" element={<Equipment />} />
+            <Route path="/documents" element={<Documents />} />
+            <Route path="/alerts" element={<Alerts />} />
+          </>
+        )}
       </Routes>
     </Layout>
   )
