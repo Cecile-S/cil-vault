@@ -1,11 +1,7 @@
 import { useState } from 'react'
-<<<<<<< HEAD
-import { Plus, Trash2, Calendar, Settings } from 'lucide-react'
-import { useEquipment } from '../hooks/useEquipment'
-=======
 import { Plus, Trash2, Calendar, Settings, Edit2, Save, X } from 'lucide-react'
+import { useEquipment } from '../hooks/useEquipment'
 import { useLocalStorage } from '../hooks/useLocalStorage'
->>>>>>> dev
 
 const DEFAULT_EQUIPMENT_TYPES = [
   { id: 'boiler', label: 'Chaudière', icon: '🔥', maintenanceInterval: 12 },
@@ -22,12 +18,8 @@ const DEFAULT_EQUIPMENT_TYPES = [
 const AVAILABLE_ICONS = ['🔥', '💨', '🌡️', '🚿', '🏮', '❄️', '💧', '🏊', '⚙️', '🔧', '🛠️', '📦', '🚪', '🪟', '🔌', '💡']
 
 export default function Equipment() {
-<<<<<<< HEAD
-  const [equipment, loading, error, addEquipment, deleteEquipment] = useEquipment()
-=======
-  const [equipment, setEquipment] = useLocalStorage('cil-equipment', [])
+  const { equipment, loading, error, addEquipment, updateEquipment, deleteEquipment } = useEquipment()
   const [customTypes, setCustomTypes] = useLocalStorage('cil-equipment-custom-types', [])
->>>>>>> dev
   const [showForm, setShowForm] = useState(false)
   const [showTypeManager, setShowTypeManager] = useState(false)
   const [formData, setFormData] = useState({
@@ -57,9 +49,6 @@ export default function Equipment() {
       : type?.label || 'Autre'
 
     const newEquipment = {
-<<<<<<< HEAD
-      ...formData,
-=======
       id: Date.now(),
       type: formData.type,
       typeLabel: typeLabel,
@@ -67,7 +56,6 @@ export default function Equipment() {
       installDate: formData.installDate,
       lastMaintenance: formData.lastMaintenance,
       nextMaintenance: formData.nextMaintenance,
->>>>>>> dev
       maintenanceInterval: type?.maintenanceInterval || 12,
       notes: formData.notes,
       createdAt: new Date().toISOString(),
