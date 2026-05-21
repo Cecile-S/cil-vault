@@ -2,12 +2,13 @@ import { openDB } from 'idb';
 
 // Constants
 const DB_NAME = 'cil-vault-db-v2';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 const STORES = {
   PROPERTIES: 'properties',
   EQUIPMENT: 'equipment',
   DOCUMENTS: 'documents',
   ALERTS: 'alerts', // for future use
+  MAINTENANCE_HISTORY: 'maintenance_history',
 };
 
 // Initialize the database
