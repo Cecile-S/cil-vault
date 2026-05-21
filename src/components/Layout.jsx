@@ -1,21 +1,43 @@
-import { NavLink } from 'react-router-dom'
-import { Home, Wrench, FileText, Bell } from 'lucide-react'
+import { NavLink, useLocation } from 'react-router-dom'
+import { Home, Wrench, FileText, Bell, Building2 } from 'lucide-react'
+import { useProperty } from '../hooks/useProperty'
 
 export default function Layout({ children }) {
-  const navItems = [
-    { to: '/', icon: Home, label: 'Accueil' },
+  const { properties } = useProperty()
+  const hasProperty = properties && properties.length > 0
+  const location = useLocation()
+
+  const navItems = hasProperty ? [
+    { to: '/', icon: Building2, label: 'Mon immo' },
     { to: '/equipment', icon: Wrench, label: 'Équipements' },
     { to: '/documents', icon: FileText, label: 'Documents' },
     { to: '/alerts', icon: Bell, label: 'Alertes' },
+  ] : [
+    { to: '/', icon: Building2, label: 'Mon immo' },
   ]
 
+  // Navigation title
+  const getTitle = () => {
+    if (!hasProperty) return 'Mes biens'
+    if (location.pathname === '/') return 'Mon bien'
+    if (location.pathname.startsWith('/equipment')) return 'Équipements'
+    if (location.pathname.startsWith('/documents')) return 'Documents'
+    if (location.pathname.startsWith('/alerts')) return 'Alertes'
+    return 'CILIA'
+  }
+
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50">
+    <div className="min-h-screen flex flex-col bg-cream">
       {/* Header */}
-      <header className="bg-cil-blue text-white px-4 py-3 sticky top-0 z-50">
-        <div className="max-w-lg mx-auto flex items-center justify-between">
-          <h1 className="text-lg font-semibold">CIL Vault</h1>
-          <span className="text-sm opacity-80">Paris</span>
+      <header className="bg-marine text-white px-4 py-3 sticky top-0 z-50 shadow-sm">
+        <div className="max-w-lg mx-auto flex items-center gap-3">
+          <span className="font-brand text-lg font-bold tracking-tight">CILIA</span>
+          {hasProperty && (
+            <>
+              <span className="text-white/30">|</span>
+              <span className="text-sm font-medium">{getTitle()}</span>
+            </>
+          )}
         </div>
       </header>
 
@@ -25,26 +47,29 @@ export default function Layout({ children }) {
       </main>
 
       {/* Bottom navigation */}
-      <nav className="bg-white border-t border-slate-200 px-4 safe-bottom sticky bottom-0">
-        <div className="max-w-lg mx-auto flex justify-around py-2">
-          {navItems.map(({ to, icon: Icon, label }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                `flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
-                  isActive
-                    ? 'text-cil-blue bg-blue-50'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`
-              }
-            >
-              <Icon className="w-5 h-5" />
-              <span className="text-xs mt-1">{label}</span>
-            </NavLink>
-          ))}
-        </div>
-      </nav>
+      {hasProperty && (
+        <nav className="bg-white border-t border-slate-200 px-4 safe-bottom sticky bottom-0 shadow-sm">
+          <div className="max-w-lg mx-auto flex justify-around py-1">
+            {navItems.map(({ to, icon: Icon, label }) => (
+              <NavLink
+                key={to}
+                to={to}
+                end={to === '/'}
+                className={({ isActive }) =>
+                  `flex flex-col items-center py-2 px-3 rounded-lg transition-colors ${
+                    isActive
+                      ? 'text-marine bg-cream-dark font-medium'
+                      : 'text-slate-500 hover:text-slate-700'
+                  }`
+                }
+              >
+                <Icon className="w-5 h-5" />
+                <span className="text-xs mt-0.5">{label}</span>
+              </NavLink>
+            ))}
+          </div>
+        </nav>
+      )}
     </div>
   )
 }

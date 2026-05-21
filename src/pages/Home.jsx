@@ -1,148 +1,169 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { TrendingUp, Thermometer, FileText, Bell, ArrowRight } from 'lucide-react'
+import { Wrench, FileText, Bell, Plus, AlertTriangle, ChevronRight, Building2, MapPin, Ruler, Layers } from 'lucide-react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
+import { useProperty } from '../hooks/useProperty'
 
 export default function Home() {
+  const { properties } = useProperty()
   const [equipment] = useLocalStorage('cil-equipment', [])
-  const [alerts] = useLocalStorage('cil-alerts', [])
   const [documents] = useLocalStorage('cil-documents', [])
-  const [apiStatus, setApiStatus] = useState('checking')
+  const [alerts] = useLocalStorage('cil-alerts', [])
 
-  useEffect(() => {
-    // Check API health
-    fetch('http://84.247.161.15:8001/')
-      .then(res => res.json())
-      .then(data => setApiStatus('online'))
-      .catch(() => setApiStatus('offline'))
-  }, [])
-
-  // Calculate energy score (simulated for demo)
-  const energyScore = equipment.length > 0 ? 'D' : '-'
-  const scoreColor = {
-    'A': 'text-green-600',
-    'B': 'text-green-500',
-    'C': 'text-yellow-500',
-    'D': 'text-orange-500',
-    'E': 'text-orange-600',
-    'F': 'text-red-500',
-    'G': 'text-red-600',
-  }[energyScore] || 'text-slate-400'
-
-  // Count active alerts
   const activeAlerts = alerts.filter(a => !a.dismissed).length
+  const property = properties[0]
+
+  // If multiple properties, show list
+  if (properties.length > 1) {
+    return <PropertyList properties={properties} />
+  }
+
+  const typeLabels = {
+    appartement: 'Appartement',
+    maison: 'Maison',
+    immeuble: 'Immeuble',
+    local_commercial: 'Local commercial',
+    autre: 'Autre',
+  }
+
+  const typeIcons = {
+    appartement: '🏢',
+    maison: '🏠',
+    immeuble: '🏗️',
+    local_commercial: '🏪',
+    autre: '📍',
+  }
+
+  // Récupère une adresse courte (avant le code postal)
+  const shortAddress = property?.adresse
+    ? property.adresse.split(',')[0]
+    : null
 
   return (
-    <div className="space-y-6">
-      {/* Welcome */}
-      <section>
-        <h2 className="text-2xl font-bold text-slate-900">Mon Carnet Logement</h2>
-        <p className="text-slate-500 mt-1">
-          Centralisez vos documents et suivez vos équipements
-        </p>
-      </section>
+    <div className="space-y-5">
 
-      {/* Energy Score Card */}
-      <section className="card">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-50 rounded-xl">
-              <Thermometer className="w-6 h-6 text-cil-blue" />
+      {/* Property card */}
+      {property && (
+        <Link to="/property" className="card block hover:shadow-md transition-shadow">
+          <div className="flex items-start gap-3">
+            <div className="p-3 bg-cream-dark rounded-xl text-2xl">
+              {typeIcons[property.type] || '🏠'}
             </div>
-            <div>
-              <p className="text-sm text-slate-500">Score énergétique</p>
-              <p className={`text-3xl font-bold ${scoreColor}`}>
-                {energyScore}
-              </p>
+            <div className="flex-1 min-w-0">
+              <h2 className="font-semibold text-lg truncate">{shortAddress || property.adresse}</h2>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-slate-500">
+                {property.type && <span>{typeLabels[property.type] || property.type}</span>}
+                {property.surface && <span className="flex items-center gap-1"><Ruler className="w-3.5 h-3.5" />{property.surface} m²</span>}
+                {property.nb_pieces && <span className="flex items-center gap-1"><Layers className="w-3.5 h-3.5" />{property.nb_pieces} pièce{property.nb_pieces > 1 ? 's' : ''}</span>}
+              </div>
             </div>
+            <ChevronRight className="w-5 h-5 text-slate-400 shrink-0 mt-1" />
           </div>
-          <div className="text-right">
-            <p className="text-sm text-slate-500">API</p>
-            <span className={`inline-flex items-center gap-1 text-sm ${
-              apiStatus === 'online' ? 'text-green-600' :
-              apiStatus === 'offline' ? 'text-red-600' : 'text-slate-400'
-            }`}>
-              <span className={`w-2 h-2 rounded-full ${
-                apiStatus === 'online' ? 'bg-green-500' :
-                apiStatus === 'offline' ? 'bg-red-500' : 'bg-slate-300'
-              }`} />
-              {apiStatus === 'online' ? 'En ligne' :
-               apiStatus === 'offline' ? 'Hors ligne' : 'Vérification...'}
-            </span>
-          </div>
-        </div>
-      </section>
+        </Link>
+      )}
 
-      {/* Quick Stats */}
-      <section className="grid grid-cols-3 gap-3">
-        <Link to="/equipment" className="card text-center hover:shadow-md transition-shadow">
-          <Wrench className="w-5 h-5 mx-auto text-slate-400" />
-          <p className="text-2xl font-bold mt-2">{equipment.length}</p>
-          <p className="text-xs text-slate-500">Équipements</p>
+      {/* Quick stats */}
+      <div className="grid grid-cols-3 gap-3">
+        <Link to="/equipment" className="card text-center hover:shadow-md transition-shadow py-4">
+          <Wrench className="w-5 h-5 mx-auto text-menthe" />
+          <p className="text-2xl font-bold mt-2 font-brand">{equipment.length}</p>
+          <p className="text-xs text-slate-500 mt-0.5">Équipements</p>
         </Link>
-        <Link to="/documents" className="card text-center hover:shadow-md transition-shadow">
-          <FileText className="w-5 h-5 mx-auto text-slate-400" />
-          <p className="text-2xl font-bold mt-2">{documents.length}</p>
-          <p className="text-xs text-slate-500">Documents</p>
+        <Link to="/documents" className="card text-center hover:shadow-md transition-shadow py-4">
+          <FileText className="w-5 h-5 mx-auto text-cil-blue" />
+          <p className="text-2xl font-bold mt-2 font-brand">{documents.length}</p>
+          <p className="text-xs text-slate-500 mt-0.5">Documents</p>
         </Link>
-        <Link to="/alerts" className="card text-center hover:shadow-md transition-shadow relative">
-          <Bell className="w-5 h-5 mx-auto text-slate-400" />
-          <p className="text-2xl font-bold mt-2">{activeAlerts}</p>
-          <p className="text-xs text-slate-500">Alertes</p>
+        <Link to="/alerts" className="card text-center hover:shadow-md transition-shadow py-4 relative">
+          <Bell className="w-5 h-5 mx-auto text-corail" />
+          <p className="text-2xl font-bold mt-2 font-brand">{activeAlerts}</p>
+          <p className="text-xs text-slate-500 mt-0.5">Alertes</p>
           {activeAlerts > 0 && (
-            <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 w-5 h-5 bg-corail text-white text-xs rounded-full flex items-center justify-center font-bold">
               {activeAlerts}
             </span>
           )}
         </Link>
-      </section>
+      </div>
 
-      {/* Quick Actions */}
+      {/* Quick actions */}
       <section>
-        <h3 className="text-lg font-semibold mb-3">Actions rapides</h3>
-        <div className="space-y-2">
-          <Link to="/documents" className="card flex items-center justify-between hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-50 rounded-lg">
-                <FileText className="w-5 h-5 text-orange-600" />
-              </div>
-              <div>
-                <p className="font-medium">Ajouter un document</p>
-                <p className="text-sm text-slate-500">DPE, facture, contrat...</p>
-              </div>
+        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Ajouter</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <Link to="/equipment" className="card flex flex-col items-center justify-center py-6 gap-2 hover:shadow-md transition-shadow border-2 border-dashed border-slate-200 hover:border-menthe/50">
+            <div className="p-3 bg-menthe/10 rounded-full">
+              <Wrench className="w-6 h-6 text-menthe" />
             </div>
-            <ArrowRight className="w-5 h-5 text-slate-400" />
+            <span className="text-sm font-medium">Équipement</span>
           </Link>
-
-          <Link to="/equipment" className="card flex items-center justify-between hover:shadow-md transition-shadow">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-50 rounded-lg">
-                <Wrench className="w-5 h-5 text-cil-blue" />
-              </div>
-              <div>
-                <p className="font-medium">Ajouter un équipement</p>
-                <p className="text-sm text-slate-500">Chaudière, VMC, PAC...</p>
-              </div>
+          <Link to="/documents" className="card flex flex-col items-center justify-center py-6 gap-2 hover:shadow-md transition-shadow border-2 border-dashed border-slate-200 hover:border-cil-blue/50">
+            <div className="p-3 bg-cil-blue/10 rounded-full">
+              <FileText className="w-6 h-6 text-cil-blue" />
             </div>
-            <ArrowRight className="w-5 h-5 text-slate-400" />
+            <span className="text-sm font-medium">Document</span>
           </Link>
         </div>
       </section>
 
-      {/* Info */}
-      <section className="text-center text-sm text-slate-400 py-4">
-        <p>CIL Vault - Carnet d'Information Logement</p>
-        <p>Obligatoire en France depuis 2023</p>
+      {/* Footer */}
+      <section className="text-center pt-4">
+        <p className="text-xs text-slate-400">CILIA — Carnet d'Information Logement</p>
+        <p className="text-xs text-slate-300 mt-0.5">Obligatoire en France depuis 2023</p>
       </section>
     </div>
   )
 }
 
-function Wrench({ className }) {
+function PropertyList({ properties }) {
+  const typeIcons = {
+    appartement: '🏢',
+    maison: '🏠',
+    immeuble: '🏗️',
+    local_commercial: '🏪',
+    autre: '📍',
+  }
+
+  const typeLabels = {
+    appartement: 'Appartement',
+    maison: 'Maison',
+    immeuble: 'Immeuble',
+    local_commercial: 'Local commercial',
+    autre: 'Autre',
+  }
+
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-    </svg>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold">Mes biens</h2>
+          <p className="text-sm text-slate-500">{properties.length} bien{properties.length > 1 ? 's' : ''}</p>
+        </div>
+        <Link to="/property" className="btn btn-primary flex items-center gap-2">
+          <Plus className="w-4 h-4" />
+          Ajouter
+        </Link>
+      </div>
+
+      <div className="space-y-3">
+        {properties.map((prop) => (
+          <Link key={prop.id} to="/property" className="card block hover:shadow-md transition-shadow">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-cream-dark rounded-xl text-xl">
+                {typeIcons[prop.type] || '🏠'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold truncate">{prop.adresse?.split(',')[0] || prop.adresse}</h3>
+                <div className="flex flex-wrap gap-x-3 gap-y-1 mt-0.5 text-sm text-slate-500">
+                  {prop.type && <span>{typeLabels[prop.type]}</span>}
+                  {prop.surface && <span>{prop.surface} m²</span>}
+                  {prop.nb_pieces && <span>{prop.nb_pieces} pc{prop.nb_pieces > 1 ? 's' : ''}</span>}
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-slate-400 shrink-0 mt-2" />
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
   )
 }
