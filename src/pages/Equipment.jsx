@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Plus, Trash2, Calendar, Settings, Edit2, Save, X } from 'lucide-react'
+import { Plus, Trash2, Calendar, Settings, Edit2, Save, X, Clock, ChevronDown, ChevronUp, Wrench } from 'lucide-react'
 import { useEquipment } from '../hooks/useEquipment'
 import { useLocalStorage } from '../hooks/useLocalStorage'
+import { useMaintenanceHistory } from '../hooks/useMaintenanceHistory'
 
 const DEFAULT_EQUIPMENT_TYPES = [
   { id: 'boiler', label: 'Chaudière', icon: '🔥', maintenanceInterval: 12 },
@@ -19,9 +20,19 @@ const AVAILABLE_ICONS = ['🔥', '💨', '🌡️', '🚿', '🏮', '❄️', '�
 
 export default function Equipment() {
   const { equipment, loading, error, addEquipment, updateEquipment, deleteEquipment } = useEquipment()
+  const { addRecord, deleteRecord, getRecordsByEquipment } = useMaintenanceHistory()
   const [customTypes, setCustomTypes] = useLocalStorage('cil-equipment-custom-types', [])
   const [showForm, setShowForm] = useState(false)
   const [showTypeManager, setShowTypeManager] = useState(false)
+  const [expandedEquipment, setExpandedEquipment] = useState(null)
+  const [showMaintenanceForm, setShowMaintenanceForm] = useState(null) // equipmentId
+  const [maintenanceForm, setMaintenanceForm] = useState({
+    date: new Date().toISOString().split('T')[0],
+    type: 'entretien',
+    cost: '',
+    company: '',
+    notes: '',
+  })
   const [formData, setFormData] = useState({
     type: 'boiler',
     customType: '',
@@ -77,6 +88,30 @@ export default function Equipment() {
     if (confirm('Supprimer cet équipement ?')) {
       deleteEquipment(id)
     }
+  }
+
+  const handleLogMaintenance = (equipmentId) => {
+    addRecord({
+      equipmentId,
+      date: maintenanceForm.date,
+      type: maintenanceForm.type,
+      cost: parseFloat(maintenanceForm.cost) || 0,
+      company: maintenanceForm.company,
+      notes: maintenanceForm.notes,
+    })
+    setMaintenanceForm({
+      date: new Date().toISOString().split('T')[0],
+      type: 'entretien',
+      cost: '',
+      company: '',
+      notes: '',
+    })
+    setShowMaintenanceForm(null)
+  }
+
+  const toggleEquipmentExpansion = (id) => {
+    setExpandedEquipment(expandedEquipment === id ? null : id)
+    setShowMaintenanceForm(null)
   }
 
   const handleAddCustomType = () => {
@@ -343,6 +378,8 @@ export default function Equipment() {
             const type = equipmentTypes.find(t => t.id === eq.type)
             const days = getDaysUntilMaintenance(eq.nextMaintenance)
             const status = getMaintenanceStatus(days)
+            const history = getRecordsByEquipment(eq.id)
+            const isExpanded = expandedEquipment === eq.id
             return (
               <div key={eq.id} className="card">
                 <div className="flex items-start justify-between">
@@ -353,12 +390,21 @@ export default function Equipment() {
                       <p className="text-sm text-slate-500">{type?.label || eq.typeLabel}</p>
                     </div>
                   </div>
-                  <button 
-                    onClick={() => handleDelete(eq.id)} 
-                    className="p-2 text-slate-400 hover:text-red-500"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => toggleEquipmentExpansion(eq.id)}
+                      className="p-2 text-slate-400 hover:text-blue-500"
+                      title="Historique d'entretien"
+                    >
+                      {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(eq.id)} 
+                      className="p-2 text-slate-400 hover:text-red-500"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
                 {eq.nextMaintenance && (
@@ -375,6 +421,150 @@ export default function Equipment() {
                   <p className="mt-2 text-sm text-slate-500 bg-slate-50 rounded-lg p-2">
                     {eq.notes}
                   </p>
+                )}
+
+                {/* Expandable maintenance history */}
+                {isExpanded && (
+                  <div className="mt-4 border-t border-slate-200 pt-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-semibold text-sm flex items-center gap-1.5">
+                        <Clock className="w-4 h-4 text-slate-400" />
+                        Historique d'entretien
+                      </h4>
+                      <button
+                        onClick={() => setShowMaintenanceForm(showMaintenanceForm === eq.id ? null : eq.id)}
+                        className="btn btn-sm btn-secondary flex items-center gap-1.5"
+                      >
+                        <Wrench className="w-3.5 h-3.5" />
+                        {showMaintenanceForm === eq.id ? 'Annuler' : 'Ajouter'}
+                      </button>
+                    </div>
+
+                    {/* Quick log form */}
+                    {showMaintenanceForm === eq.id && (
+                      <div className="bg-slate-50 rounded-lg p-3 mb-3 space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-xs font-medium mb-0.5">Date</label>
+                            <input
+                              type="date"
+                              className="input text-sm"
+                              value={maintenanceForm.date}
+                              onChange={(e) => setMaintenanceForm({ ...maintenanceForm, date: e.target.value })}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium mb-0.5">Type</label>
+                            <select
+                              className="input text-sm"
+                              value={maintenanceForm.type}
+                              onChange={(e) => setMaintenanceForm({ ...maintenanceForm, type: e.target.value })}
+                            >
+                              <option value="entretien">Entretien</option>
+                              <option value="reparation">Réparation</option>
+                              <option value="remplacement">Remplacement</option>
+                              <option value="diagnostic">Diagnostic</option>
+                              <option value="autre">Autre</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-xs font-medium mb-0.5">Coût (€)</label>
+                            <input
+                              type="number"
+                              className="input text-sm"
+                              placeholder="0"
+                              value={maintenanceForm.cost}
+                              onChange={(e) => setMaintenanceForm({ ...maintenanceForm, cost: e.target.value })}
+                              min="0"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium mb-0.5">Entreprise</label>
+                            <input
+                              type="text"
+                              className="input text-sm"
+                              placeholder="Nom prestataire"
+                              value={maintenanceForm.company}
+                              onChange={(e) => setMaintenanceForm({ ...maintenanceForm, company: e.target.value })}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium mb-0.5">Notes</label>
+                          <textarea
+                            className="input text-sm"
+                            rows={2}
+                            placeholder="Détails de l'intervention..."
+                            value={maintenanceForm.notes}
+                            onChange={(e) => setMaintenanceForm({ ...maintenanceForm, notes: e.target.value })}
+                          />
+                        </div>
+                        <button
+                          onClick={() => handleLogMaintenance(eq.id)}
+                          className="btn btn-primary w-full text-sm"
+                          disabled={!maintenanceForm.date}
+                        >
+                          Enregistrer l'intervention
+                        </button>
+                      </div>
+                    )}
+
+                    {/* History records */}
+                    {history.length === 0 ? (
+                      <p className="text-sm text-slate-400 italic">
+                        Aucun entretien enregistré. Ajoutez votre première intervention.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {history.map((record) => {
+                          const typeColors = {
+                            entretien: 'bg-blue-100 text-blue-700',
+                            reparation: 'bg-orange-100 text-orange-700',
+                            remplacement: 'bg-purple-100 text-purple-700',
+                            diagnostic: 'bg-green-100 text-green-700',
+                            autre: 'bg-slate-100 text-slate-700',
+                          }
+                          const typeColor = typeColors[record.type] || typeColors.autre
+                          return (
+                            <div key={record.id} className="flex items-start justify-between bg-slate-50 rounded-lg p-2.5">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-medium bg-white px-2 py-0.5 rounded">
+                                    {new Date(record.date).toLocaleDateString('fr-FR')}
+                                  </span>
+                                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${typeColor}`}>
+                                    {record.type === 'entretien' ? 'Entretien' :
+                                     record.type === 'reparation' ? 'Réparation' :
+                                     record.type === 'remplacement' ? 'Remplacement' :
+                                     record.type === 'diagnostic' ? 'Diagnostic' :
+                                     'Autre'}
+                                  </span>
+                                  {record.cost > 0 && (
+                                    <span className="text-xs text-slate-500">{record.cost.toFixed(2)} €</span>
+                                  )}
+                                </div>
+                                {record.company && (
+                                  <p className="text-xs text-slate-500 mt-1">{record.company}</p>
+                                )}
+                                {record.notes && (
+                                  <p className="text-xs text-slate-600 mt-0.5">{record.notes}</p>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => deleteRecord(record.id)}
+                                className="p-1 text-slate-300 hover:text-red-500 ml-2 shrink-0"
+                                title="Supprimer"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             )
