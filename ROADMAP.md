@@ -121,6 +121,7 @@
 ## 🔧 BACKLOG IDEES
 
 ### Fonctionnalités futures
+- [ ] Recherche automatique de notice (vraie API de recherche type Google Custom Search, cle a configurer) - version actuelle = lien de recherche manuel restreint PDF, valide comme suffisant pour l'instant (26/07/2026)
 - [ ] Multi-logements
 - [ ] Partage famille/notaire
 - [ ] Signature électronique
