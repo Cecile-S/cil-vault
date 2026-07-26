@@ -12,8 +12,9 @@ import {
   Download,
   Link,
 } from "lucide-react";
-import { useIndexedDB } from "../hooks/useIndexedDB";
-import { useLocalStorage } from "../hooks/useLocalStorage";
+import { useDocuments } from "../hooks/useDocuments";
+import { useEquipment } from "../hooks/useEquipment";
+import { useProperty } from "../hooks/useProperty";
 import { CIL_OCR } from "../services/ocr-service";
 
 const DOCUMENT_TYPES = [
@@ -32,8 +33,9 @@ const DOCUMENT_TYPES = [
 
 export default function Documents() {
   const { documents, loading, error, addDocument, deleteDocument } =
-    useIndexedDB();
-  const [equipment] = useLocalStorage("cil-equipment", []);
+    useDocuments();
+  const { equipment } = useEquipment();
+  const { properties } = useProperty();
   const [showForm, setShowForm] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -48,6 +50,7 @@ export default function Documents() {
     mimeType: "",
     fileExtension: "",
     equipmentId: "",
+    propertyId: "",
   });
   const fileInputRef = useRef(null);
 
@@ -218,6 +221,7 @@ export default function Documents() {
     
     const newDoc = {
       ...formData,
+      propertyId: formData.propertyId || properties[0]?.id || null,
       icon: type?.icon || "📎",
       equipmentName: selectedEquipment ? selectedEquipment.name : null,
       createdAt: new Date().toISOString(),
@@ -234,6 +238,7 @@ export default function Documents() {
       mimeType: "",
       fileExtension: "",
       equipmentId: "",
+      propertyId: properties[0]?.id || "",
     });
     setShowForm(false);
     setPreview(null);
@@ -319,6 +324,25 @@ export default function Documents() {
               required
             />
           </div>
+
+          {properties.length > 1 && (
+            <div>
+              <label className="block text-sm font-medium mb-1">Bien concerne</label>
+              <select
+                className="input"
+                value={formData.propertyId || properties[0]?.id || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, propertyId: e.target.value })
+                }
+              >
+                {properties.map((prop) => (
+                  <option key={prop.id} value={prop.id}>
+                    {prop.adresse?.split(',')[0] || prop.adresse}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -412,6 +436,7 @@ export default function Documents() {
                   mimeType: "",
                   fileExtension: "",
                   equipmentId: "",
+                  propertyId: properties[0]?.id || "",
                 });
                 setPreview(null);
                 setFileToUpload(null);
