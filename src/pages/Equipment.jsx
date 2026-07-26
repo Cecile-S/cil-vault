@@ -4,6 +4,7 @@ import { useEquipment } from '../hooks/useEquipment'
 import { useProperty } from '../hooks/useProperty'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { useMaintenanceHistory } from '../hooks/useMaintenanceHistory'
+import DocumentationManager from '../components/DocumentationManager'
 
 const DEFAULT_EQUIPMENT_TYPES = [
   { id: 'boiler', label: 'Chaudière', icon: '🔥', maintenanceInterval: 12 },
@@ -45,6 +46,7 @@ export default function Equipment() {
     installDate: '',
     lastMaintenance: '',
     nextMaintenance: '',
+    warrantyMonths: '',
     notes: '',
     propertyId: '',
   })
@@ -74,6 +76,7 @@ export default function Equipment() {
       lastMaintenance: formData.lastMaintenance,
       nextMaintenance: formData.nextMaintenance,
       maintenanceInterval: type?.maintenanceInterval || 12,
+      warrantyMonths: formData.warrantyMonths ? parseInt(formData.warrantyMonths) : null,
       notes: formData.notes,
       propertyId: formData.propertyId || null,
       createdAt: new Date().toISOString(),
@@ -359,6 +362,17 @@ export default function Equipment() {
               className="input" 
               value={formData.nextMaintenance} 
               onChange={(e) => setFormData({ ...formData, nextMaintenance: e.target.value })} 
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Garantie (mois)</label>
+            <input 
+              type="number" 
+              className="input" 
+              placeholder="Ex: 24"
+              value={formData.warrantyMonths} 
+              onChange={(e) => setFormData({ ...formData, warrantyMonths: e.target.value })} 
             />
           </div>
 
@@ -651,6 +665,8 @@ export default function Equipment() {
           })}
         </div>
       )})()}
+
+      <DocumentationManager equipment={equipment} />
     </div>
   )
 }
