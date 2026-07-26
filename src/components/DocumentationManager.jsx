@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { FileText, Search, ExternalLink, Download, Trash2, Plus, BookOpen } from 'lucide-react'
+import { FileText, Search, ExternalLink, Download, Trash2, Plus, BookOpen, Upload } from 'lucide-react'
+import { useLocalStorage } from '../hooks/useLocalStorage'
 
 // Base de données de liens vers notices constructeur (exemples)
 const MANUFACTURER_NOTICES = {
@@ -28,13 +29,16 @@ const MANUFACTURER_NOTICES = {
 
 export default function DocumentationManager({ equipment = [] }) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [notices, setNotices] = useState([])
+  const [notices, setNotices] = useLocalStorage('cil-documentation-notices', [])
   const [showAddForm, setShowAddForm] = useState(false)
   const [newNotice, setNewNotice] = useState({
     equipmentId: '',
     title: '',
     url: '',
     notes: '',
+    fileContent: '',
+    fileName: '',
+    mimeType: '',
   })
 
   // Search for equipment manuals online
@@ -69,6 +73,32 @@ export default function DocumentationManager({ equipment = [] }) {
     }])
   }
 
+  const handleFileSelect = async (file) => {
+    if (!file) return
+    const reader = new FileReader()
+    const content = await new Promise((resolve, reject) => {
+      reader.onload = () => resolve(reader.result)
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
+    setNewNotice(prev => ({
+      ...prev,
+      fileContent: content,
+      fileName: file.name,
+      mimeType: file.type,
+      title: prev.title || file.name.replace(/\.[^/.]+$/, ''),
+    }))
+  }
+
+  const downloadNoticeFile = (dataUrl, filename) => {
+    const link = document.createElement('a')
+    link.href = dataUrl
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   const handleAddNotice = () => {
     if (!newNotice.title) return
     
@@ -81,11 +111,14 @@ export default function DocumentationManager({ equipment = [] }) {
       title: newNotice.title,
       url: newNotice.url,
       notes: newNotice.notes,
+      fileContent: newNotice.fileContent,
+      fileName: newNotice.fileName,
+      mimeType: newNotice.mimeType,
       source: 'manual',
       addedAt: new Date().toISOString(),
     }])
     
-    setNewNotice({ equipmentId: '', title: '', url: '', notes: '' })
+    setNewNotice({ equipmentId: '', title: '', url: '', notes: '', fileContent: '', fileName: '', mimeType: '' })
     setShowAddForm(false)
   }
 
@@ -191,7 +224,20 @@ export default function DocumentationManager({ equipment = [] }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">URL</label>
+            <label className="block text-sm font-medium mb-1">Fichier (PDF/image, optionnel)</label>
+            <input
+              type="file"
+              accept="application/pdf,image/*"
+              className="input"
+              onChange={(e) => handleFileSelect(e.target.files?.[0])}
+            />
+            {newNotice.fileName && (
+              <p className="text-xs text-slate-500 mt-1">Fichier: {newNotice.fileName}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">URL (si pas de fichier)</label>
             <input
               type="url"
               className="input"
@@ -262,13 +308,23 @@ export default function DocumentationManager({ equipment = [] }) {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <button
-                  onClick={() => openExternalLink(notice.url)}
-                  className="p-2 text-slate-400 hover:text-blue-500"
-                  title="Ouvrir le lien"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </button>
+                {notice.fileContent ? (
+                  <button
+                    onClick={() => downloadNoticeFile(notice.fileContent, notice.fileName || notice.title)}
+                    className="p-2 text-slate-400 hover:text-blue-500"
+                    title="Telecharger le fichier"
+                  >
+                    <Download className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => openExternalLink(notice.url)}
+                    className="p-2 text-slate-400 hover:text-blue-500"
+                    title="Ouvrir le lien"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </button>
+                )}
                 <button
                   onClick={() => handleDeleteNotice(notice.id)}
                   className="p-2 text-slate-400 hover:text-red-500"
