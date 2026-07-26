@@ -22,6 +22,18 @@ function App() {
     )
   }
 
+  // Si aucun bien n'existe, rediriger vers la creation d'un bien
+  if (!hasProperty) {
+    return (
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Property />} />
+          <Route path="/property" element={<Property />} />
+        </Routes>
+      </Layout>
+    )
+  }
+
   return (
     <Layout>
       <Routes>

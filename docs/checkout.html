@@ -44,7 +44,7 @@
         </p>
         
         <!-- Back Link -->
-        <a href="app.html" class="block text-center text-sm text-slate-500 mt-4 hover:text-cil-blue">
+        <a href="#" class="app-link block text-center text-sm text-slate-500 mt-4 hover:text-cil-blue">
             ← Retour à l'application
         </a>
     </div>
@@ -72,5 +72,11 @@
             document.getElementById('checkout-btn').classList.add('bg-green-500');
         }
     </script>
+<script src="config.js"></script>
+<script>
+document.querySelectorAll(".app-link").forEach(function(el) {
+  el.href = CILIA_CONFIG.APP_URL;
+});
+</script>
 </body>
 </html>

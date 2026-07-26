@@ -12,8 +12,10 @@ import {
   Download,
   Link,
 } from "lucide-react";
-import { useIndexedDB } from "../hooks/useIndexedDB";
-import { useLocalStorage } from "../hooks/useLocalStorage";
+import { useDocuments } from "../hooks/useDocuments";
+import { useEquipment } from "../hooks/useEquipment";
+import { useProperty } from "../hooks/useProperty";
+import { CIL_OCR } from "../services/ocr-service";
 
 const DOCUMENT_TYPES = [
   { id: "dpe", label: "DPE", icon: "📊" },
@@ -31,8 +33,9 @@ const DOCUMENT_TYPES = [
 
 export default function Documents() {
   const { documents, loading, error, addDocument, deleteDocument } =
-    useIndexedDB();
-  const [equipment] = useLocalStorage("cil-equipment", []);
+    useDocuments();
+  const { equipment } = useEquipment();
+  const { properties } = useProperty();
   const [showForm, setShowForm] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -47,6 +50,7 @@ export default function Documents() {
     mimeType: "",
     fileExtension: "",
     equipmentId: "",
+    propertyId: "",
   });
   const fileInputRef = useRef(null);
 
@@ -59,7 +63,6 @@ export default function Documents() {
     link.click();
     document.body.removeChild(link);
   };
-
   const handleFile = async (file) => {
     if (!file) return;
     setUploading(true);
@@ -73,6 +76,11 @@ export default function Documents() {
         reader.readAsDataURL(file);
       });
 
+      // Extract text via OCR service
+      const extractedText = await CIL_OCR.extractText(file);
+      // Auto-parse to get document type and data
+      const { type: detectedType, data } = await CIL_OCR.autoParse(extractedText);
+
       // Determine preview
       let previewUrl = null;
       let previewType = "other";
@@ -84,19 +92,79 @@ export default function Documents() {
         previewType = "pdf";
       }
 
-      // Set form data with file content stored as base64
+      // Prepare form update
       const fileExtension = fileName.split(".").pop();
-      setFormData({
-        name: fileName.replace(/\.[^/.]+$/, ""),
-        type: "other",
+      const newFormData = {
+        ...formData,
+        name: fileName.replace(/\\.[^/\\]+$/, ""),
+        type: detectedType !== "other" ? detectedType : "other",
         date: "",
         notes: "",
         content: content, // base64 data URL
         mimeType: file.type,
         fileExtension: fileExtension,
-        equipmentId: formData.equipmentId,
-      });
+        equipmentId: formData.equipmentId, // keep existing
+      };
 
+      // Fill fields based on detected type
+      if (detectedType === "invoice" && data) {
+        // Date
+        if (data.date) {
+          const dateMatch = data.date.match(/(\\d{1,2})[\\/-](\\d{1,2})[\\/-](\\d{2,4})/);
+          if (dateMatch) {
+            const [, day, month, year] = dateMatch;
+            const y = year.length === 2 ? "20" + year : year;
+            newFormData.date = y + "-" + month.padStart(2, "0") + "-" + day.padStart(2, "0");
+          }
+        }
+        // Amount
+        if (data.amount) {
+          const amountNum = parseFloat(data.amount.replace(/[^\\d.,]/g, "").replace(",", "."));
+          if (!isNaN(amountNum)) {
+            const prefix = newFormData.notes ? `${newFormData.notes} | ` : "";
+            newFormData.notes = `${prefix}Montant: ${amountNum.toFixed(2)} €`;
+          }
+        }
+        // Supplier
+        if (data.supplier) {
+          const prefix = newFormData.notes ? `${newFormData.notes} | ` : "";
+          newFormData.notes = `${prefix}Fournisseur: ${data.supplier}`;
+        }
+      } else if (detectedType === "dpe" && data) {
+        // Date
+        if (data.date) {
+          const dateMatch = data.date.match(/(\\d{1,2})[\\/-](\\d{1,2})[\\/-](\\d{2,4})/);
+          if (dateMatch) {
+            const [, day, month, year] = dateMatch;
+            const y = year.length === 2 ? "20" + year : year;
+            newFormData.date = y + "-" + month.padStart(2, "0") + "-" + day.padStart(2, "0");
+          }
+        }
+        // Energy class
+        if (data.energyClass) {
+          const prefix = newFormData.notes ? `${newFormData.notes} | ` : "";
+          newFormData.notes = `${prefix}Classe énergie: ${data.energyClass}`;
+        }
+        // GES class
+        if (data.gesClass) {
+          const prefix = newFormData.notes ? `${newFormData.notes} | ` : "";
+          newFormData.notes = `${prefix}GES: ${data.gesClass}`;
+        }
+        // Surface
+        if (data.surface) {
+          const prefix = newFormData.notes ? `${newFormData.notes} | ` : "";
+          newFormData.notes = `${prefix}Surface: ${data.surface} m²`;
+        }
+      } else if (detectedType === "warranty" && data) {
+        const prefix = newFormData.notes ? `${newFormData.notes} | ` : "";
+        newFormData.notes = `${prefix}Garantie détectée`;
+      } else if (detectedType === "contract" && data) {
+        const prefix = newFormData.notes ? `${newFormData.notes} | ` : "";
+        newFormData.notes = `${prefix}Contrat détecté`;
+      }
+
+      // Apply updates
+      setFormData(newFormData);
       setFileToUpload(file);
       setPreview({ url: previewUrl, type: previewType, name: fileName });
     } catch (error) {
@@ -105,8 +173,10 @@ export default function Documents() {
       const fileName = file.name;
       setFormData((prev) => ({
         ...prev,
-        name: fileName.replace(/\.[^/.]+$/, ""),
+        name: fileName.replace(/\\.[^/\\]+$/, ""),
         type: "other",
+        date: "",
+        notes: "",
         content: "",
       }));
       setFileToUpload(file);
@@ -115,7 +185,6 @@ export default function Documents() {
       setUploading(false);
     }
   };
-
   const handleDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -152,6 +221,7 @@ export default function Documents() {
     
     const newDoc = {
       ...formData,
+      propertyId: formData.propertyId || properties[0]?.id || null,
       icon: type?.icon || "📎",
       equipmentName: selectedEquipment ? selectedEquipment.name : null,
       createdAt: new Date().toISOString(),
@@ -168,6 +238,7 @@ export default function Documents() {
       mimeType: "",
       fileExtension: "",
       equipmentId: "",
+      propertyId: properties[0]?.id || "",
     });
     setShowForm(false);
     setPreview(null);
@@ -253,6 +324,25 @@ export default function Documents() {
               required
             />
           </div>
+
+          {properties.length > 1 && (
+            <div>
+              <label className="block text-sm font-medium mb-1">Bien concerne</label>
+              <select
+                className="input"
+                value={formData.propertyId || properties[0]?.id || ""}
+                onChange={(e) =>
+                  setFormData({ ...formData, propertyId: e.target.value })
+                }
+              >
+                {properties.map((prop) => (
+                  <option key={prop.id} value={prop.id}>
+                    {prop.adresse?.split(',')[0] || prop.adresse}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -346,6 +436,7 @@ export default function Documents() {
                   mimeType: "",
                   fileExtension: "",
                   equipmentId: "",
+                  propertyId: properties[0]?.id || "",
                 });
                 setPreview(null);
                 setFileToUpload(null);

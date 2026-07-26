@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom'
 import { Home, Wrench, FileText, Bell, Building2 } from 'lucide-react'
 import { useProperty } from '../hooks/useProperty'
+import logoCilia from '../assets/logo-cilia-h.svg'
 
 export default function Layout({ children }) {
   const { properties } = useProperty()
@@ -29,12 +30,12 @@ export default function Layout({ children }) {
   return (
     <div className="min-h-screen flex flex-col bg-cream">
       {/* Header */}
-      <header className="bg-marine text-white px-4 py-3 sticky top-0 z-50 shadow-sm">
+      <header className="bg-cream text-marine px-4 py-3 sticky top-0 z-50 shadow-sm border-b border-marine/10">
         <div className="max-w-lg mx-auto flex items-center gap-3">
-          <span className="font-brand text-lg font-bold tracking-tight">CILIA</span>
+          <img src={logoCilia} alt="CILIA" className="h-8" />
           {hasProperty && (
             <>
-              <span className="text-white/30">|</span>
+              <span className="text-marine/20">|</span>
               <span className="text-sm font-medium">{getTitle()}</span>
             </>
           )}

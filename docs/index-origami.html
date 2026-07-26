@@ -74,7 +74,7 @@ tailwind.config = {
       </a>
       <a href="#comment" class="text-sm hover:text-cil-blue transition hidden sm:block">Comment ça marche</a>
       <a href="comparaison.html" class="text-sm hover:text-cil-blue transition hidden sm:block">Comparaison</a>
-      <a href="app.html" class="bg-cil-blue text-white px-5 py-2.5 rounded-lg font-medium text-sm hover:bg-cil-blue/90 transition">Créer mon carnet</a>
+      <a href="#" class="app-link bg-cil-blue text-white px-5 py-2.5 rounded-lg font-medium text-sm hover:bg-cil-blue/90 transition">Créer mon carnet</a>
     </div>
   </div>
 </nav>
@@ -103,7 +103,7 @@ tailwind.config = {
         Prêt en 2 minutes pour votre vente ou location.
       </p>
       <div class="flex flex-col sm:flex-row gap-4">
-        <a href="app.html" class="bg-cil-blue text-white px-8 py-4 rounded-xl font-bricolage font-semibold text-lg hover:bg-cil-blue/90 transition text-center shadow-xl shadow-cil-blue/30">
+        <a href="#" class="app-link bg-cil-blue text-white px-8 py-4 rounded-xl font-bricolage font-semibold text-lg hover:bg-cil-blue/90 transition text-center shadow-xl shadow-cil-blue/30">
           <i data-lucide="camera" class="w-5 h-5 inline mr-2"></i>
           Essayer l'IA gratuitement
         </a>
@@ -128,7 +128,7 @@ tailwind.config = {
     </div>
     <div class="relative flex justify-center">
       <div class="absolute inset-0 bg-gradient-to-br from-cil-blue/10 via-menthe/10 to-soleil/10 rounded-3xl transform rotate-3"></div>
-      <img src="assets/hero-illustration.svg" alt="Illustration CILIA" class="w-full max-w-lg relative z-10">
+      <img src="assets/hero-illustration.png" alt="Illustration CILIA" class="w-full max-w-lg relative z-10">
     </div>
   </div>
 </section>
@@ -273,7 +273,7 @@ tailwind.config = {
           <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i><strong class="text-cil-blue">IA incluse</strong></li>
           <li class="flex items-center gap-2 text-sm"><i data-lucide="check" class="w-4 h-4 text-menthe"></i>Alertes basiques</li>
         </ul>
-        <a href="app.html" class="block w-full text-center bg-cil-blue/10 text-cil-blue py-3 rounded-lg font-medium hover:bg-cil-blue/20 transition">Commencer</a>
+        <a href="#" class="app-link block w-full text-center bg-cil-blue/10 text-cil-blue py-3 rounded-lg font-medium hover:bg-cil-blue/20 transition">Commencer</a>
       </div>
 
       <div class="bg-cil-blue text-white rounded-2xl p-6 relative shadow-2xl transform md:-translate-y-2">
@@ -373,7 +373,7 @@ tailwind.config = {
     <p class="text-white/80 text-lg mb-8">
       Prenez un document en photo. L'IA fait le reste. Gratuit, sans inscription.
     </p>
-    <a href="app.html" class="inline-block bg-white text-cil-blue px-10 py-4 rounded-xl font-bricolage font-semibold text-lg hover:bg-cream transition shadow-2xl">
+    <a href="#" class="app-link inline-block bg-white text-cil-blue px-10 py-4 rounded-xl font-bricolage font-semibold text-lg hover:bg-cream transition shadow-2xl">
       <i data-lucide="camera" class="w-5 h-5 inline mr-2"></i>
       Tester l'IA maintenant
     </a>
@@ -391,7 +391,7 @@ tailwind.config = {
       <div>
         <p class="font-bricolage font-semibold mb-4">Produit</p>
         <ul class="space-y-2 text-sm text-white/60">
-          <li><a href="app.html" class="hover:text-white transition">Créer un carnet</a></li>
+          <li><a href="#" class="app-link hover:text-white transition">Créer un carnet</a></li>
           <li><a href="#tarifs" class="hover:text-white transition">Tarifs</a></li>
           <li><a href="#ia" class="hover:text-white transition">Notre IA</a></li>
         </ul>
@@ -421,5 +421,11 @@ tailwind.config = {
 </footer>
 
 <script>lucide.createIcons();</script>
+<script src="config.js"></script>
+<script>
+document.querySelectorAll(".app-link").forEach(function(el) {
+  el.href = CILIA_CONFIG.APP_URL;
+});
+</script>
 </body>
 </html>

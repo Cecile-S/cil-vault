@@ -39,7 +39,7 @@ tailwind.config = {
 <a href="index-origami.html" class="font-bricolage font-bold text-2xl text-cil-blue">🏠 CILIA</a>
 <div class="flex gap-6 items-center">
 <a href="index-origami.html" class="text-sm hover:text-cil-blue transition">Accueil</a>
-<a href="app.html" class="bg-cil-blue text-white px-5 py-2.5 rounded-lg font-medium text-sm hover:bg-cil-blue/90 transition">Créer mon carnet</a>
+<a href="#" class="app-link bg-cil-blue text-white px-5 py-2.5 rounded-lg font-medium text-sm hover:bg-cil-blue/90 transition">Créer mon carnet</a>
 </div>
 </div>
 </nav>
@@ -351,7 +351,7 @@ Prêt à essayer CILIA ?
 <p class="text-white/80 mb-8">
 15 documents gratuits, IA incluse, sans inscription.
 </p>
-<a href="app.html" class="inline-block bg-white text-cil-blue px-10 py-4 rounded-xl font-bricolage font-semibold text-lg hover:bg-cream transition shadow-2xl">
+<a href="#" class="app-link inline-block bg-white text-cil-blue px-10 py-4 rounded-xl font-bricolage font-semibold text-lg hover:bg-cream transition shadow-2xl">
 Créer mon carnet gratuitement
 </a>
 </div>
@@ -366,5 +366,11 @@ Créer mon carnet gratuitement
 </footer>
 
 <script>lucide.createIcons();</script>
+<script src="config.js"></script>
+<script>
+document.querySelectorAll(".app-link").forEach(function(el) {
+  el.href = CILIA_CONFIG.APP_URL;
+});
+</script>
 </body>
 </html>

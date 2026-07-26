@@ -1,37 +1,25 @@
 import { useState, useEffect } from 'react';
-import { openDB, deleteDB } from 'idb';
+import { initDB, STORES } from './useDB';
 
-// Constants
-const DB_NAME = 'cil-vault-db';
-const DB_VERSION = 1;
-const STORE_NAME = 'documents';
-
-// Initialize the database
-const initDB = async () => {
-  return openDB(DB_NAME, DB_VERSION, {
-    upgrade(db) {
-      // Create object store if it doesn't exist
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
-      }
-    },
-  });
-};
-
-// Hook to use IndexedDB for documents
-export function useIndexedDB() {
+// Hook to use IndexedDB for documents (base de donnees unifiee, avec association a un bien)
+export function useDocuments() {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Load documents from IndexedDB
-  const loadDocuments = async () => {
+  const loadDocuments = async (propertyId) => {
     try {
       const db = await initDB();
-      const tx = db.transaction(STORE_NAME, 'readonly');
-      const store = tx.objectStore(STORE_NAME);
-      const allDocs = await store.getAll();
-      setDocuments(allDocs);
+      const tx = db.transaction(STORES.DOCUMENTS, 'readonly');
+      const store = tx.objectStore(STORES.DOCUMENTS);
+      let allDocuments;
+      if (propertyId) {
+        const index = store.index('by-property');
+        allDocuments = await index.getAll(propertyId);
+      } else {
+        allDocuments = await store.getAll();
+      }
+      setDocuments(allDocuments || []);
       setLoading(false);
     } catch (err) {
       console.error('Failed to load documents:', err);
@@ -40,15 +28,13 @@ export function useIndexedDB() {
     }
   };
 
-  // Add a document
   const addDocument = async (doc) => {
     try {
       const db = await initDB();
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
+      const tx = db.transaction(STORES.DOCUMENTS, 'readwrite');
+      const store = tx.objectStore(STORES.DOCUMENTS);
       await store.add(doc);
       await tx.done;
-      // Reload documents to get the updated list with the new ID
       await loadDocuments();
     } catch (err) {
       console.error('Failed to add document:', err);
@@ -57,12 +43,11 @@ export function useIndexedDB() {
     }
   };
 
-  // Update a document
   const updateDocument = async (id, updates) => {
     try {
       const db = await initDB();
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
+      const tx = db.transaction(STORES.DOCUMENTS, 'readwrite');
+      const store = tx.objectStore(STORES.DOCUMENTS);
       const doc = await store.get(id);
       if (!doc) throw new Error('Document not found');
       const updatedDoc = { ...doc, ...updates };
@@ -76,12 +61,11 @@ export function useIndexedDB() {
     }
   };
 
-  // Delete a document
   const deleteDocument = async (id) => {
     try {
       const db = await initDB();
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
+      const tx = db.transaction(STORES.DOCUMENTS, 'readwrite');
+      const store = tx.objectStore(STORES.DOCUMENTS);
       await store.delete(id);
       await tx.done;
       await loadDocuments();
@@ -92,12 +76,11 @@ export function useIndexedDB() {
     }
   };
 
-  // Clear all documents (for testing)
   const clearDocuments = async () => {
     try {
       const db = await initDB();
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
+      const tx = db.transaction(STORES.DOCUMENTS, 'readwrite');
+      const store = tx.objectStore(STORES.DOCUMENTS);
       await store.clear();
       await tx.done;
       await loadDocuments();
@@ -108,10 +91,14 @@ export function useIndexedDB() {
     }
   };
 
-  // Load documents on initial mount
   useEffect(() => {
     loadDocuments();
   }, []);
+
+  const getDocumentsByProperty = (propertyId) => {
+    if (!propertyId) return documents;
+    return documents.filter(doc => doc.propertyId === propertyId);
+  };
 
   return {
     documents,
@@ -121,5 +108,7 @@ export function useIndexedDB() {
     updateDocument,
     deleteDocument,
     clearDocuments,
+    loadDocuments,
+    getDocumentsByProperty,
   };
 }

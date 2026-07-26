@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Plus, Trash2, Calendar, Settings, Edit2, Save, X, Clock, ChevronDown, ChevronUp, Wrench } from 'lucide-react'
+import { Plus, Trash2, Calendar, Settings, Edit2, Save, X, Clock, ChevronDown, ChevronUp, Wrench, Home } from 'lucide-react'
 import { useEquipment } from '../hooks/useEquipment'
+import { useProperty } from '../hooks/useProperty'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { useMaintenanceHistory } from '../hooks/useMaintenanceHistory'
 
@@ -20,10 +21,14 @@ const AVAILABLE_ICONS = ['🔥', '💨', '🌡️', '🚿', '🏮', '❄️', '�
 
 export default function Equipment() {
   const { equipment, loading, error, addEquipment, updateEquipment, deleteEquipment } = useEquipment()
+  const { properties } = useProperty()
   const { addRecord, deleteRecord, getRecordsByEquipment } = useMaintenanceHistory()
   const [customTypes, setCustomTypes] = useLocalStorage('cil-equipment-custom-types', [])
   const [showForm, setShowForm] = useState(false)
   const [showTypeManager, setShowTypeManager] = useState(false)
+  const [filterPropertyId, setFilterPropertyId] = useState('all')
+  const [editingPropertyId, setEditingPropertyId] = useState(null)
+  const [editPropertyValue, setEditPropertyValue] = useState('')
   const [expandedEquipment, setExpandedEquipment] = useState(null)
   const [showMaintenanceForm, setShowMaintenanceForm] = useState(null) // equipmentId
   const [maintenanceForm, setMaintenanceForm] = useState({
@@ -41,6 +46,7 @@ export default function Equipment() {
     lastMaintenance: '',
     nextMaintenance: '',
     notes: '',
+    propertyId: '',
   })
   const [newTypeData, setNewTypeData] = useState({
     label: '',
@@ -69,6 +75,7 @@ export default function Equipment() {
       nextMaintenance: formData.nextMaintenance,
       maintenanceInterval: type?.maintenanceInterval || 12,
       notes: formData.notes,
+      propertyId: formData.propertyId || null,
       createdAt: new Date().toISOString(),
     }
     addEquipment(newEquipment)
@@ -80,6 +87,7 @@ export default function Equipment() {
       lastMaintenance: '',
       nextMaintenance: '',
       notes: '',
+      propertyId: '',
     })
     setShowForm(false)
   }
@@ -298,6 +306,22 @@ export default function Equipment() {
           </div>
 
           <div>
+            <label className="block text-sm font-medium mb-1">Bien associé</label>
+            <select 
+              className="input" 
+              value={formData.propertyId} 
+              onChange={(e) => setFormData({ ...formData, propertyId: e.target.value })}
+            >
+              <option value="">— Sélectionner un bien —</option>
+              {properties.map(prop => (
+                <option key={prop.id} value={prop.id}>
+                  {prop.adresse || prop.nom || `Bien #${prop.id}`}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
             <label className="block text-sm font-medium mb-1">Nom / Modèle</label>
             <input 
               type="text" 
@@ -364,17 +388,51 @@ export default function Equipment() {
         </form>
       )}
 
-      {equipment.length === 0 ? (
-        <div className="text-center py-12">
-          <Settings className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-          <p className="text-slate-500">Aucun équipement enregistré</p>
-          <p className="text-sm text-slate-400 mt-1">
-            Ajoutez votre chaudière, VMC ou PAC pour recevoir des rappels d'entretien
-          </p>
+      {/* Property filter bar — only show if more than 1 property */}
+      {properties.length > 1 && (
+        <div className="flex items-center gap-2">
+          <Home className="w-4 h-4 text-slate-400" />
+          <select
+            className="input text-sm max-w-xs"
+            value={filterPropertyId}
+            onChange={(e) => setFilterPropertyId(e.target.value)}
+          >
+            <option value="all">Tous les biens</option>
+            {properties.map(prop => (
+              <option key={prop.id} value={prop.id}>
+                {prop.adresse || prop.nom || `Bien #${prop.id}`}
+              </option>
+            ))}
+          </select>
         </div>
-      ) : (
+      )}
+
+      {/* Filtered equipment list */}
+      {(() => {
+        const filteredEquipment = filterPropertyId === 'all'
+          ? equipment
+          : equipment.filter(eq => eq.propertyId === parseInt(filterPropertyId) || eq.propertyId === filterPropertyId)
+        
+        if (filteredEquipment.length === 0) {
+          return (
+            <div className="text-center py-12">
+              <Settings className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+              <p className="text-slate-500">
+                {equipment.length === 0
+                  ? 'Aucun équipement enregistré'
+                  : 'Aucun équipement pour ce bien'
+                }
+              </p>
+              <p className="text-sm text-slate-400 mt-1">
+                Ajoutez votre chaudière, VMC ou PAC pour recevoir des rappels d'entretien
+              </p>
+            </div>
+          )
+        }
+
+        return (
         <div className="space-y-3">
-          {equipment.map(eq => {
+          {filteredEquipment.map(eq => {
             const type = equipmentTypes.find(t => t.id === eq.type)
             const days = getDaysUntilMaintenance(eq.nextMaintenance)
             const status = getMaintenanceStatus(days)
@@ -391,6 +449,16 @@ export default function Equipment() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => {
+                        setEditingPropertyId(editingPropertyId === eq.id ? null : eq.id)
+                        setEditPropertyValue(eq.propertyId || '')
+                      }}
+                      className="p-2 text-slate-400 hover:text-blue-500"
+                      title="Modifier le bien associé"
+                    >
+                      <Home className="w-4 h-4" />
+                    </button>
                     <button
                       onClick={() => toggleEquipmentExpansion(eq.id)}
                       className="p-2 text-slate-400 hover:text-blue-500"
@@ -421,6 +489,18 @@ export default function Equipment() {
                   <p className="mt-2 text-sm text-slate-500 bg-slate-50 rounded-lg p-2">
                     {eq.notes}
                   </p>
+                )}
+
+                {/* Associated property badge */}
+                {eq.propertyId && (
+                  <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
+                    <Home className="w-3.5 h-3.5" />
+                    <span>
+                      {properties.find(p => p.id === eq.propertyId)?.adresse 
+                        || properties.find(p => p.id === eq.propertyId)?.nom 
+                        || `Bien #${eq.propertyId}`}
+                    </span>
+                  </div>
                 )}
 
                 {/* Expandable maintenance history */}
@@ -570,7 +650,7 @@ export default function Equipment() {
             )
           })}
         </div>
-      )}
+      )})()}
     </div>
   )
 }

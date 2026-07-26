@@ -7,14 +7,20 @@ export function useEquipment() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Load equipment from IndexedDB
-  const loadEquipment = async () => {
+  // Load all equipment from IndexedDB
+  const loadEquipment = async (propertyId) => {
     try {
       const db = await initDB();
       const tx = db.transaction(STORES.EQUIPMENT, 'readonly');
       const store = tx.objectStore(STORES.EQUIPMENT);
-      const allEquipment = await store.getAll();
-      setEquipment(allEquipment);
+      let allEquipment;
+      if (propertyId) {
+        const index = store.index('by-property');
+        allEquipment = await index.getAll(propertyId);
+      } else {
+        allEquipment = await store.getAll();
+      }
+      setEquipment(allEquipment || []);
       setLoading(false);
     } catch (err) {
       console.error('Failed to load equipment:', err);
@@ -96,6 +102,12 @@ export function useEquipment() {
     loadEquipment();
   }, []);
 
+  // Get equipment filtered by property — useful for per-property views
+  const getEquipmentByProperty = (propertyId) => {
+    if (!propertyId) return equipment;
+    return equipment.filter(eq => eq.propertyId === propertyId);
+  };
+
   return {
     equipment,
     loading,
@@ -104,5 +116,7 @@ export function useEquipment() {
     updateEquipment,
     deleteEquipment,
     clearEquipment,
+    loadEquipment,
+    getEquipmentByProperty,
   };
 }
