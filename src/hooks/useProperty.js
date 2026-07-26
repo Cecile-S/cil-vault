@@ -1,13 +1,16 @@
-import { useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, createElement } from 'react';
 import { initDB, STORES } from './useDB';
 
-// Hook to use IndexedDB for properties
-export function useProperty() {
+// Contexte partage : toutes les pages voient le meme etat des biens en temps reel
+// (avant : chaque composant appelant useProperty() avait son propre etat independant,
+// ce qui causait un blocage sur l'ecran de creation apres avoir cree un bien)
+const PropertyContext = createContext(null);
+
+export function PropertyProvider({ children }) {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Load properties from IndexedDB
   const loadProperties = async () => {
     try {
       const db = await initDB();
@@ -23,7 +26,6 @@ export function useProperty() {
     }
   };
 
-  // Add a property
   const addProperty = async (property) => {
     try {
       const db = await initDB();
@@ -31,7 +33,6 @@ export function useProperty() {
       const store = tx.objectStore(STORES.PROPERTIES);
       await store.add(property);
       await tx.done;
-      // Reload properties to get the updated list with the new ID
       await loadProperties();
     } catch (err) {
       console.error('Failed to add property:', err);
@@ -40,7 +41,6 @@ export function useProperty() {
     }
   };
 
-  // Update a property
   const updateProperty = async (id, updates) => {
     try {
       const db = await initDB();
@@ -59,7 +59,6 @@ export function useProperty() {
     }
   };
 
-  // Delete a property
   const deleteProperty = async (id) => {
     try {
       const db = await initDB();
@@ -75,7 +74,6 @@ export function useProperty() {
     }
   };
 
-  // Clear all properties (for testing)
   const clearProperties = async () => {
     try {
       const db = await initDB();
@@ -91,12 +89,11 @@ export function useProperty() {
     }
   };
 
-  // Load properties on initial mount
   useEffect(() => {
     loadProperties();
   }, []);
 
-  return {
+  const value = {
     properties,
     loading,
     error,
@@ -105,4 +102,15 @@ export function useProperty() {
     deleteProperty,
     clearProperties,
   };
+
+  return createElement(PropertyContext.Provider, { value }, children);
+}
+
+// Hook de consommation : toutes les pages qui appellent useProperty() lisent le MEME etat partage
+export function useProperty() {
+  const context = useContext(PropertyContext);
+  if (!context) {
+    throw new Error('useProperty must be used within a PropertyProvider');
+  }
+  return context;
 }
