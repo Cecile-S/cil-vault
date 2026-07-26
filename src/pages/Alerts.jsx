@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react'
 import { Bell, Check, AlertTriangle, Info, X } from 'lucide-react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { useEquipment } from '../hooks/useEquipment'
+import { useDocuments } from '../hooks/useDocuments'
+import { needsWarrantyAlert, getWarrantyAlertMessage } from '../services/warranty-calculator'
+import { needsDiagnosticAlert, getDiagnosticAlertMessage } from '../services/diagnostic-validator'
+import { generateTenantNegligenceAlerts } from '../services/tenant-alert-service'
 
 // Generate alerts based on equipment
 function generateAlerts(equipment) {
@@ -33,19 +37,59 @@ function generateAlerts(equipment) {
         })
       }
     }
+
+    if (needsWarrantyAlert(eq)) {
+      alerts.push({
+        id: `warranty-${eq.id}`,
+        type: 'warning',
+        title: `Garantie ${eq.name}`,
+        message: getWarrantyAlertMessage(eq),
+        equipmentId: eq.id,
+        createdAt: new Date().toISOString(),
+      })
+    }
+  })
+
+  const tenantAlerts = generateTenantNegligenceAlerts(equipment)
+  tenantAlerts.forEach(ta => {
+    alerts.push({
+      id: `tenant-${ta.equipmentId || ta.id}`,
+      type: ta.severite === 'urgent' ? 'urgent' : 'warning',
+      title: ta.title || 'Entretien locataire en retard',
+      message: ta.message,
+      equipmentId: ta.equipmentId,
+      createdAt: new Date().toISOString(),
+    })
   })
 
   return alerts
 }
 
+function generateDiagnosticAlerts(documents) {
+  const alerts = []
+  documents.forEach(doc => {
+    if (needsDiagnosticAlert(doc)) {
+      alerts.push({
+        id: `diagnostic-${doc.id}`,
+        type: 'warning',
+        title: `Diagnostic ${doc.name}`,
+        message: getDiagnosticAlertMessage(doc),
+        createdAt: new Date().toISOString(),
+      })
+    }
+  })
+  return alerts
+}
+
 export default function Alerts() {
   const { equipment } = useEquipment()
+  const { documents } = useDocuments()
   const [dismissedAlerts, setDismissedAlerts] = useLocalStorage('cil-dismissed-alerts', [])
   const [systemAlerts] = useLocalStorage('cil-system-alerts', [])
 
-  // Generate maintenance alerts
   const maintenanceAlerts = generateAlerts(equipment)
-  const allAlerts = [...maintenanceAlerts, ...systemAlerts]
+  const diagnosticAlerts = generateDiagnosticAlerts(documents)
+  const allAlerts = [...maintenanceAlerts, ...diagnosticAlerts, ...systemAlerts]
   const activeAlerts = allAlerts.filter(a => !dismissedAlerts.includes(a.id))
 
   const handleDismiss = (alertId) => {
