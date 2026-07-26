@@ -196,6 +196,7 @@ export default function Documents() {
       setFormData(newFormData);
       setFileToUpload(file);
       setPreview({ url: previewUrl, type: previewType, name: fileName });
+      setShowForm(true);
     } catch (error) {
       console.error("File processing error:", error);
       // Fallback to basic handling
@@ -210,6 +211,7 @@ export default function Documents() {
       }));
       setFileToUpload(file);
       setPreview(null);
+      setShowForm(true);
     } finally {
       setUploading(false);
     }
@@ -362,13 +364,28 @@ export default function Documents() {
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded p-4 text-center ${
+            className={`border-2 border-dashed rounded p-4 text-center space-y-2 ${
               dragOver
                 ? "border-blue-500 bg-blue-50"
                 : "border-slate-300 bg-slate-50"
             }`}
           >
-            <p className="text-sm text-slate-500">Ou déposez un fichier ici</p>
+            <p className="text-sm text-slate-500">Déposez un fichier ici</p>
+            <p className="text-xs text-slate-400">ou</p>
+            <input
+              type="file"
+              accept="application/pdf,image/*"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="btn btn-secondary text-sm"
+            >
+              Sélectionner un fichier
+            </button>
           </div>
         </div>
       </div>
