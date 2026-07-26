@@ -16,6 +16,9 @@ import { useDocuments } from "../hooks/useDocuments";
 import { useEquipment } from "../hooks/useEquipment";
 import { useProperty } from "../hooks/useProperty";
 import { CIL_OCR } from "../services/ocr-service";
+import { getDiagnosticStatus } from "../services/diagnostic-validator";
+import { detectDiagnosticsInText, splitGroupedDiagnostic } from "../services/diagnostic-group-parser";
+import { extractWarrantyDuration } from "../services/warranty-calculator";
 
 const DOCUMENT_TYPES = [
   { id: "dpe", label: "DPE", icon: "📊" },
@@ -34,7 +37,7 @@ const DOCUMENT_TYPES = [
 export default function Documents() {
   const { documents, loading, error, addDocument, deleteDocument } =
     useDocuments();
-  const { equipment } = useEquipment();
+  const { equipment, updateEquipment } = useEquipment();
   const { properties } = useProperty();
   const [showForm, setShowForm] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -51,6 +54,9 @@ export default function Documents() {
     fileExtension: "",
     equipmentId: "",
     propertyId: "",
+    detectedWarrantyMonths: "",
+    updateEquipmentWarranty: true,
+    groupedDiagnostics: [],
   });
   const fileInputRef = useRef(null);
 
@@ -81,6 +87,23 @@ export default function Documents() {
       // Auto-parse to get document type and data
       const { type: detectedType, data } = await CIL_OCR.autoParse(extractedText);
 
+      // Detecte si le PDF contient plusieurs diagnostics groupes
+      const detectedDiagnostics = detectDiagnosticsInText(extractedText);
+      const isGroupedDiagnostic = detectedDiagnostics.length > 1;
+      const multiDiagnosticNote = isGroupedDiagnostic
+        ? `Diagnostic groupe detecte : ${detectedDiagnostics.join(', ')}`
+        : '';
+      let detectedGenericDate = '';
+      const genericDateMatch = extractedText.match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})/);
+      if (genericDateMatch) {
+        const [, day, month, year] = genericDateMatch;
+        const y = year.length === 2 ? "20" + year : year;
+        detectedGenericDate = y + "-" + month.padStart(2, "0") + "-" + day.padStart(2, "0");
+      }
+      const splitDiagnostics = isGroupedDiagnostic
+        ? splitGroupedDiagnostic({ notes: extractedText, date: detectedGenericDate, id: Date.now(), name: fileName }, 'sale')
+        : [];
+
       // Determine preview
       let previewUrl = null;
       let previewType = "other";
@@ -99,11 +122,12 @@ export default function Documents() {
         name: fileName.replace(/\\.[^/\\]+$/, ""),
         type: detectedType !== "other" ? detectedType : "other",
         date: "",
-        notes: "",
+        notes: multiDiagnosticNote,
         content: content, // base64 data URL
         mimeType: file.type,
         fileExtension: fileExtension,
         equipmentId: formData.equipmentId, // keep existing
+        groupedDiagnostics: splitDiagnostics,
       };
 
       // Fill fields based on detected type
@@ -129,6 +153,11 @@ export default function Documents() {
         if (data.supplier) {
           const prefix = newFormData.notes ? `${newFormData.notes} | ` : "";
           newFormData.notes = `${prefix}Fournisseur: ${data.supplier}`;
+        }
+        // Warranty duration (mois) detectee dans le texte de la facture
+        const warrantyMonthsDetected = extractWarrantyDuration(extractedText);
+        if (warrantyMonthsDetected) {
+          newFormData.detectedWarrantyMonths = String(warrantyMonthsDetected);
         }
       } else if (detectedType === "dpe" && data) {
         // Date
@@ -167,6 +196,7 @@ export default function Documents() {
       setFormData(newFormData);
       setFileToUpload(file);
       setPreview({ url: previewUrl, type: previewType, name: fileName });
+      setShowForm(true);
     } catch (error) {
       console.error("File processing error:", error);
       // Fallback to basic handling
@@ -181,6 +211,7 @@ export default function Documents() {
       }));
       setFileToUpload(file);
       setPreview(null);
+      setShowForm(true);
     } finally {
       setUploading(false);
     }
@@ -218,15 +249,49 @@ export default function Documents() {
     e.preventDefault();
     const type = DOCUMENT_TYPES.find((t) => t.id === formData.type);
     const selectedEquipment = equipment.find(eq => eq.id === parseInt(formData.equipmentId));
-    
-    const newDoc = {
-      ...formData,
-      propertyId: formData.propertyId || properties[0]?.id || null,
-      icon: type?.icon || "📎",
-      equipmentName: selectedEquipment ? selectedEquipment.name : null,
-      createdAt: new Date().toISOString(),
-    };
-    addDocument(newDoc);
+    const propertyIdToUse = formData.propertyId || properties[0]?.id || null;
+
+    if (formData.groupedDiagnostics && formData.groupedDiagnostics.length > 1) {
+      // Diagnostic groupe : creer un document distinct par diagnostic detecte
+      formData.groupedDiagnostics.forEach((diag) => {
+        const diagType = DOCUMENT_TYPES.find((t) => t.id === diag.type);
+        addDocument({
+          name: `${diag.label} - ${formData.name || "Diagnostic"}`,
+          type: diag.type,
+          date: diag.date || formData.date,
+          notes: `Extrait du diagnostic groupe : ${formData.name}`,
+          content: formData.content,
+          mimeType: formData.mimeType,
+          fileExtension: formData.fileExtension,
+          equipmentId: formData.equipmentId,
+          propertyId: propertyIdToUse,
+          icon: diagType?.icon || "📎",
+          equipmentName: selectedEquipment ? selectedEquipment.name : null,
+          isSplitFromGroup: true,
+          createdAt: new Date().toISOString(),
+        });
+      });
+    } else {
+      const newDoc = {
+        ...formData,
+        propertyId: propertyIdToUse,
+        icon: type?.icon || "📎",
+        equipmentName: selectedEquipment ? selectedEquipment.name : null,
+        createdAt: new Date().toISOString(),
+      };
+      addDocument(newDoc);
+    }
+
+    // Proposer la mise a jour de la garantie de l'equipement lie, si detectee/confirmee
+    if (
+      formData.updateEquipmentWarranty &&
+      formData.equipmentId &&
+      formData.detectedWarrantyMonths
+    ) {
+      updateEquipment(parseInt(formData.equipmentId), {
+        warrantyMonths: parseInt(formData.detectedWarrantyMonths),
+      });
+    }
 
     // Reset form
     setFormData({
@@ -239,6 +304,9 @@ export default function Documents() {
       fileExtension: "",
       equipmentId: "",
       propertyId: properties[0]?.id || "",
+      detectedWarrantyMonths: "",
+      updateEquipmentWarranty: true,
+      groupedDiagnostics: [],
     });
     setShowForm(false);
     setPreview(null);
@@ -296,13 +364,28 @@ export default function Documents() {
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
-            className={`border-2 border-dashed rounded p-4 text-center ${
+            className={`border-2 border-dashed rounded p-4 text-center space-y-2 ${
               dragOver
                 ? "border-blue-500 bg-blue-50"
                 : "border-slate-300 bg-slate-50"
             }`}
           >
-            <p className="text-sm text-slate-500">Ou déposez un fichier ici</p>
+            <p className="text-sm text-slate-500">Déposez un fichier ici</p>
+            <p className="text-xs text-slate-400">ou</p>
+            <input
+              type="file"
+              accept="application/pdf,image/*"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="btn btn-secondary text-sm"
+            >
+              Sélectionner un fichier
+            </button>
           </div>
         </div>
       </div>
@@ -403,6 +486,46 @@ export default function Documents() {
                   Ajoutez d'abord des équipements pour les lier aux factures
                 </p>
               )}
+
+              {formData.equipmentId && (
+                <div className="mt-3 p-3 bg-slate-50 rounded-lg space-y-2">
+                  <label className="block text-sm font-medium">
+                    Garantie détectée (mois)
+                  </label>
+                  <input
+                    type="number"
+                    className="input"
+                    placeholder="Ex: 24"
+                    value={formData.detectedWarrantyMonths}
+                    onChange={(e) =>
+                      setFormData({ ...formData, detectedWarrantyMonths: e.target.value })
+                    }
+                  />
+                  <label className="flex items-center gap-2 text-sm text-slate-600">
+                    <input
+                      type="checkbox"
+                      checked={formData.updateEquipmentWarranty}
+                      onChange={(e) =>
+                        setFormData({ ...formData, updateEquipmentWarranty: e.target.checked })
+                      }
+                    />
+                    Mettre à jour la garantie de l'équipement avec cette valeur
+                  </label>
+                </div>
+              )}
+            </div>
+          )}
+
+          {formData.groupedDiagnostics && formData.groupedDiagnostics.length > 1 && (
+            <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
+              <p className="text-sm font-medium text-blue-900 mb-2">
+                Diagnostic groupe detecte : {formData.groupedDiagnostics.length} diagnostics seront enregistres separement
+              </p>
+              <ul className="text-sm text-blue-800 space-y-1">
+                {formData.groupedDiagnostics.map((diag) => (
+                  <li key={diag.type}>{diag.icon} {diag.label}</li>
+                ))}
+              </ul>
             </div>
           )}
 
@@ -437,6 +560,9 @@ export default function Documents() {
                   fileExtension: "",
                   equipmentId: "",
                   propertyId: properties[0]?.id || "",
+                  detectedWarrantyMonths: "",
+                  updateEquipmentWarranty: true,
+                  groupedDiagnostics: [],
                 });
                 setPreview(null);
                 setFileToUpload(null);
@@ -509,6 +635,30 @@ export default function Documents() {
                     </span>
                   </div>
                 )}
+
+                {doc.date && ["dpe", "electricity", "gas", "lead", "asbestos", "erp"].includes(doc.type) && (() => {
+                  const diagStatus = getDiagnosticStatus(doc.date, doc.type);
+                  const statusStyle = {
+                    valid: "text-green-700 bg-green-50",
+                    expiring: "text-orange-700 bg-orange-50",
+                    expired: "text-red-700 bg-red-50",
+                    unlimited: "text-green-700 bg-green-50",
+                    unknown: "text-slate-500 bg-slate-50",
+                  }[diagStatus.status] || "text-slate-500 bg-slate-50";
+                  const statusLabel = {
+                    valid: "Valide",
+                    expiring: "Expire bientot",
+                    expired: "Expire",
+                    unlimited: "Validite illimitee",
+                    unknown: "Validite inconnue",
+                  }[diagStatus.status] || "Validite inconnue";
+                  return (
+                    <div className={`mt-2 text-xs rounded-lg px-2 py-1 inline-block ${statusStyle}`}>
+                      {statusLabel}
+                      {diagStatus.expirationDate && ` - jusqu'au ${new Date(diagStatus.expirationDate).toLocaleDateString("fr-FR")}`}
+                    </div>
+                  );
+                })()}
 
                 {linkedEquipmentName && (
                   <div className="mt-2 flex items-center gap-2 text-sm text-blue-600 bg-blue-50 rounded-lg p-2">

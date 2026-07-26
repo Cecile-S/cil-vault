@@ -85,10 +85,10 @@ export function getWarrantyStatus(purchaseDate, warrantyMonths) {
  * @returns {boolean}
  */
 export function needsWarrantyAlert(equipment, alertDaysBefore = 30) {
-  if (!equipment.dateAchat && !equipment.installationDate) return false
+  if (!equipment.dateAchat && !equipment.installationDate && !equipment.installDate) return false
   
-  const purchaseDate = equipment.dateAchat || equipment.installationDate
-  const warrantyMonths = equipment.warrantyDuration || equipment.garantieMois || extractWarrantyDuration(equipment.notes)
+  const purchaseDate = equipment.dateAchat || equipment.installationDate || equipment.installDate
+  const warrantyMonths = equipment.warrantyDuration || equipment.garantieMois || equipment.warrantyMonths || extractWarrantyDuration(equipment.notes)
   
   if (!warrantyMonths) return false
   
@@ -107,8 +107,8 @@ export function needsWarrantyAlert(equipment, alertDaysBefore = 30) {
  * @returns {string}
  */
 export function getWarrantyAlertMessage(equipment) {
-  const purchaseDate = equipment.dateAchat || equipment.installationDate
-  const warrantyMonths = equipment.warrantyDuration || equipment.garantieMois || extractWarrantyDuration(equipment.notes)
+  const purchaseDate = equipment.dateAchat || equipment.installationDate || equipment.installDate
+  const warrantyMonths = equipment.warrantyDuration || equipment.garantieMois || equipment.warrantyMonths || extractWarrantyDuration(equipment.notes)
   
   if (!warrantyMonths) {
     return '⚠️ Garantie: durée non définie'

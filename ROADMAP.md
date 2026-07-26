@@ -121,6 +121,7 @@
 ## 🔧 BACKLOG IDEES
 
 ### Fonctionnalités futures
+- [ ] Recherche automatique de notice (vraie API de recherche type Google Custom Search, cle a configurer) - version actuelle = lien de recherche manuel restreint PDF, valide comme suffisant pour l'instant (26/07/2026)
 - [ ] Multi-logements
 - [ ] Partage famille/notaire
 - [ ] Signature électronique
@@ -165,11 +166,12 @@
 ## 🎨 DESIGN SYSTEM
 
 ### Couleurs
-- Primary : `#1e40af` (bleu)
-- Secondary : `#64748b` (slate)
-- Success : `#10b981` (green)
-- Warning : `#f59e0b` (orange)
-- Danger : `#ef4444` (red)
+- Marine (texte/fond fonce) : `#2C3E50`
+- Cream (fond clair) : `#FEF7ED`
+- Menthe (accent) : `#4ECDC4`
+- Corail (accent) : `#FF6B6B`
+- Soleil (accent) : `#FFE66D`
+- Cil-blue (liens/CTA) : `#1e40af`
 
 ### Typographie
 - Font : Inter, system-ui

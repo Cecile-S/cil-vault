@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, createElement } from 'react';
 import { initDB, STORES } from './useDB';
 
-// Hook to use IndexedDB for documents (base de donnees unifiee, avec association a un bien)
-export function useDocuments() {
+// Contexte partage : evite que chaque composant ait son propre etat independant
+const DocumentsContext = createContext(null);
+
+export function DocumentsProvider({ children }) {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -100,7 +102,7 @@ export function useDocuments() {
     return documents.filter(doc => doc.propertyId === propertyId);
   };
 
-  return {
+  const value = {
     documents,
     loading,
     error,
@@ -111,4 +113,14 @@ export function useDocuments() {
     loadDocuments,
     getDocumentsByProperty,
   };
+
+  return createElement(DocumentsContext.Provider, { value }, children);
+}
+
+export function useDocuments() {
+  const context = useContext(DocumentsContext);
+  if (!context) {
+    throw new Error('useDocuments must be used within a DocumentsProvider');
+  }
+  return context;
 }

@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { Plus, Trash2, Calendar, Settings, Edit2, Save, X, Clock, ChevronDown, ChevronUp, Wrench, Home } from 'lucide-react'
+import { Plus, Trash2, Calendar, Settings, Edit2, Save, X, Clock, ChevronDown, ChevronUp, Wrench, Home, Camera, Loader2 } from 'lucide-react'
 import { useEquipment } from '../hooks/useEquipment'
 import { useProperty } from '../hooks/useProperty'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { useMaintenanceHistory } from '../hooks/useMaintenanceHistory'
+import { getDefaultResponsibility, USER_ROLES, ROLE_LABELS } from '../hooks/useUserRole'
+import { CIL_OCR } from '../services/ocr-service'
 
 const DEFAULT_EQUIPMENT_TYPES = [
   { id: 'boiler', label: 'Chaudière', icon: '🔥', maintenanceInterval: 12 },
@@ -25,6 +27,12 @@ export default function Equipment() {
   const { addRecord, deleteRecord, getRecordsByEquipment } = useMaintenanceHistory()
   const [customTypes, setCustomTypes] = useLocalStorage('cil-equipment-custom-types', [])
   const [showForm, setShowForm] = useState(false)
+  const [editingEquipmentId, setEditingEquipmentId] = useState(null)
+  const [labelPhoto, setLabelPhoto] = useState(null) // base64 data URL de la photo etiquette
+  const [labelExtractedText, setLabelExtractedText] = useState('')
+  const [labelOcrLoading, setLabelOcrLoading] = useState(false)
+  const [notices, setNotices] = useLocalStorage('cil-documentation-notices', [])
+  const [linkInputs, setLinkInputs] = useState({}) // { [equipmentId]: url en cours de saisie }
   const [showTypeManager, setShowTypeManager] = useState(false)
   const [filterPropertyId, setFilterPropertyId] = useState('all')
   const [editingPropertyId, setEditingPropertyId] = useState(null)
@@ -42,9 +50,15 @@ export default function Equipment() {
     type: 'boiler',
     customType: '',
     name: '',
+    marque: '',
+    modele: '',
+    reference: '',
+    numeroSerie: '',
     installDate: '',
     lastMaintenance: '',
     nextMaintenance: '',
+    warrantyMonths: '',
+    responsible: '',
     notes: '',
     propertyId: '',
   })
@@ -56,6 +70,94 @@ export default function Equipment() {
 
   // Combine default and custom types
   const equipmentTypes = [...DEFAULT_EQUIPMENT_TYPES, ...customTypes]
+
+  const MANUFACTURER_NOTICES = {
+    'chaudiere frisquet': 'https://www.frisquet.com/documentation',
+    'chaudiere de dietrich': 'https://www.dedietrich-thermique.fr/notices',
+    'chaudiere saunier': 'https://www.saunierduval.fr/documentation',
+    'chaudiere viessmann': 'https://www.viessmann.com/fr/documentation/',
+    'chaudiere elm leblanc': 'https://www.elmleblanc-particuliers.fr/notices',
+    'vmc atlantic': 'https://www.atlantic.fr/documentation-vmc',
+    'vmc aldes': 'https://www.aldes.fr/documentation/',
+    'pac daikin': 'https://www.daikin.fr/fr/documentation',
+    'pac mitsubishi': 'https://www.mitsubishi-electric.fr/documentation',
+    'pac atlantic': 'https://www.atlantic.fr/documentation-pompes-a-chaleur',
+    'chauffe-eau ariston': 'https://www.ariston.com/documentation',
+  }
+
+  const findManufacturerNotice = (marque, modele) => {
+    const query = `${marque || ''} ${modele || ''}`.toLowerCase()
+    for (const [key, url] of Object.entries(MANUFACTURER_NOTICES)) {
+      if (query.includes(key.split(' ')[1] || '') && query.includes(key.split(' ')[0])) {
+        return url
+      }
+    }
+    return null
+  }
+
+  const getNoticesForEquipment = (equipmentId) => notices.filter(n => n.equipmentId === equipmentId)
+
+  const handleAddNoticeLink = (eq) => {
+    const url = (linkInputs[eq.id] || '').trim()
+    if (!url) return
+    setNotices([...notices, {
+      id: Date.now(),
+      equipmentId: eq.id,
+      title: `Notice ${eq.marque || ''} ${eq.modele || ''}`.trim() || eq.name,
+      url,
+      source: 'manual',
+      addedAt: new Date().toISOString(),
+    }])
+    setLinkInputs({ ...linkInputs, [eq.id]: '' })
+  }
+
+  const handleDeleteNotice = (noticeId) => {
+    setNotices(notices.filter(n => n.id !== noticeId))
+  }
+
+  const handleLabelPhoto = async (file) => {
+    if (!file) return
+    setLabelOcrLoading(true)
+    try {
+      const reader = new FileReader()
+      const dataUrl = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result)
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+      setLabelPhoto(dataUrl)
+      const text = await CIL_OCR.extractText(file)
+      setLabelExtractedText(text || '')
+    } catch (err) {
+      console.error('Erreur lecture etiquette:', err)
+      setLabelExtractedText('')
+    } finally {
+      setLabelOcrLoading(false)
+    }
+  }
+
+  const handleEditEquipment = (eq) => {
+    setEditingEquipmentId(eq.id)
+    setFormData({
+      type: eq.type || 'boiler',
+      customType: '',
+      name: eq.name || '',
+      marque: eq.marque || '',
+      modele: eq.modele || '',
+      reference: eq.reference || '',
+      numeroSerie: eq.numeroSerie || '',
+      installDate: eq.installDate || '',
+      lastMaintenance: eq.lastMaintenance || '',
+      nextMaintenance: eq.nextMaintenance || '',
+      warrantyMonths: eq.warrantyMonths ? String(eq.warrantyMonths) : '',
+      responsible: eq.responsible || '',
+      notes: eq.notes || '',
+      propertyId: eq.propertyId || '',
+    })
+    setLabelPhoto(eq.labelPhoto || null)
+    setLabelExtractedText('')
+    setShowForm(true)
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -70,25 +172,46 @@ export default function Equipment() {
       type: formData.type,
       typeLabel: typeLabel,
       name: formData.name || typeLabel,
+      marque: formData.marque,
+      modele: formData.modele,
+      reference: formData.reference,
+      numeroSerie: formData.numeroSerie,
+      labelPhoto: labelPhoto,
       installDate: formData.installDate,
       lastMaintenance: formData.lastMaintenance,
       nextMaintenance: formData.nextMaintenance,
       maintenanceInterval: type?.maintenanceInterval || 12,
+      warrantyMonths: formData.warrantyMonths ? parseInt(formData.warrantyMonths) : null,
+      responsible: formData.responsible || getDefaultResponsibility(formData.type),
       notes: formData.notes,
       propertyId: formData.propertyId || null,
       createdAt: new Date().toISOString(),
     }
-    addEquipment(newEquipment)
+    if (editingEquipmentId) {
+      const { id, createdAt, ...updates } = newEquipment
+      updateEquipment(editingEquipmentId, updates)
+      setEditingEquipmentId(null)
+    } else {
+      addEquipment(newEquipment)
+    }
     setFormData({
       type: 'boiler',
       customType: '',
       name: '',
+      marque: '',
+      modele: '',
+      reference: '',
+      numeroSerie: '',
       installDate: '',
       lastMaintenance: '',
       nextMaintenance: '',
+      warrantyMonths: '',
+      responsible: '',
       notes: '',
       propertyId: '',
     })
+    setLabelPhoto(null)
+    setLabelExtractedText('')
     setShowForm(false)
   }
 
@@ -332,6 +455,71 @@ export default function Equipment() {
             />
           </div>
 
+          <div className="p-3 bg-slate-50 rounded-lg space-y-2">
+            <label className="block text-sm font-medium">
+              Photo etiquette produit (pour retrouver la reference/notice)
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="input"
+              onChange={(e) => handleLabelPhoto(e.target.files?.[0])}
+            />
+            {labelOcrLoading && (
+              <p className="text-xs text-slate-500 flex items-center gap-1">
+                <Loader2 className="w-3 h-3 animate-spin" /> Lecture de l'etiquette...
+              </p>
+            )}
+            {labelExtractedText && (
+              <div className="text-xs bg-white border border-slate-200 rounded p-2 max-h-24 overflow-y-auto">
+                <p className="font-medium text-slate-600 mb-1">Texte detecte (copiez la marque/reference ci-dessous) :</p>
+                <p className="text-slate-500 whitespace-pre-wrap">{labelExtractedText}</p>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium mb-1">Marque</label>
+              <input
+                type="text"
+                className="input"
+                placeholder="Ex: Frisquet"
+                value={formData.marque}
+                onChange={(e) => setFormData({ ...formData, marque: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Modele</label>
+              <input
+                type="text"
+                className="input"
+                placeholder="Ex: Optima"
+                value={formData.modele}
+                onChange={(e) => setFormData({ ...formData, modele: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Reference</label>
+              <input
+                type="text"
+                className="input"
+                value={formData.reference}
+                onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Numero de serie</label>
+              <input
+                type="text"
+                className="input"
+                value={formData.numeroSerie}
+                onChange={(e) => setFormData({ ...formData, numeroSerie: e.target.value })}
+              />
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium mb-1">Date d'installation</label>
             <input 
@@ -363,6 +551,29 @@ export default function Equipment() {
           </div>
 
           <div>
+            <label className="block text-sm font-medium mb-1">Garantie (mois)</label>
+            <input 
+              type="number" 
+              className="input" 
+              placeholder="Ex: 24"
+              value={formData.warrantyMonths} 
+              onChange={(e) => setFormData({ ...formData, warrantyMonths: e.target.value })} 
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Responsable de l'entretien</label>
+            <select
+              className="input"
+              value={formData.responsible || getDefaultResponsibility(formData.type)}
+              onChange={(e) => setFormData({ ...formData, responsible: e.target.value })}
+            >
+              <option value={USER_ROLES.OWNER}>{ROLE_LABELS[USER_ROLES.OWNER]}</option>
+              <option value={USER_ROLES.TENANT}>{ROLE_LABELS[USER_ROLES.TENANT]}</option>
+            </select>
+          </div>
+
+          <div>
             <label className="block text-sm font-medium mb-1">Notes</label>
             <textarea 
               className="input" 
@@ -375,11 +586,16 @@ export default function Equipment() {
 
           <div className="flex gap-2">
             <button type="submit" className="btn btn-primary flex-1">
-              Enregistrer
+              {editingEquipmentId ? 'Modifier' : 'Enregistrer'}
             </button>
             <button 
               type="button" 
-              onClick={() => setShowForm(false)} 
+              onClick={() => {
+                setShowForm(false)
+                setEditingEquipmentId(null)
+                setLabelPhoto(null)
+                setLabelExtractedText('')
+              }} 
               className="btn btn-secondary"
             >
               Annuler
@@ -449,6 +665,22 @@ export default function Equipment() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
+                    {(eq.marque || eq.modele) && (
+                      <button
+                        onClick={() => toggleEquipmentExpansion(eq.id)}
+                        className="p-2 text-slate-400 hover:text-blue-500"
+                        title="Chercher la notice"
+                      >
+                        <Camera className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleEditEquipment(eq)}
+                      className="p-2 text-slate-400 hover:text-blue-500"
+                      title="Modifier l'equipement"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
                     <button
                       onClick={() => {
                         setEditingPropertyId(editingPropertyId === eq.id ? null : eq.id)
@@ -644,6 +876,74 @@ export default function Equipment() {
                         })}
                       </div>
                     )}
+
+                    {/* Notice / documentation - integree a la fiche equipement */}
+                    <div className="mt-4 border-t border-slate-200 pt-4">
+                      <h4 className="font-semibold text-sm flex items-center gap-1.5 mb-3">
+                        <Camera className="w-4 h-4 text-slate-400" />
+                        Notice / documentation
+                      </h4>
+
+                      {getNoticesForEquipment(eq.id).length > 0 && (
+                        <div className="space-y-2 mb-3">
+                          {getNoticesForEquipment(eq.id).map(notice => (
+                            <div key={notice.id} className="flex items-center justify-between bg-slate-50 rounded-lg p-2 text-sm">
+                              <a href={notice.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">
+                                {notice.title}
+                              </a>
+                              <button
+                                onClick={() => handleDeleteNotice(notice.id)}
+                                className="p-1 text-slate-300 hover:text-red-500 shrink-0"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {(eq.marque || eq.modele) ? (
+                        <div className="space-y-2">
+                          {findManufacturerNotice(eq.marque, eq.modele) && (
+                            <a
+                              href={findManufacturerNotice(eq.marque, eq.modele)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn btn-secondary text-sm w-full text-center block"
+                            >
+                              Notice trouvee : site du fabricant
+                            </a>
+                          )}
+                          <a
+                            href={`https://www.google.com/search?q=${encodeURIComponent((eq.marque || '') + ' ' + (eq.modele || '') + ' notice mode emploi filetype:pdf')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-secondary text-sm w-full text-center block"
+                          >
+                            Chercher sur internet (PDF uniquement)
+                          </a>
+                          <div className="flex gap-2">
+                            <input
+                              type="url"
+                              className="input text-sm flex-1"
+                              placeholder="Coller le lien de la notice trouvee"
+                              value={linkInputs[eq.id] || ''}
+                              onChange={(e) => setLinkInputs({ ...linkInputs, [eq.id]: e.target.value })}
+                            />
+                            <button
+                              onClick={() => handleAddNoticeLink(eq)}
+                              className="btn btn-primary text-sm"
+                            >
+                              Lier
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-400">
+                          Renseignez la marque/modele (via photo etiquette) pour rechercher une notice.
+                        </p>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
