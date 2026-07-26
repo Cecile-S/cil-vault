@@ -5,7 +5,6 @@ import { useProperty } from '../hooks/useProperty'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { useMaintenanceHistory } from '../hooks/useMaintenanceHistory'
 import { getDefaultResponsibility, USER_ROLES, ROLE_LABELS } from '../hooks/useUserRole'
-import DocumentationManager from '../components/DocumentationManager'
 import { CIL_OCR } from '../services/ocr-service'
 
 const DEFAULT_EQUIPMENT_TYPES = [
@@ -32,7 +31,8 @@ export default function Equipment() {
   const [labelPhoto, setLabelPhoto] = useState(null) // base64 data URL de la photo etiquette
   const [labelExtractedText, setLabelExtractedText] = useState('')
   const [labelOcrLoading, setLabelOcrLoading] = useState(false)
-  const [manualSearchQuery, setManualSearchQuery] = useState('')
+  const [notices, setNotices] = useLocalStorage('cil-documentation-notices', [])
+  const [linkInputs, setLinkInputs] = useState({}) // { [equipmentId]: url en cours de saisie }
   const [showTypeManager, setShowTypeManager] = useState(false)
   const [filterPropertyId, setFilterPropertyId] = useState('all')
   const [editingPropertyId, setEditingPropertyId] = useState(null)
@@ -70,6 +70,50 @@ export default function Equipment() {
 
   // Combine default and custom types
   const equipmentTypes = [...DEFAULT_EQUIPMENT_TYPES, ...customTypes]
+
+  const MANUFACTURER_NOTICES = {
+    'chaudiere frisquet': 'https://www.frisquet.com/documentation',
+    'chaudiere de dietrich': 'https://www.dedietrich-thermique.fr/notices',
+    'chaudiere saunier': 'https://www.saunierduval.fr/documentation',
+    'chaudiere viessmann': 'https://www.viessmann.com/fr/documentation/',
+    'chaudiere elm leblanc': 'https://www.elmleblanc-particuliers.fr/notices',
+    'vmc atlantic': 'https://www.atlantic.fr/documentation-vmc',
+    'vmc aldes': 'https://www.aldes.fr/documentation/',
+    'pac daikin': 'https://www.daikin.fr/fr/documentation',
+    'pac mitsubishi': 'https://www.mitsubishi-electric.fr/documentation',
+    'pac atlantic': 'https://www.atlantic.fr/documentation-pompes-a-chaleur',
+    'chauffe-eau ariston': 'https://www.ariston.com/documentation',
+  }
+
+  const findManufacturerNotice = (marque, modele) => {
+    const query = `${marque || ''} ${modele || ''}`.toLowerCase()
+    for (const [key, url] of Object.entries(MANUFACTURER_NOTICES)) {
+      if (query.includes(key.split(' ')[1] || '') && query.includes(key.split(' ')[0])) {
+        return url
+      }
+    }
+    return null
+  }
+
+  const getNoticesForEquipment = (equipmentId) => notices.filter(n => n.equipmentId === equipmentId)
+
+  const handleAddNoticeLink = (eq) => {
+    const url = (linkInputs[eq.id] || '').trim()
+    if (!url) return
+    setNotices([...notices, {
+      id: Date.now(),
+      equipmentId: eq.id,
+      title: `Notice ${eq.marque || ''} ${eq.modele || ''}`.trim() || eq.name,
+      url,
+      source: 'manual',
+      addedAt: new Date().toISOString(),
+    }])
+    setLinkInputs({ ...linkInputs, [eq.id]: '' })
+  }
+
+  const handleDeleteNotice = (noticeId) => {
+    setNotices(notices.filter(n => n.id !== noticeId))
+  }
 
   const handleLabelPhoto = async (file) => {
     if (!file) return
@@ -623,7 +667,7 @@ export default function Equipment() {
                   <div className="flex items-center gap-1">
                     {(eq.marque || eq.modele) && (
                       <button
-                        onClick={() => setManualSearchQuery(`${eq.marque || ''} ${eq.modele || ''}`.trim())}
+                        onClick={() => toggleEquipmentExpansion(eq.id)}
                         className="p-2 text-slate-400 hover:text-blue-500"
                         title="Chercher la notice"
                       >
@@ -832,6 +876,74 @@ export default function Equipment() {
                         })}
                       </div>
                     )}
+
+                    {/* Notice / documentation - integree a la fiche equipement */}
+                    <div className="mt-4 border-t border-slate-200 pt-4">
+                      <h4 className="font-semibold text-sm flex items-center gap-1.5 mb-3">
+                        <Camera className="w-4 h-4 text-slate-400" />
+                        Notice / documentation
+                      </h4>
+
+                      {getNoticesForEquipment(eq.id).length > 0 && (
+                        <div className="space-y-2 mb-3">
+                          {getNoticesForEquipment(eq.id).map(notice => (
+                            <div key={notice.id} className="flex items-center justify-between bg-slate-50 rounded-lg p-2 text-sm">
+                              <a href={notice.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">
+                                {notice.title}
+                              </a>
+                              <button
+                                onClick={() => handleDeleteNotice(notice.id)}
+                                className="p-1 text-slate-300 hover:text-red-500 shrink-0"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {(eq.marque || eq.modele) ? (
+                        <div className="space-y-2">
+                          {findManufacturerNotice(eq.marque, eq.modele) && (
+                            <a
+                              href={findManufacturerNotice(eq.marque, eq.modele)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="btn btn-secondary text-sm w-full text-center block"
+                            >
+                              Notice trouvee : site du fabricant
+                            </a>
+                          )}
+                          <a
+                            href={`https://www.google.com/search?q=${encodeURIComponent((eq.marque || '') + ' ' + (eq.modele || '') + ' notice mode emploi filetype:pdf')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-secondary text-sm w-full text-center block"
+                          >
+                            Chercher sur internet (PDF uniquement)
+                          </a>
+                          <div className="flex gap-2">
+                            <input
+                              type="url"
+                              className="input text-sm flex-1"
+                              placeholder="Coller le lien de la notice trouvee"
+                              value={linkInputs[eq.id] || ''}
+                              onChange={(e) => setLinkInputs({ ...linkInputs, [eq.id]: e.target.value })}
+                            />
+                            <button
+                              onClick={() => handleAddNoticeLink(eq)}
+                              className="btn btn-primary text-sm"
+                            >
+                              Lier
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-400">
+                          Renseignez la marque/modele (via photo etiquette) pour rechercher une notice.
+                        </p>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -839,8 +951,6 @@ export default function Equipment() {
           })}
         </div>
       )})()}
-
-      <DocumentationManager equipment={equipment} initialQuery={manualSearchQuery} />
     </div>
   )
 }
