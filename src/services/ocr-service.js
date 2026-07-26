@@ -210,7 +210,7 @@ const CIL_OCR = {
   // Classify using backend API
   async classifyWithAI(text) {
     try {
-      const response = await fetch('http://84.247.161.15:8001/ai/classify', {
+      const response = await fetch('/api/ai/classify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: text })
