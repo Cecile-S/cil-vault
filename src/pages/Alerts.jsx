@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Bell, Check, AlertTriangle, Info, X } from 'lucide-react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
+import { useEquipment } from '../hooks/useEquipment'
 
 // Generate alerts based on equipment
 function generateAlerts(equipment) {
@@ -38,7 +39,7 @@ function generateAlerts(equipment) {
 }
 
 export default function Alerts() {
-  const [equipment] = useLocalStorage('cil-equipment', [])
+  const { equipment } = useEquipment()
   const [dismissedAlerts, setDismissedAlerts] = useLocalStorage('cil-dismissed-alerts', [])
   const [systemAlerts] = useLocalStorage('cil-system-alerts', [])
 
