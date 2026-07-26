@@ -90,8 +90,10 @@ export default function Alerts() {
   const { equipment } = useEquipment()
   const { documents } = useDocuments()
   const [dismissedAlerts, setDismissedAlerts] = useLocalStorage('cil-dismissed-alerts', [])
-  const [systemAlerts] = useLocalStorage('cil-system-alerts', [])
+  const [systemAlerts, setSystemAlerts] = useLocalStorage('cil-system-alerts', [])
   const { role, setRole, showAllAlerts, setShowAllAlerts, filterAlertsByRole, roleLabel } = useUserRole()
+  const [showAddAlert, setShowAddAlert] = useState(false)
+  const [newAlert, setNewAlert] = useState({ type: 'info', title: '', message: '' })
 
   const maintenanceAlerts = generateAlerts(equipment)
   const diagnosticAlerts = generateDiagnosticAlerts(documents)
@@ -105,6 +107,22 @@ export default function Alerts() {
 
   const handleDismissAll = () => {
     setDismissedAlerts(allAlerts.map(a => a.id))
+  }
+
+  const handleAddAlert = () => {
+    if (!newAlert.title || !newAlert.message) return
+    setSystemAlerts([
+      ...systemAlerts,
+      {
+        id: `custom-${Date.now()}`,
+        type: newAlert.type,
+        title: newAlert.title,
+        message: newAlert.message,
+        createdAt: new Date().toISOString(),
+      },
+    ])
+    setNewAlert({ type: 'info', title: '', message: '' })
+    setShowAddAlert(false)
   }
 
   const getAlertStyle = (type) => {
@@ -154,6 +172,12 @@ export default function Alerts() {
             />
             Tout voir
           </label>
+          <button
+            onClick={() => setShowAddAlert(!showAddAlert)}
+            className="btn btn-secondary text-sm py-1 px-2"
+          >
+            + Alerte
+          </button>
         </div>
         {activeAlerts.length > 0 && (
           <button
@@ -165,6 +189,50 @@ export default function Alerts() {
           </button>
         )}
       </div>
+
+      {showAddAlert && (
+        <div className="card space-y-3">
+          <h3 className="font-semibold">Nouvelle alerte personnalisee</h3>
+          <div>
+            <label className="block text-sm font-medium mb-1">Titre</label>
+            <input
+              type="text"
+              className="input"
+              value={newAlert.title}
+              onChange={(e) => setNewAlert({ ...newAlert, title: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Message</label>
+            <textarea
+              className="input"
+              rows={2}
+              value={newAlert.message}
+              onChange={(e) => setNewAlert({ ...newAlert, message: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Type</label>
+            <select
+              className="input"
+              value={newAlert.type}
+              onChange={(e) => setNewAlert({ ...newAlert, type: e.target.value })}
+            >
+              <option value="info">Info</option>
+              <option value="warning">A planifier</option>
+              <option value="urgent">Urgent</option>
+            </select>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={handleAddAlert} className="btn btn-primary flex-1">
+              Ajouter
+            </button>
+            <button onClick={() => setShowAddAlert(false)} className="btn btn-secondary">
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
 
       {activeAlerts.length === 0 ? (
         <div className="text-center py-12">
