@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { FileText, Search, ExternalLink, Download, Trash2, Plus, BookOpen, Upload } from 'lucide-react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 
@@ -27,7 +27,7 @@ const MANUFACTURER_NOTICES = {
   'chaudiere chaudiere': 'https://www.sauter.fr/documentation',
 }
 
-export default function DocumentationManager({ equipment = [] }) {
+export default function DocumentationManager({ equipment = [], initialQuery = '' }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [notices, setNotices] = useLocalStorage('cil-documentation-notices', [])
   const [showAddForm, setShowAddForm] = useState(false)
@@ -40,6 +40,14 @@ export default function DocumentationManager({ equipment = [] }) {
     fileName: '',
     mimeType: '',
   })
+
+  // Lance automatiquement une recherche quand initialQuery est fourni (ex: depuis la fiche equipement)
+  useEffect(() => {
+    if (initialQuery && initialQuery.length >= 3) {
+      searchManual(initialQuery)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialQuery])
 
   // Search for equipment manuals online
   const searchManual = async (query) => {
