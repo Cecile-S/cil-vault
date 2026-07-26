@@ -17,7 +17,7 @@ import { useEquipment } from "../hooks/useEquipment";
 import { useProperty } from "../hooks/useProperty";
 import { CIL_OCR } from "../services/ocr-service";
 import { getDiagnosticStatus } from "../services/diagnostic-validator";
-import { detectDiagnosticsInText } from "../services/diagnostic-group-parser";
+import { detectDiagnosticsInText, splitGroupedDiagnostic } from "../services/diagnostic-group-parser";
 import { extractWarrantyDuration } from "../services/warranty-calculator";
 
 const DOCUMENT_TYPES = [
@@ -56,6 +56,7 @@ export default function Documents() {
     propertyId: "",
     detectedWarrantyMonths: "",
     updateEquipmentWarranty: true,
+    groupedDiagnostics: [],
   });
   const fileInputRef = useRef(null);
 
@@ -88,9 +89,20 @@ export default function Documents() {
 
       // Detecte si le PDF contient plusieurs diagnostics groupes
       const detectedDiagnostics = detectDiagnosticsInText(extractedText);
-      const multiDiagnosticNote = detectedDiagnostics.length > 1
+      const isGroupedDiagnostic = detectedDiagnostics.length > 1;
+      const multiDiagnosticNote = isGroupedDiagnostic
         ? `Diagnostic groupe detecte : ${detectedDiagnostics.join(', ')}`
         : '';
+      let detectedGenericDate = '';
+      const genericDateMatch = extractedText.match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})/);
+      if (genericDateMatch) {
+        const [, day, month, year] = genericDateMatch;
+        const y = year.length === 2 ? "20" + year : year;
+        detectedGenericDate = y + "-" + month.padStart(2, "0") + "-" + day.padStart(2, "0");
+      }
+      const splitDiagnostics = isGroupedDiagnostic
+        ? splitGroupedDiagnostic({ notes: extractedText, date: detectedGenericDate, id: Date.now(), name: fileName }, 'sale')
+        : [];
 
       // Determine preview
       let previewUrl = null;
@@ -115,6 +127,7 @@ export default function Documents() {
         mimeType: file.type,
         fileExtension: fileExtension,
         equipmentId: formData.equipmentId, // keep existing
+        groupedDiagnostics: splitDiagnostics,
       };
 
       // Fill fields based on detected type
@@ -234,15 +247,38 @@ export default function Documents() {
     e.preventDefault();
     const type = DOCUMENT_TYPES.find((t) => t.id === formData.type);
     const selectedEquipment = equipment.find(eq => eq.id === parseInt(formData.equipmentId));
-    
-    const newDoc = {
-      ...formData,
-      propertyId: formData.propertyId || properties[0]?.id || null,
-      icon: type?.icon || "📎",
-      equipmentName: selectedEquipment ? selectedEquipment.name : null,
-      createdAt: new Date().toISOString(),
-    };
-    addDocument(newDoc);
+    const propertyIdToUse = formData.propertyId || properties[0]?.id || null;
+
+    if (formData.groupedDiagnostics && formData.groupedDiagnostics.length > 1) {
+      // Diagnostic groupe : creer un document distinct par diagnostic detecte
+      formData.groupedDiagnostics.forEach((diag) => {
+        const diagType = DOCUMENT_TYPES.find((t) => t.id === diag.type);
+        addDocument({
+          name: `${diag.label} - ${formData.name || "Diagnostic"}`,
+          type: diag.type,
+          date: diag.date || formData.date,
+          notes: `Extrait du diagnostic groupe : ${formData.name}`,
+          content: formData.content,
+          mimeType: formData.mimeType,
+          fileExtension: formData.fileExtension,
+          equipmentId: formData.equipmentId,
+          propertyId: propertyIdToUse,
+          icon: diagType?.icon || "📎",
+          equipmentName: selectedEquipment ? selectedEquipment.name : null,
+          isSplitFromGroup: true,
+          createdAt: new Date().toISOString(),
+        });
+      });
+    } else {
+      const newDoc = {
+        ...formData,
+        propertyId: propertyIdToUse,
+        icon: type?.icon || "📎",
+        equipmentName: selectedEquipment ? selectedEquipment.name : null,
+        createdAt: new Date().toISOString(),
+      };
+      addDocument(newDoc);
+    }
 
     // Proposer la mise a jour de la garantie de l'equipement lie, si detectee/confirmee
     if (
@@ -268,6 +304,7 @@ export default function Documents() {
       propertyId: properties[0]?.id || "",
       detectedWarrantyMonths: "",
       updateEquipmentWarranty: true,
+      groupedDiagnostics: [],
     });
     setShowForm(false);
     setPreview(null);
@@ -462,6 +499,19 @@ export default function Documents() {
             </div>
           )}
 
+          {formData.groupedDiagnostics && formData.groupedDiagnostics.length > 1 && (
+            <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg">
+              <p className="text-sm font-medium text-blue-900 mb-2">
+                Diagnostic groupe detecte : {formData.groupedDiagnostics.length} diagnostics seront enregistres separement
+              </p>
+              <ul className="text-sm text-blue-800 space-y-1">
+                {formData.groupedDiagnostics.map((diag) => (
+                  <li key={diag.type}>{diag.icon} {diag.label}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium mb-1">Notes</label>
             <textarea
@@ -495,6 +545,7 @@ export default function Documents() {
                   propertyId: properties[0]?.id || "",
                   detectedWarrantyMonths: "",
                   updateEquipmentWarranty: true,
+                  groupedDiagnostics: [],
                 });
                 setPreview(null);
                 setFileToUpload(null);
