@@ -32,7 +32,10 @@ export default function Layout({ children }) {
       {/* Header */}
       <header className="bg-marine text-white px-4 py-3 sticky top-0 z-50 shadow-sm">
         <div className="max-w-lg mx-auto flex items-center gap-3">
-          <img src={logoCilia} alt="CILIA" className="h-7" />
+          <div className="flex items-center gap-2">
+            <img src={logoCilia} alt="" className="h-7 w-7 rounded" />
+            <span className="font-brand text-lg font-bold tracking-tight">CILIA</span>
+          </div>
           {hasProperty && (
             <>
               <span className="text-white/30">|</span>
