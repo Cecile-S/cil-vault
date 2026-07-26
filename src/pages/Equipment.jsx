@@ -28,6 +28,7 @@ export default function Equipment() {
   const { addRecord, deleteRecord, getRecordsByEquipment } = useMaintenanceHistory()
   const [customTypes, setCustomTypes] = useLocalStorage('cil-equipment-custom-types', [])
   const [showForm, setShowForm] = useState(false)
+  const [editingEquipmentId, setEditingEquipmentId] = useState(null)
   const [labelPhoto, setLabelPhoto] = useState(null) // base64 data URL de la photo etiquette
   const [labelExtractedText, setLabelExtractedText] = useState('')
   const [labelOcrLoading, setLabelOcrLoading] = useState(false)
@@ -91,6 +92,29 @@ export default function Equipment() {
     }
   }
 
+  const handleEditEquipment = (eq) => {
+    setEditingEquipmentId(eq.id)
+    setFormData({
+      type: eq.type || 'boiler',
+      customType: '',
+      name: eq.name || '',
+      marque: eq.marque || '',
+      modele: eq.modele || '',
+      reference: eq.reference || '',
+      numeroSerie: eq.numeroSerie || '',
+      installDate: eq.installDate || '',
+      lastMaintenance: eq.lastMaintenance || '',
+      nextMaintenance: eq.nextMaintenance || '',
+      warrantyMonths: eq.warrantyMonths ? String(eq.warrantyMonths) : '',
+      responsible: eq.responsible || '',
+      notes: eq.notes || '',
+      propertyId: eq.propertyId || '',
+    })
+    setLabelPhoto(eq.labelPhoto || null)
+    setLabelExtractedText('')
+    setShowForm(true)
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
     const type = equipmentTypes.find(t => t.id === formData.type)
@@ -119,7 +143,13 @@ export default function Equipment() {
       propertyId: formData.propertyId || null,
       createdAt: new Date().toISOString(),
     }
-    addEquipment(newEquipment)
+    if (editingEquipmentId) {
+      const { id, createdAt, ...updates } = newEquipment
+      updateEquipment(editingEquipmentId, updates)
+      setEditingEquipmentId(null)
+    } else {
+      addEquipment(newEquipment)
+    }
     setFormData({
       type: 'boiler',
       customType: '',
@@ -512,11 +542,16 @@ export default function Equipment() {
 
           <div className="flex gap-2">
             <button type="submit" className="btn btn-primary flex-1">
-              Enregistrer
+              {editingEquipmentId ? 'Modifier' : 'Enregistrer'}
             </button>
             <button 
               type="button" 
-              onClick={() => setShowForm(false)} 
+              onClick={() => {
+                setShowForm(false)
+                setEditingEquipmentId(null)
+                setLabelPhoto(null)
+                setLabelExtractedText('')
+              }} 
               className="btn btn-secondary"
             >
               Annuler
@@ -595,6 +630,13 @@ export default function Equipment() {
                         <Camera className="w-4 h-4" />
                       </button>
                     )}
+                    <button
+                      onClick={() => handleEditEquipment(eq)}
+                      className="p-2 text-slate-400 hover:text-blue-500"
+                      title="Modifier l'equipement"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
                     <button
                       onClick={() => {
                         setEditingPropertyId(editingPropertyId === eq.id ? null : eq.id)
