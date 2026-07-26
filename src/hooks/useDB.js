@@ -14,7 +14,7 @@ const STORES = {
 // Initialize the database
 const initDB = async () => {
   return openDB(DB_NAME, DB_VERSION, {
-    upgrade(db, oldVersion, transaction) {
+    upgrade(db, oldVersion, newVersion, transaction) {
       // Create object stores if they don't exist
       Object.values(STORES).forEach(storeName => {
         if (!db.objectStoreNames.contains(storeName)) {
