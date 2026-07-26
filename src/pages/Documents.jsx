@@ -18,6 +18,7 @@ import { useProperty } from "../hooks/useProperty";
 import { CIL_OCR } from "../services/ocr-service";
 import { getDiagnosticStatus } from "../services/diagnostic-validator";
 import { detectDiagnosticsInText } from "../services/diagnostic-group-parser";
+import { extractWarrantyDuration } from "../services/warranty-calculator";
 
 const DOCUMENT_TYPES = [
   { id: "dpe", label: "DPE", icon: "📊" },
@@ -36,7 +37,7 @@ const DOCUMENT_TYPES = [
 export default function Documents() {
   const { documents, loading, error, addDocument, deleteDocument } =
     useDocuments();
-  const { equipment } = useEquipment();
+  const { equipment, updateEquipment } = useEquipment();
   const { properties } = useProperty();
   const [showForm, setShowForm] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -53,6 +54,8 @@ export default function Documents() {
     fileExtension: "",
     equipmentId: "",
     propertyId: "",
+    detectedWarrantyMonths: "",
+    updateEquipmentWarranty: true,
   });
   const fileInputRef = useRef(null);
 
@@ -137,6 +140,11 @@ export default function Documents() {
         if (data.supplier) {
           const prefix = newFormData.notes ? `${newFormData.notes} | ` : "";
           newFormData.notes = `${prefix}Fournisseur: ${data.supplier}`;
+        }
+        // Warranty duration (mois) detectee dans le texte de la facture
+        const warrantyMonthsDetected = extractWarrantyDuration(extractedText);
+        if (warrantyMonthsDetected) {
+          newFormData.detectedWarrantyMonths = String(warrantyMonthsDetected);
         }
       } else if (detectedType === "dpe" && data) {
         // Date
@@ -236,6 +244,17 @@ export default function Documents() {
     };
     addDocument(newDoc);
 
+    // Proposer la mise a jour de la garantie de l'equipement lie, si detectee/confirmee
+    if (
+      formData.updateEquipmentWarranty &&
+      formData.equipmentId &&
+      formData.detectedWarrantyMonths
+    ) {
+      updateEquipment(parseInt(formData.equipmentId), {
+        warrantyMonths: parseInt(formData.detectedWarrantyMonths),
+      });
+    }
+
     // Reset form
     setFormData({
       name: "",
@@ -247,6 +266,8 @@ export default function Documents() {
       fileExtension: "",
       equipmentId: "",
       propertyId: properties[0]?.id || "",
+      detectedWarrantyMonths: "",
+      updateEquipmentWarranty: true,
     });
     setShowForm(false);
     setPreview(null);
@@ -411,6 +432,33 @@ export default function Documents() {
                   Ajoutez d'abord des équipements pour les lier aux factures
                 </p>
               )}
+
+              {formData.equipmentId && (
+                <div className="mt-3 p-3 bg-slate-50 rounded-lg space-y-2">
+                  <label className="block text-sm font-medium">
+                    Garantie détectée (mois)
+                  </label>
+                  <input
+                    type="number"
+                    className="input"
+                    placeholder="Ex: 24"
+                    value={formData.detectedWarrantyMonths}
+                    onChange={(e) =>
+                      setFormData({ ...formData, detectedWarrantyMonths: e.target.value })
+                    }
+                  />
+                  <label className="flex items-center gap-2 text-sm text-slate-600">
+                    <input
+                      type="checkbox"
+                      checked={formData.updateEquipmentWarranty}
+                      onChange={(e) =>
+                        setFormData({ ...formData, updateEquipmentWarranty: e.target.checked })
+                      }
+                    />
+                    Mettre à jour la garantie de l'équipement avec cette valeur
+                  </label>
+                </div>
+              )}
             </div>
           )}
 
@@ -445,6 +493,8 @@ export default function Documents() {
                   fileExtension: "",
                   equipmentId: "",
                   propertyId: properties[0]?.id || "",
+                  detectedWarrantyMonths: "",
+                  updateEquipmentWarranty: true,
                 });
                 setPreview(null);
                 setFileToUpload(null);
