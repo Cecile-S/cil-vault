@@ -4,6 +4,7 @@ import { useEquipment } from '../hooks/useEquipment'
 import { useProperty } from '../hooks/useProperty'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { useMaintenanceHistory } from '../hooks/useMaintenanceHistory'
+import { getDefaultResponsibility, USER_ROLES, ROLE_LABELS } from '../hooks/useUserRole'
 import DocumentationManager from '../components/DocumentationManager'
 
 const DEFAULT_EQUIPMENT_TYPES = [
@@ -47,6 +48,7 @@ export default function Equipment() {
     lastMaintenance: '',
     nextMaintenance: '',
     warrantyMonths: '',
+    responsible: '',
     notes: '',
     propertyId: '',
   })
@@ -77,6 +79,7 @@ export default function Equipment() {
       nextMaintenance: formData.nextMaintenance,
       maintenanceInterval: type?.maintenanceInterval || 12,
       warrantyMonths: formData.warrantyMonths ? parseInt(formData.warrantyMonths) : null,
+      responsible: formData.responsible || getDefaultResponsibility(formData.type),
       notes: formData.notes,
       propertyId: formData.propertyId || null,
       createdAt: new Date().toISOString(),
@@ -374,6 +377,18 @@ export default function Equipment() {
               value={formData.warrantyMonths} 
               onChange={(e) => setFormData({ ...formData, warrantyMonths: e.target.value })} 
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Responsable de l'entretien</label>
+            <select
+              className="input"
+              value={formData.responsible || getDefaultResponsibility(formData.type)}
+              onChange={(e) => setFormData({ ...formData, responsible: e.target.value })}
+            >
+              <option value={USER_ROLES.OWNER}>{ROLE_LABELS[USER_ROLES.OWNER]}</option>
+              <option value={USER_ROLES.TENANT}>{ROLE_LABELS[USER_ROLES.TENANT]}</option>
+            </select>
           </div>
 
           <div>
