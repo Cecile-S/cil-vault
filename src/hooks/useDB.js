@@ -2,7 +2,7 @@ import { openDB } from 'idb';
 
 // Constants
 const DB_NAME = 'cil-vault-db-v2';
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 const STORES = {
   PROPERTIES: 'properties',
   EQUIPMENT: 'equipment',
@@ -27,6 +27,14 @@ const initDB = async () => {
         const equipStore = transaction.objectStore(STORES.EQUIPMENT);
         if (!equipStore.indexNames.contains('by-property')) {
           equipStore.createIndex('by-property', 'propertyId', { unique: false });
+        }
+      }
+
+      // Add propertyId index to documents store for version 5+
+      if (oldVersion < 5 && db.objectStoreNames.contains(STORES.DOCUMENTS)) {
+        const docStore = transaction.objectStore(STORES.DOCUMENTS);
+        if (!docStore.indexNames.contains('by-property')) {
+          docStore.createIndex('by-property', 'propertyId', { unique: false });
         }
       }
     },
