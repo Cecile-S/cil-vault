@@ -1,13 +1,14 @@
-import { useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, createElement } from 'react';
 import { initDB, STORES } from './useDB';
 
-// Hook to use IndexedDB for equipment
-export function useEquipment() {
+// Contexte partage : evite que chaque composant ait son propre etat independant
+const EquipmentContext = createContext(null);
+
+export function EquipmentProvider({ children }) {
   const [equipment, setEquipment] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Load all equipment from IndexedDB
   const loadEquipment = async (propertyId) => {
     try {
       const db = await initDB();
@@ -29,7 +30,6 @@ export function useEquipment() {
     }
   };
 
-  // Add an equipment
   const addEquipment = async (equip) => {
     try {
       const db = await initDB();
@@ -37,7 +37,6 @@ export function useEquipment() {
       const store = tx.objectStore(STORES.EQUIPMENT);
       await store.add(equip);
       await tx.done;
-      // Reload equipment to get the updated list with the new ID
       await loadEquipment();
     } catch (err) {
       console.error('Failed to add equipment:', err);
@@ -46,7 +45,6 @@ export function useEquipment() {
     }
   };
 
-  // Update an equipment
   const updateEquipment = async (id, updates) => {
     try {
       const db = await initDB();
@@ -65,7 +63,6 @@ export function useEquipment() {
     }
   };
 
-  // Delete an equipment
   const deleteEquipment = async (id) => {
     try {
       const db = await initDB();
@@ -81,7 +78,6 @@ export function useEquipment() {
     }
   };
 
-  // Clear all equipment (for testing)
   const clearEquipment = async () => {
     try {
       const db = await initDB();
@@ -97,18 +93,16 @@ export function useEquipment() {
     }
   };
 
-  // Load equipment on initial mount
   useEffect(() => {
     loadEquipment();
   }, []);
 
-  // Get equipment filtered by property — useful for per-property views
   const getEquipmentByProperty = (propertyId) => {
     if (!propertyId) return equipment;
     return equipment.filter(eq => eq.propertyId === propertyId);
   };
 
-  return {
+  const value = {
     equipment,
     loading,
     error,
@@ -119,4 +113,14 @@ export function useEquipment() {
     loadEquipment,
     getEquipmentByProperty,
   };
+
+  return createElement(EquipmentContext.Provider, { value }, children);
+}
+
+export function useEquipment() {
+  const context = useContext(EquipmentContext);
+  if (!context) {
+    throw new Error('useEquipment must be used within an EquipmentProvider');
+  }
+  return context;
 }
