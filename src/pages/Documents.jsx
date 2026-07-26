@@ -16,6 +16,8 @@ import { useDocuments } from "../hooks/useDocuments";
 import { useEquipment } from "../hooks/useEquipment";
 import { useProperty } from "../hooks/useProperty";
 import { CIL_OCR } from "../services/ocr-service";
+import { getDiagnosticStatus } from "../services/diagnostic-validator";
+import { detectDiagnosticsInText } from "../services/diagnostic-group-parser";
 
 const DOCUMENT_TYPES = [
   { id: "dpe", label: "DPE", icon: "📊" },
@@ -81,6 +83,12 @@ export default function Documents() {
       // Auto-parse to get document type and data
       const { type: detectedType, data } = await CIL_OCR.autoParse(extractedText);
 
+      // Detecte si le PDF contient plusieurs diagnostics groupes
+      const detectedDiagnostics = detectDiagnosticsInText(extractedText);
+      const multiDiagnosticNote = detectedDiagnostics.length > 1
+        ? `Diagnostic groupe detecte : ${detectedDiagnostics.join(', ')}`
+        : '';
+
       // Determine preview
       let previewUrl = null;
       let previewType = "other";
@@ -99,7 +107,7 @@ export default function Documents() {
         name: fileName.replace(/\\.[^/\\]+$/, ""),
         type: detectedType !== "other" ? detectedType : "other",
         date: "",
-        notes: "",
+        notes: multiDiagnosticNote,
         content: content, // base64 data URL
         mimeType: file.type,
         fileExtension: fileExtension,
@@ -509,6 +517,30 @@ export default function Documents() {
                     </span>
                   </div>
                 )}
+
+                {doc.date && ["dpe", "electricity", "gas", "lead", "asbestos", "erp"].includes(doc.type) && (() => {
+                  const diagStatus = getDiagnosticStatus(doc.date, doc.type);
+                  const statusStyle = {
+                    valid: "text-green-700 bg-green-50",
+                    expiring: "text-orange-700 bg-orange-50",
+                    expired: "text-red-700 bg-red-50",
+                    unlimited: "text-green-700 bg-green-50",
+                    unknown: "text-slate-500 bg-slate-50",
+                  }[diagStatus.status] || "text-slate-500 bg-slate-50";
+                  const statusLabel = {
+                    valid: "Valide",
+                    expiring: "Expire bientot",
+                    expired: "Expire",
+                    unlimited: "Validite illimitee",
+                    unknown: "Validite inconnue",
+                  }[diagStatus.status] || "Validite inconnue";
+                  return (
+                    <div className={`mt-2 text-xs rounded-lg px-2 py-1 inline-block ${statusStyle}`}>
+                      {statusLabel}
+                      {diagStatus.expirationDate && ` - jusqu'au ${new Date(diagStatus.expirationDate).toLocaleDateString("fr-FR")}`}
+                    </div>
+                  );
+                })()}
 
                 {linkedEquipmentName && (
                   <div className="mt-2 flex items-center gap-2 text-sm text-blue-600 bg-blue-50 rounded-lg p-2">
