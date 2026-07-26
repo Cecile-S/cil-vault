@@ -3,11 +3,13 @@ import { Link } from 'react-router-dom'
 import { Wrench, FileText, Bell, Plus, AlertTriangle, ChevronRight, Building2, MapPin, Ruler, Layers } from 'lucide-react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { useProperty } from '../hooks/useProperty'
+import { useEquipment } from '../hooks/useEquipment'
+import { useDocuments } from '../hooks/useDocuments'
 
 export default function Home() {
   const { properties } = useProperty()
-  const [equipment] = useLocalStorage('cil-equipment', [])
-  const [documents] = useLocalStorage('cil-documents', [])
+  const { equipment } = useEquipment()
+  const { documents } = useDocuments()
   const [alerts] = useLocalStorage('cil-alerts', [])
 
   const activeAlerts = alerts.filter(a => !a.dismissed).length
