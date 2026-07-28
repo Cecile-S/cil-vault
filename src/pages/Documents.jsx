@@ -119,7 +119,7 @@ export default function Documents() {
       const fileExtension = fileName.split(".").pop();
       const newFormData = {
         ...formData,
-        name: fileName.replace(/\\.[^/\\]+$/, ""),
+        name: fileName.replace(/\.[^/\\]+$/, ""),
         type: detectedType !== "other" ? detectedType : "other",
         date: "",
         notes: multiDiagnosticNote,
@@ -134,7 +134,7 @@ export default function Documents() {
       if (detectedType === "invoice" && data) {
         // Date
         if (data.date) {
-          const dateMatch = data.date.match(/(\\d{1,2})[\\/-](\\d{1,2})[\\/-](\\d{2,4})/);
+          const dateMatch = data.date.match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})/);
           if (dateMatch) {
             const [, day, month, year] = dateMatch;
             const y = year.length === 2 ? "20" + year : year;
@@ -143,7 +143,7 @@ export default function Documents() {
         }
         // Amount
         if (data.amount) {
-          const amountNum = parseFloat(data.amount.replace(/[^\\d.,]/g, "").replace(",", "."));
+          const amountNum = parseFloat(data.amount.replace(/[^\d.,]/g, "").replace(",", "."));
           if (!isNaN(amountNum)) {
             const prefix = newFormData.notes ? `${newFormData.notes} | ` : "";
             newFormData.notes = `${prefix}Montant: ${amountNum.toFixed(2)} €`;
@@ -162,7 +162,7 @@ export default function Documents() {
       } else if (detectedType === "dpe" && data) {
         // Date
         if (data.date) {
-          const dateMatch = data.date.match(/(\\d{1,2})[\\/-](\\d{1,2})[\\/-](\\d{2,4})/);
+          const dateMatch = data.date.match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})/);
           if (dateMatch) {
             const [, day, month, year] = dateMatch;
             const y = year.length === 2 ? "20" + year : year;
@@ -203,7 +203,7 @@ export default function Documents() {
       const fileName = file.name;
       setFormData((prev) => ({
         ...prev,
-        name: fileName.replace(/\\.[^/\\]+$/, ""),
+        name: fileName.replace(/\.[^/\\]+$/, ""),
         type: "other",
         date: "",
         notes: "",

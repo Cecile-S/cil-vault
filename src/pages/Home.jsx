@@ -1,18 +1,17 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Wrench, FileText, Bell, Plus, AlertTriangle, ChevronRight, Building2, MapPin, Ruler, Layers } from 'lucide-react'
-import { useLocalStorage } from '../hooks/useLocalStorage'
 import { useProperty } from '../hooks/useProperty'
 import { useEquipment } from '../hooks/useEquipment'
 import { useDocuments } from '../hooks/useDocuments'
+import { useAlerts } from '../hooks/useAlerts'
 
 export default function Home() {
   const { properties } = useProperty()
   const { equipment } = useEquipment()
   const { documents } = useDocuments()
-  const [alerts] = useLocalStorage('cil-alerts', [])
+  const { activeAlerts: activeAlertsList } = useAlerts()
 
-  const activeAlerts = alerts.filter(a => !a.dismissed).length
+  const activeAlerts = activeAlertsList.length
   const property = properties[0]
 
   // If multiple properties, show list

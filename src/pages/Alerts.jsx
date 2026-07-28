@@ -1,105 +1,22 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Bell, Check, AlertTriangle, Info, X } from 'lucide-react'
-import { useLocalStorage } from '../hooks/useLocalStorage'
-import { useEquipment } from '../hooks/useEquipment'
-import { useDocuments } from '../hooks/useDocuments'
-import { needsWarrantyAlert, getWarrantyAlertMessage } from '../services/warranty-calculator'
-import { needsDiagnosticAlert, getDiagnosticAlertMessage } from '../services/diagnostic-validator'
-import { generateTenantNegligenceAlerts } from '../services/tenant-alert-service'
-import { useUserRole } from '../hooks/useUserRole'
-
-// Generate alerts based on equipment
-function generateAlerts(equipment) {
-  const alerts = []
-  const today = new Date()
-
-  equipment.forEach(eq => {
-    if (eq.nextMaintenance) {
-      const nextDate = new Date(eq.nextMaintenance)
-      const daysUntil = Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24))
-
-      if (daysUntil <= 30 && daysUntil > 0) {
-        alerts.push({
-          id: `maintenance-${eq.id}`,
-          type: 'warning',
-          title: `Entretien ${eq.name} à planifier`,
-          message: `Dans ${daysUntil} jours (${nextDate.toLocaleDateString('fr-FR')})`,
-          equipmentId: eq.id,
-          destinataire: eq.responsible,
-          createdAt: new Date().toISOString(),
-        })
-      } else if (daysUntil <= 0) {
-        alerts.push({
-          id: `maintenance-${eq.id}`,
-          type: 'urgent',
-          title: `Entretien ${eq.name} en retard`,
-          message: `Prévu le ${nextDate.toLocaleDateString('fr-FR')}`,
-          equipmentId: eq.id,
-          destinataire: eq.responsible,
-          createdAt: new Date().toISOString(),
-        })
-      }
-    }
-
-    if (needsWarrantyAlert(eq)) {
-      alerts.push({
-        id: `warranty-${eq.id}`,
-        type: 'warning',
-        title: `Garantie ${eq.name}`,
-        message: getWarrantyAlertMessage(eq),
-        equipmentId: eq.id,
-        destinataire: eq.responsible,
-        createdAt: new Date().toISOString(),
-      })
-    }
-  })
-
-  const tenantAlerts = generateTenantNegligenceAlerts(equipment)
-  tenantAlerts.forEach(ta => {
-    alerts.push({
-      id: `tenant-${ta.equipmentId || ta.id}`,
-      type: ta.severite === 'urgent' ? 'urgent' : 'warning',
-      title: ta.title || 'Entretien locataire en retard',
-      message: ta.message,
-      equipmentId: ta.equipmentId,
-      destinataire: 'proprietaire',
-      createdAt: new Date().toISOString(),
-    })
-  })
-
-  return alerts
-}
-
-function generateDiagnosticAlerts(documents) {
-  const alerts = []
-  documents.forEach(doc => {
-    if (needsDiagnosticAlert(doc)) {
-      alerts.push({
-        id: `diagnostic-${doc.id}`,
-        type: 'warning',
-        title: `Diagnostic ${doc.name}`,
-        message: getDiagnosticAlertMessage(doc),
-        createdAt: new Date().toISOString(),
-      })
-    }
-  })
-  return alerts
-}
+import { useAlerts } from '../hooks/useAlerts'
 
 export default function Alerts() {
-  const { equipment } = useEquipment()
-  const { documents } = useDocuments()
-  const [dismissedAlerts, setDismissedAlerts] = useLocalStorage('cil-dismissed-alerts', [])
-  const [systemAlerts, setSystemAlerts] = useLocalStorage('cil-system-alerts', [])
-  const { role, setRole, showAllAlerts, setShowAllAlerts, filterAlertsByRole, roleLabel } = useUserRole()
+  const {
+    allAlerts,
+    activeAlerts,
+    dismissedAlerts,
+    setDismissedAlerts,
+    systemAlerts,
+    setSystemAlerts,
+    role,
+    setRole,
+    showAllAlerts,
+    setShowAllAlerts,
+  } = useAlerts()
   const [showAddAlert, setShowAddAlert] = useState(false)
   const [newAlert, setNewAlert] = useState({ type: 'info', title: '', message: '' })
-
-  const maintenanceAlerts = generateAlerts(equipment)
-  const diagnosticAlerts = generateDiagnosticAlerts(documents)
-  const allAlerts = [...maintenanceAlerts, ...diagnosticAlerts, ...systemAlerts]
-  const roleFilteredAlerts = filterAlertsByRole(allAlerts)
-  const activeAlerts = roleFilteredAlerts.filter(a => !dismissedAlerts.includes(a.id))
 
   const handleDismiss = (alertId) => {
     setDismissedAlerts([...dismissedAlerts, alertId])

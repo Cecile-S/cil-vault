@@ -1,0 +1,5 @@
+<svg width="140" height="32" viewBox="0 0 140 32" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="4" width="24" height="24" rx="7" fill="#4ECDC4"/>
+  <path d="M12 10.5L18 14.5V21.5H15.5V16.5H8.5V21.5H6V14.5L12 10.5Z" fill="#2C3E50"/>
+  <text x="30" y="23" font-family="Inter, system-ui, sans-serif" font-size="17" font-weight="700" letter-spacing="0.5" fill="#2C3E50">CILIA</text>
+</svg>
