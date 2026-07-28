@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 import { Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import Home from './pages/Home'
@@ -6,6 +7,9 @@ import Documents from './pages/Documents'
 import Alerts from './pages/Alerts'
 import Property from './pages/Property'
 import { useProperty } from './hooks/useProperty'
+=======
+import FicheEquipement from './components/FicheEquipement';
+>>>>>>> Stashed changes
 
 function App() {
   const { properties, loading } = useProperty()
@@ -35,6 +39,7 @@ function App() {
   }
 
   return (
+<<<<<<< Updated upstream
     <Layout>
       <Routes>
         <Route path="/" element={<Home />} />
@@ -49,6 +54,18 @@ function App() {
       </Routes>
     </Layout>
   )
+=======
+    <div className="App">
+      <header className="App-header">
+        <h1>CIL Vault</h1>
+        <p>Système de gestion des équipements</p>
+      </header>
+      <main>
+        <FicheEquipement />
+      </main>
+    </div>
+  );
+>>>>>>> Stashed changes
 }
 
 export default App
